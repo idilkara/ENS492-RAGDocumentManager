@@ -1,13 +1,12 @@
-// ChatbotUI.js
 import React, { useState } from 'react';
 import './chatbot.css';
 
 const ChatbotUI = () => {
   const [messages, setMessages] = useState([
-    { id: 1, text: 'Hello! How can I assist you today?', isBot: true }
+    { id: 1, text: 'Hello! How can I assist you today?', isBot: true },
   ]);
   const [input, setInput] = useState('');
-  
+
   const handleSendMessage = () => {
     if (input.trim() === '') return;
 
@@ -18,7 +17,7 @@ const ChatbotUI = () => {
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, text: 'I’m here to help you manage documents.', isBot: true }
+        { id: Date.now() + 1, text: 'I’m here to help you manage documents.', isBot: true },
       ]);
     }, 1000);
 
@@ -27,8 +26,7 @@ const ChatbotUI = () => {
 
   return (
     <div className="app-container">
-
-      <div className="chat-container" >
+      <div className="chat-container">
         <div className="chat-header">Document Management Chatbot</div>
 
         <div className="chat-history">
@@ -37,7 +35,7 @@ const ChatbotUI = () => {
               {msg.text}
             </div>
           ))}
-        </div> 
+        </div>
 
         <div className="input-container">
           <input
@@ -47,11 +45,11 @@ const ChatbotUI = () => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
           />
-          <button className="send-button" onClick={handleSendMessage}>Send</button>
+          <button className="send-button" onClick={handleSendMessage}>
+            Send
+          </button>
         </div>
       </div>
-
-
     </div>
   );
 };

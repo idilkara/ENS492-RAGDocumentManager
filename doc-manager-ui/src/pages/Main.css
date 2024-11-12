@@ -1,0 +1,28 @@
+/* Main container to hold both panels */
+.main-container {
+    display: flex;
+    height: 100vh; /* Full height of the viewport */
+    width: 100%; /* Full width of the viewport */
+    margin: 0; /* Remove any default margin */
+  }
+  
+  /* Left panel (Pink) */
+  .left-panel {
+    width: 50%; /* Takes half of the screen */
+    background-color: pink; /* Pink background */
+    height: 100vh; /* Full height */
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Center the content */
+  }
+  
+  /* Right panel (Red) */
+  .right-panel {
+    width: 50%; /* Takes the other half of the screen */
+    background-color: red; /* Red background */
+    height: 100vh; /* Full height */
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Center the content */
+  }
+  

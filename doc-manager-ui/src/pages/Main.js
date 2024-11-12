@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
-import ChatbotUI from './chatbot';
-import SidePanel from './sidepanel';
+import ChatbotUI from './chatbot'; // Assuming the ChatbotUI component is in 'chatbot.js'
+import SidePanel from './sidepanel'; // Assuming the SidePanel component is in 'sidepanel.js'
 
 const Main = () => {
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isPanelOpen] = useState(true); // Toggle this state to open/close the panel
 
   console.log('Rendering Main Component');
-  
+
   return (
+
+
     <div className="main-container">
-      <ChatbotUI isPanelOpen={isPanelOpen} setIsPanelOpen={setIsPanelOpen} />
-      
-      {/* Render the SidePanel outside the button */}
-      <SidePanel isOpen={isPanelOpen} /> {/* Pass the isOpen prop to the SidePanel */}
-      
-      <button
-        className="toggle-panel-button"
-        style={{ left: isPanelOpen ? '300px' : '0' }}
-        onClick={() => setIsPanelOpen(!isPanelOpen)} // Toggle the panel state
-      >
-        {isPanelOpen ? 'Close Panel' : 'Open Panel'}
-      </button>
-    </div>
-  
+          {/* Left panel - Pink */}
+          <div className="left-panel">
+
+          <SidePanel isOpen={isPanelOpen} />
+
+          </div>
+    
+          {/* Right panel - Red */}
+          <div className="right-panel">
+
+          <ChatbotUI />
+
+          </div>
+        </div>
   );
 };
 
