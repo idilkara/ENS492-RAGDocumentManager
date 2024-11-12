@@ -12,18 +12,14 @@ const Main = () => {
 
     <div className="main-container">
           {/* Left panel - Pink */}
-          <div className="left-panel">
+
 
           <SidePanel isOpen={isPanelOpen} />
 
-          </div>
-    
-          {/* Right panel - Red */}
-          <div className="right-panel">
+        
 
           <ChatbotUI />
 
-          </div>
         </div>
   );
 };

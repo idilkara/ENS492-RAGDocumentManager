@@ -1,17 +1,15 @@
 /* sidepanel.css */
 .side-panel {
-    width: 300px;
-    background-color: #333;
-    color: #ffffff;
-    padding: 20px;
-    position: fixed;
-    left: -400px; /* Start off-screen */
-    height: 100vh;
-    transition: left 0.3s ease;
-    z-index: 1000;
-  }
-  
+  width: 400px; /* 1/4 of the screen */
+  background-color: #333;
+  color: #ffffff;
+  padding: 20px;
+  position: fixed;
+  height: 100vh;
+  transition: left 0.3s ease;
+  z-index: 1000;
+}
+
 .side-panel.open {
-    left: 0; /* Move the panel to visible position */
-  }
-  
+  left: 0; /* Move the panel to visible position */
+}

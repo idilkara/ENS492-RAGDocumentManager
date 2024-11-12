@@ -1,97 +1,156 @@
 /* Simplified chatbot CSS */
+.dim {
+  position: absolute;
+  top: 0;
+  left: 440;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Black with 30% opacity */
+  
+}
+
+.back-arrow-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 24px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  z-index: 1001;  /* Ensure it is on top of other content */
+}
+
+.pdf-container {
+  position: fixed;
+  top: 50%;
+  left: 63.5%;
+  transform: translate(-50%, -50%);
+  background-color: #f5f5f5;
+  padding: 20px;  /* Add padding around the PDF for a "margin" look */
+  z-index: 1002;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Stronger shadow for paper effect */
+  width: 50vw;  /* Set a fixed width for the paper effect */
+  height: 70vh; /* Set a fixed height for the paper effect */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-container iframe {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ccc;  /* Light gray border like a paper edge */
+  border-radius: 4px;
+  background-color: white; /* White background to resemble paper */
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1); /* Soft inner shadow */
+}
+
 .app-container {
-    display: flex;
-    flex-direction: column;
-   
-    height: 100vh;
-    background-color: #f5f5f5; /* Light background for the whole app */
-  }
+  display: flex;
+  height: 100vh;
+  background-color: #f5f5f5; /* Light background for the whole app */
+  margin-left: 436px;
+}
+
+.chat-container {
+  flex: 3; /* Take up 3/4 of the page */
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
   
-  .chat-container {
-    width: 100%;
-    max-width: 600px; /* Max width for chat */
-    margin-top: 20px;
-    background-color: #ffffff;
-    align-items: center;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    flex-direction: column;
-    overflow: hidden;
-  }
+}
+
+.chat-header {
+  padding: 10px;
+  background-color: #0078d4;
+  color: #fff;
+  text-align: center;
+  font-size: 18px;
+}
+
+.chat-history {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 700px; /* Limit height for scrolling */
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 60%;
+}
+
+.message.bot {
+  background-color: #ddd;
+  color: #333;
+  align-self: flex-start;
+}
+
+.message.user {
+  background-color: #0078d4;
+  color: #fff;
+  align-self: flex-end;
+}
+
+.input-container {
+  display: flex;
+  padding: 10px;
+  background-color: #ffffff;
   
-  .chat-header {
-    padding: 10px;
-    background-color: #0078d4;
-    color: #fff;
-    text-align: center;
-    font-size: 18px;
-  }
+}
+
+.text-input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+.send-button {
+  padding: 10px 20px;
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.send-button:hover {
+  background-color: #005bb5;
+}
+
+.toggle-panel-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  padding: 10px;
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+
+.display-button {
+  padding: 10px 20px;
   
-  .chat-history {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-    max-height: 400px; /* Limit height for scrolling */
-  }
-  
-  .message {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 60%;
-  }
-  
-  .message.bot {
-    background-color: #ddd;
-    color: #333;
-    align-self: flex-start;
-  }
-  
-  .message.user {
-    background-color: #0078d4;
-    color: #fff;
-    align-self: flex-end;
-  }
-  
-  .input-container {
-    display: flex;
-    padding: 10px;
-    background-color: #fff;
-    border-top: 1px solid #ddd;
-  }
-  
-  .text-input {
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  .send-button {
-    padding: 10px 20px;
-    background-color: #0078d4;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .send-button:hover {
-    background-color: #005bb5;
-  }
-  
-  .toggle-panel-button {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    padding: 10px;
-    background-color: #0078d4;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    z-index: 1001;
-  }
-  
+  color: #333;
+  border-width: 1px;
+  border-color: #000;
+  border-radius: 20px; /* Rounded corners */
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px; /* Space between the message and the button */
+  display: block; /* Make the button a block element to ensure it goes below the message */
+}

@@ -6,6 +6,8 @@ const ChatbotUI = () => {
     { id: 1, text: 'Hello! How can I assist you today?', isBot: true },
   ]);
   const [input, setInput] = useState('');
+  const [isDimVisible, setIsDimVisible] = useState(false);  // State for dim overlay visibility
+  const [isPdfVisible, setIsPdfVisible] = useState(false);  // State for PDF visibility
 
   const handleSendMessage = () => {
     if (input.trim() === '') return;
@@ -24,8 +26,39 @@ const ChatbotUI = () => {
     setInput('');
   };
 
+  const handleViewPDFClick = () => {
+    setIsDimVisible(true);  // Show dim overlay when the button is clicked
+    setIsPdfVisible(true);  // Show PDF viewer
+  };
+
+  const handleBackArrowClick = () => {
+    setIsDimVisible(false);  // Hide dim overlay when back arrow is clicked
+    setIsPdfVisible(false);  // Hide PDF viewer
+  };
+
   return (
     <div className="app-container">
+      {isDimVisible && (
+        <div className="dim">
+          {/* Back arrow button to restore lights */}
+          <button className="back-arrow-button" onClick={handleBackArrowClick}>
+            ←
+          </button>
+        </div>
+      )}
+
+      {/* PDF Viewer */}
+      {isPdfVisible && (
+        <div className="pdf-container">
+          {/* Using iframe to display the PDF */}
+          <iframe
+            src="/pdfs/aaa.pdf"  // Assuming the PDF is in the public folder
+
+            title="PDF Viewer"
+          ></iframe>
+        </div>
+      )}
+
       <div className="chat-container">
         <div className="chat-header">Document Management Chatbot</div>
 
@@ -33,6 +66,13 @@ const ChatbotUI = () => {
           {messages.map((msg) => (
             <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
               {msg.text}
+
+              {/* Show the button below the chatbot message only */}
+              {msg.isBot && (
+                <button className="display-button" onClick={handleViewPDFClick}>
+                  View PDF
+                </button>
+              )}
             </div>
           ))}
         </div>
