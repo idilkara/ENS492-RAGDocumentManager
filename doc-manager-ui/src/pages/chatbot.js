@@ -60,7 +60,7 @@ const ChatbotUI = () => {
       )}
 
       <div className="chat-container">
-        <div className="chat-header">Document Management Chatbot</div>
+        <div className="chat-header">SUDoc</div>
 
         <div className="chat-history">
           {messages.map((msg) => (
