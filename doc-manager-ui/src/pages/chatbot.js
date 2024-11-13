@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './chatbot.css';
+import axios from 'axios';
 
 const ChatbotUI = () => {
   const [messages, setMessages] = useState([
@@ -9,19 +10,47 @@ const ChatbotUI = () => {
   const [isDimVisible, setIsDimVisible] = useState(false);  // State for dim overlay visibility
   const [isPdfVisible, setIsPdfVisible] = useState(false);  // State for PDF visibility
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (input.trim() === '') return;
 
-    const newMessage = { id: Date.now(), text: input, isBot: false };
-    setMessages([...messages, newMessage]);
+    // const newMessage = { id: Date.now(), text: input, isBot: false };
+    // setMessages([...messages, newMessage]);
 
-    // Simulate bot response
-    setTimeout(() => {
+    const userMessage = { id: Date.now(), text: input, isBot: false };
+    setMessages((prev) => [...prev, userMessage]);
+
+    // // Simulate bot response
+    // setTimeout(() => {
+    //   setMessages((prev) => [
+    //     ...prev,
+    //     { id: Date.now() + 1, text: 'I’m here to help you manage documents.', isBot: true },
+    //   ]);
+    // }, 1000);
+    // Send the user's message to the backend using fetch
+    try {
+      const response = await fetch('http://127.0.0.1:5000/user_query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: input }), // Send the input as the user query
+      });
+
+      const data = await response.json();
+
+      // Assuming the backend responds with a text field
+      const botMessage = data.response || "I'm here to assist you!";
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, text: 'I’m here to help you manage documents.', isBot: true },
+        { id: Date.now() + 1, text: botMessage, isBot: true },
       ]);
-    }, 1000);
+    } catch (error) {
+      console.error("Error sending request:", error);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, text: "Sorry, there was an issue processing your request.", isBot: true },
+      ]);
+    }
 
     setInput('');
   };
