@@ -134,7 +134,7 @@ def search_query(query):
 
     return results['result']
 
-
+#AAAAAAAAAAAA
 # Function to retrieve documents grouped by document_id to avoid duplicates
 def retrieve_documents(query):
     results = vectorstore.similarity_search(query)
