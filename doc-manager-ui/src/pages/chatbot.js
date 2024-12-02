@@ -19,14 +19,6 @@ const ChatbotUI = () => {
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
 
-    // // Simulate bot response
-    // setTimeout(() => {
-    //   setMessages((prev) => [
-    //     ...prev,
-    //     { id: Date.now() + 1, text: 'I’m here to help you manage documents.', isBot: true },
-    //   ]);
-    // }, 1000);
-    // Send the user's message to the backend using fetch
     try {
       const response = await fetch('http://127.0.0.1:5000/user_query', {
         method: 'POST',

@@ -27,7 +27,6 @@
   flex-shrink: 0; /* Prevent shrinking */
 }
 
-
 .nav-item {
   color: #ffffff;
   font-size: 16px;
@@ -42,3 +41,99 @@
   color: #92afbb; /* Change to a lighter blue on hover */
   background-color: rgba(255, 255, 255, 0.079);
 }
+
+/* Upload Section */
+.upload-section {
+  margin-top: 20px;
+}
+
+.upload-button {
+  background-color: #061e36;
+  color: #ffffff;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  top: 400px;
+  bottom: 20px;
+}
+
+.upload-button:hover {
+  background-color: #92afbb; /* Light blue on hover */
+}
+
+.search-bar {
+  justify-content: center;
+  align-items: center;
+  width: 94%;
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.079);
+  color: #9e9ea0;
+}
+
+.document-list {
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 400px; 
+  overflow-y: auto;  /* Add scrolling */
+}
+
+.document-item {
+  padding: 10px;
+  margin-bottom: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.document-item:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #92afbb; /* Lighter blue on hover */
+}
+
+
+
+input[type="file"] {
+  display: none; /* Hide the default file input */
+}
+
+
+.settings-section {
+  padding: 10px;
+}
+
+.settings-item {
+  color: #ffffff;
+  font-size: 16px;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+  background-color: transparent; /* Default background is transparent */
+  border-radius: 5px;
+}
+
+.settings-item:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Light background on hover */
+}
+
+/* Add some space between items */
+.settings-nav {
+  margin-top: 20px;
+}
+
+/* Update other sections if needed */
+.side-panel {
+  background: linear-gradient(145deg, #041526, #061e36, #092349);
+}
+

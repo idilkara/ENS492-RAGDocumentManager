@@ -58,7 +58,7 @@
 
 .chat-container {
   flex: 3; /* Take up 3/4 of the page */
-  background: linear-gradient(145deg, #06223e, #215ca5, #8477d9);
+  background: linear-gradient(145deg, #3a5977, #88a0bb, #d5e0f7);
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -134,7 +134,7 @@
 
 .send-button {
   padding: 10px 20px;
-  background-color: rgba(0, 120, 212, 0.8);
+  background-color: rgba(10, 37, 86, 0.8);
   color: #ffffff;
   border: none;
   border-radius: 5px;
