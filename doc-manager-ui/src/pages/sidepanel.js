@@ -5,6 +5,7 @@ const SidePanel = ({ isOpen }) => {
   const [message, setMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [documents, setDocuments] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);  // State to track uploading process
 
   useEffect(() => {
     // Simulating the fetching of document names from the 'public/pdfs' folder
@@ -43,15 +44,43 @@ const SidePanel = ({ isOpen }) => {
     setMessage('Settings');
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
+    console.log("File selected:", file);
+  
     if (file && file.type === 'application/pdf') {
-      setDocuments((prevDocs) => [...prevDocs, file.name]);
+      try {
+        setIsUploading(true);  // Start uploading state
+        console.log('Uploading started...');
+  
+        const formData = new FormData();
+        formData.append('file', file);
+  
+        const response = await fetch('http://127.0.0.1:5000/upload', {
+          method: 'POST',
+          body: formData,
+        });
+  
+        const result = await response.json();
+        console.log('Upload result:', result);
+  
+        if (response.ok) {
+          setDocuments((prevDocs) => [...prevDocs, file.name]);
+          alert(result.message);  // Show success message
+        } else {
+          alert(result.error || 'Error uploading the file');  // Show error message
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Failed to upload file');
+      } finally {
+        setIsUploading(false);  // End uploading state
+      }
     } else {
       alert('Please upload a valid PDF file.');
     }
   };
-
+  
   const handleLogOutClick = () => {
     // Implement logout functionality (for now, just logging out to console)
     console.log('Logged Out');
@@ -74,15 +103,18 @@ const SidePanel = ({ isOpen }) => {
           />
 
           {/* File input for uploading PDFs */}
-          <label htmlFor="upload-file" className="upload-button">
-            Upload PDF
-          </label>
-          <input
-            type="file"
-            id="upload-file"
-            accept="application/pdf"
-            onChange={handleFileUpload}
-          />
+          <div className="file-upload-container">
+            <label htmlFor="upload-file" className="upload-button">
+              {isUploading ? 'Uploading...' : 'Upload PDF'}
+            </label>
+            <input
+              type="file"
+              id="upload-file"
+              accept="application/pdf"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}  // Hide the default file input
+            />
+          </div>
 
           <ul className="document-list">
             {filteredDocuments.map((doc, index) => (

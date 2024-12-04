@@ -11,30 +11,30 @@ const ChatbotUI = () => {
   const [isPdfVisible, setIsPdfVisible] = useState(false);  // State for PDF visibility
 
   const handleSendMessage = async () => {
-    if (input.trim() === '') return;
-
-    // const newMessage = { id: Date.now(), text: input, isBot: false };
-    // setMessages([...messages, newMessage]);
+    if (input.trim() === "") return;
 
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/user_query', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: input }), // Send the input as the user query
+      const response = await axios.post("http://127.0.0.1:5000/user_query", {
+        query: input
       });
 
-      const data = await response.json();
+      const data = response.data;
 
-      // Assuming the backend responds with a text field
-      const botMessage = data.response || "I'm here to assist you!";
+      const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
+      const filePath = data.file_path || null;
+
+      // Ensure file path is handled separately
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, text: botMessage, isBot: true },
+        {
+          id: Date.now() + 1,
+          text: botResponse,  // Only response, no file path in text
+          isBot: true,
+          filePath: filePath, // Store filePath separately for the "View PDF" button
+        },
       ]);
     } catch (error) {
       console.error("Error sending request:", error);
@@ -44,12 +44,25 @@ const ChatbotUI = () => {
       ]);
     }
 
-    setInput('');
+    setInput("");
   };
 
-  const handleViewPDFClick = () => {
-    setIsDimVisible(true);  // Show dim overlay when the button is clicked
-    setIsPdfVisible(true);  // Show PDF viewer
+  const handleViewPDFClick = async (filePath) => {
+    if (!filePath) return;
+
+    try {
+      const response = await axios.get(`http://127.0.0.1:5000/get_pdf?file_path=${encodeURIComponent(filePath)}`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      // Open the PDF in a new tab
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Error fetching PDF:", error);
+    }
   };
 
   const handleBackArrowClick = () => {
@@ -74,7 +87,6 @@ const ChatbotUI = () => {
           {/* Using iframe to display the PDF */}
           <iframe
             src="/pdfs/aaa.pdf"  // Assuming the PDF is in the public folder
-
             title="PDF Viewer"
           ></iframe>
         </div>
@@ -88,9 +100,9 @@ const ChatbotUI = () => {
             <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
               {msg.text}
 
-              {/* Show the button below the chatbot message only */}
-              {msg.isBot && (
-                <button className="display-button" onClick={handleViewPDFClick}>
+              {/* Show the button below the chatbot message only if filePath exists */}
+              {msg.isBot && msg.filePath && (
+                <button className="display-button" onClick={() => handleViewPDFClick(msg.filePath)}>
                   View PDF
                 </button>
               )}
