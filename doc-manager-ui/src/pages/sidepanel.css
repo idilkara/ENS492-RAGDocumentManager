@@ -1,16 +1,17 @@
 /* sidepanel.css */
 .side-panel {
-  width: 400px;
+  width: 200px;
   background: linear-gradient(145deg, #041526, #061e36, #092349); 
   color: #ffffff;
-  padding: 20px;
+  padding: 20px 10px 20px 10px;
   position: fixed;
-  height: 95vh;
+  height: 100vh;
   transition: left 0.3s ease;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   justify-content: space-between; /* Space out content */
+  align-items: center;
 }
 
 .side-panel h2 {
@@ -22,9 +23,10 @@
   display: flex;
   justify-content: space-around; /* Distribute items evenly */
   
-  padding: 10px 0;
-  bottom: 0; /* Stick to the bottom of the panel */
-  flex-shrink: 0; /* Prevent shrinking */
+  /* padding:  10px 10px 10px 10px;
+ /* bottom: 10px;  Stick to the bottom of the panel */
+ /* flex-shrink: 0;  Prevent shrinking */
+ padding-bottom: 20px;
 }
 
 .nav-item {
@@ -33,23 +35,37 @@
   text-align: center;
   cursor: pointer;
   transition: color 0.3s ease;
-  width: 250px;
+  width: 100px;
   height: 50px; 
+  border-radius:10px;
+  display: flex; /* Enables Flexbox */
+  align-items: center; /* Vertically center the content */
+  justify-content: center; /* Horizontally center the content */
+  font-weight: bold;
+
 }
 
 .nav-item:hover {
-  color: #92afbb; /* Change to a lighter blue on hover */
+  color: #ffffff; /* Change to a lighter blue on hover */
   background-color: rgba(255, 255, 255, 0.079);
+  font-weight: bold;
+  
+}
+
+.nav-item.selected {
+  color: #ffffff; /* Change to a lighter blue on hover */
+  background-color: rgba(255, 255, 255, 0.079);
+  font-weight: bold;
 }
 
 /* Upload Section */
 .upload-section {
-  margin-top: 20px;
+  padding: 10px;
 }
 
 .upload-button {
-  background-color: #061e36;
-  color: #ffffff;
+  background-color: #92afbb;
+  color: #000000;
   padding: 10px 15px;
   border: none;
   border-radius: 5px;
@@ -57,10 +73,12 @@
   transition: background-color 0.3s ease;
   top: 400px;
   bottom: 20px;
+  font-weight: bold;
 }
 
 .upload-button:hover {
-  background-color: #92afbb; /* Light blue on hover */
+  background-color:   rgba(0, 90, 160, 0.8) ; /* Light blue on hover */
+  color: #ffffff;
 }
 
 .search-bar {
@@ -69,7 +87,7 @@
   width: 94%;
   padding: 10px;
   font-size: 16px;
-  margin-bottom: 15px;
+  
   border-radius: 5px;
   border: none;
   background-color: rgba(255, 255, 255, 0.079);
@@ -82,14 +100,14 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 400px; 
+  max-height: 440px; 
   overflow-y: auto;  /* Add scrolling */
 }
 
 .document-item {
   padding: 10px;
   margin-bottom: 5px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.079);
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -132,8 +150,12 @@ input[type="file"] {
   margin-top: 20px;
 }
 
-/* Update other sections if needed */
-.side-panel {
-  background: linear-gradient(145deg, #041526, #061e36, #092349);
-}
 
+
+.file-upload-container {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  
+
+}

@@ -6,6 +6,8 @@ const SidePanel = ({ isOpen }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [documents, setDocuments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);  // State to track uploading process
+  const [selectedItem, setSelectedItem] = useState("settings"); // State to track the selected item
+
 
   useEffect(() => {
     // Simulating the fetching of document names from the 'public/pdfs' folder
@@ -38,10 +40,13 @@ const SidePanel = ({ isOpen }) => {
   // Handlers to update the message
   const handleUploadsClick = () => {
     setMessage('Upload Document');
+    setSelectedItem("uploads");
+
   };
 
   const handleSettingsClick = () => {
     setMessage('Settings');
+    setSelectedItem("settings");
   };
 
   const handleFileUpload = async (event) => {
@@ -89,7 +94,7 @@ const SidePanel = ({ isOpen }) => {
 
   return (
     <div className={`side-panel ${isOpen ? 'open' : ''}`}>
-      <h2>Your Space</h2>
+      <h2>Sabancı University Document Management System</h2>
 
       {/* Show upload section if Upload Document is selected */}
       {message === 'Upload Document' && (
@@ -145,8 +150,9 @@ const SidePanel = ({ isOpen }) => {
 
       {/* Navigation bar at the bottom */}
       <div className="side-panel-nav">
-        <div className="nav-item" onClick={handleUploadsClick}>Upload Document</div>
-        <div className="nav-item" onClick={handleSettingsClick}>Settings</div>
+     
+        <div className={`nav-item ${selectedItem === "uploads" ? "selected" : ""}`} onClick={handleUploadsClick}>Documents</div>
+        <div className={`nav-item ${selectedItem === "settings" ? "selected" : ""}`} onClick={handleSettingsClick}>Settings</div>
       </div>
     </div>
   );

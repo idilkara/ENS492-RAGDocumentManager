@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import './chatbot.css';
 import axios from 'axios';
 
@@ -9,19 +10,24 @@ const ChatbotUI = () => {
   const [input, setInput] = useState('');
   const [isDimVisible, setIsDimVisible] = useState(false);  // State for dim overlay visibility
   const [isPdfVisible, setIsPdfVisible] = useState(false);  // State for PDF visibility
+  const chatHistoryRef = useRef(null); // Create a reference for the chat container
+
 
   const handleSendMessage = async () => {
     if (input.trim() === "") return;
-
+    
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
-
     try {
       const response = await axios.post("http://127.0.0.1:5000/user_query", {
         query: input
       });
 
       const data = response.data;
+      // console.log(response.data)
+      // const data =  `  
+      // ${response.data}
+      // `;
 
       const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
       const filePath = data.file_path || null;
@@ -36,6 +42,8 @@ const ChatbotUI = () => {
           filePath: filePath, // Store filePath separately for the "View PDF" button
         },
       ]);
+
+
     } catch (error) {
       console.error("Error sending request:", error);
       setMessages((prev) => [
@@ -70,8 +78,19 @@ const ChatbotUI = () => {
     setIsPdfVisible(false);  // Hide PDF viewer
   };
 
+  // Scroll to the most recent message
+  useEffect(() => {
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  }, [messages]); // Triggered whenever messages are updated
+
+    
+
   return (
     <div className="app-container">
+
+
       {isDimVisible && (
         <div className="dim">
           {/* Back arrow button to restore lights */}
@@ -93,17 +112,17 @@ const ChatbotUI = () => {
       )}
 
       <div className="chat-container">
-        <div className="chat-header">SUDoc</div>
+        {/*<div className="chat-header"><h2>SUDoc</h2></div> */}
 
         <div className="chat-history">
           {messages.map((msg) => (
             <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
-              {msg.text}
+             <ReactMarkdown>{msg.text}</ReactMarkdown> 
 
               {/* Show the button below the chatbot message only if filePath exists */}
               {msg.isBot && msg.filePath && (
                 <button className="display-button" onClick={() => handleViewPDFClick(msg.filePath)}>
-                  View PDF
+                  <div className= "pdfLabel">View PDF</div >
                 </button>
               )}
             </div>
