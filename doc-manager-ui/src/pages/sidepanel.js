@@ -139,7 +139,7 @@ const SidePanel = ({ isOpen }) => {
               Log Out
             </div>
             <div className="settings-item">
-              Option 1
+              Option 1 okok
             </div>
             <div className="settings-item">
               Option 2
