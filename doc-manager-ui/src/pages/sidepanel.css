@@ -1,161 +1,115 @@
-/* sidepanel.css */
+/* Side Panel */
 .side-panel {
-  width: 200px;
-  background: linear-gradient(145deg, #041526, #061e36, #092349); 
-  color: #ffffff;
-  padding: 20px 10px 20px 10px;
-  position: fixed;
-  height: 100vh;
-  transition: left 0.3s ease;
-  z-index: 1000;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* Space out content */
-  align-items: center;
+  flex-direction: column; /* Stack elements vertically */
+  height: 100vh; /* Full height of the viewport */
+  width: 100%; /* Full width */
+  background: var(--color-surface); /* Use surface color */
+  color: var(--color-text); /* Use text color */
+  padding: var(--spacing-xs); /* Spacing around the panel */
+  box-sizing: border-box; /* Include padding in dimensions */
 }
 
-.side-panel h2 {
-  margin-top: 0;
-}
-
-/* Navigation Bar */
-.side-panel-nav {
-  display: flex;
-  justify-content: space-around; /* Distribute items evenly */
-  
-  /* padding:  10px 10px 10px 10px;
- /* bottom: 10px;  Stick to the bottom of the panel */
- /* flex-shrink: 0;  Prevent shrinking */
- padding-bottom: 20px;
-}
-
-.nav-item {
-  color: #ffffff;
-  font-size: 16px;
+/* Upper Section */
+.side-panel-upper {
+  flex: 0 0 auto; /* Keep the upper section fixed at the top */
   text-align: center;
-  cursor: pointer;
-  transition: color 0.3s ease;
-  width: 100px;
-  height: 50px; 
-  border-radius:10px;
-  display: flex; /* Enables Flexbox */
-  align-items: center; /* Vertically center the content */
-  justify-content: center; /* Horizontally center the content */
+  margin-bottom: var(--spacing-xs); /* Space below the title */
+}
+
+.side-panel-title {
+  font-size: var(--font-size-lg); /* Use defined large size */
   font-weight: bold;
-
-}
-
-.nav-item:hover {
-  color: #ffffff; /* Change to a lighter blue on hover */
-  background-color: rgba(255, 255, 255, 0.079);
-  font-weight: bold;
-  
-}
-
-.nav-item.selected {
-  color: #ffffff; /* Change to a lighter blue on hover */
-  background-color: rgba(255, 255, 255, 0.079);
-  font-weight: bold;
-}
-
-/* Upload Section */
-.upload-section {
-  padding: 10px;
-}
-
-.upload-button {
-  background-color: #92afbb;
-  color: #000000;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  top: 400px;
-  bottom: 20px;
-  font-weight: bold;
-}
-
-.upload-button:hover {
-  background-color:   rgba(0, 90, 160, 0.8) ; /* Light blue on hover */
-  color: #ffffff;
-}
-
-.search-bar {
-  justify-content: center;
-  align-items: center;
-  width: 94%;
-  padding: 10px;
-  font-size: 16px;
-  
-  border-radius: 5px;
-  border: none;
-  background-color: rgba(255, 255, 255, 0.079);
-  color: #9e9ea0;
-}
-
-.document-list {
-  justify-content: center;
-  align-items: center;
-  list-style: none;
-  padding: 0;
   margin: 0;
-  max-height: 440px; 
-  overflow-y: auto;  /* Add scrolling */
+  /* color: var(--color-primary); Accent color for emphasis */
 }
 
-.document-item {
-  padding: 10px;
-  margin-bottom: 5px;
-  background-color: rgba(255, 255, 255, 0.079);
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.document-item:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #92afbb; /* Lighter blue on hover */
-}
-
-
-
-input[type="file"] {
-  display: none; /* Hide the default file input */
-}
-
-
-.settings-section {
-  padding: 10px;
-}
-
-.settings-item {
-  color: #ffffff;
-  font-size: 16px;
-  padding: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.3s ease;
-  background-color: transparent; /* Default background is transparent */
-  border-radius: 5px;
-}
-
-.settings-item:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* Light background on hover */
-}
-
-/* Add some space between items */
-.settings-nav {
-  margin-top: 20px;
-}
-
-
-
-.file-upload-container {
+/* Lower Section */
+.side-panel-lower {
+  flex: 1; /* Take up remaining space */
   display: flex;
   flex-direction: column;
-  padding: 15px;
-  
 
+  text-align: left;
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  margin-bottom: var(--spacing-xs); /* Space above the bottom section */
+}
+
+.side-panel-listing-title {
+
+  padding: var(--spacing-xxs); /* Compact padding */
+ /* background-color: var(--color-primary);  Match panel color */
+  color: var(--color-text);
+  border-radius: var(--border-radius-md); /* Rounded corners */
+  font-size: var(--font-size-lg); /* Medium size for listing titles */
+  font-weight: bold;
+  margin-bottom: var(--spacing-xxs);
+}
+
+.side-panel-listing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xxs); /* Space between chat listing elements */
+  overflow-y: auto; /* Enable independent scrolling */
+}
+
+.side-panel-listing-element {
+  background-color: rgba(17, 34, 64, 0.9); /* Use a subdued background */
+  padding: var(--spacing-xxs); /* Compact spacing */
+  border-radius: var(--border-radius-md); /* Consistent rounding */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  font-size: var(--font-size-md); /* Use small font size for compactness */
+}
+
+.side-panel-listing-element-references {
+  margin-top: var(--spacing-xxs); /* Space between chat title and references */
+  overflow-y: auto; /* Allow scrolling for overflow */
+  max-height: 70px; /* Limit height */
+}
+
+.side-panel-listing-element-reference {
+  background-color: rgba(20, 40, 60, 0.9); /* Use muted color */
+  padding: var(--spacing-xxs); /* Compact padding */
+  border-radius: var(--border-radius-sm); /* Rounded corners */
+  margin-bottom: var(--spacing-xxs); /* Space between references */
+  font-size: var(--font-size-sm); /* Smaller font size */
+  color: var(--color-text-muted); /* Use muted text color */
+}
+
+/* Bottom Section */
+.side-panel-bottom {
+  text-align: left;
+  flex: 0 0 auto; /* Fixed height for the bottom section */
+  margin-top: auto; /* Push this section to the bottom */
+  padding: var(--spacing-xs) 0; /* Add padding around the bottom section */
+}
+
+.side-panel-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xxs); /* Space between buttons */
+  align-items: center; /* Center align buttons */
+}
+
+.side-panel-options-button {
+  width: 90%; /* Adjust button width */
+  padding: var(--spacing-xxs); /* Compact padding */
+  background-color: var(--color-surface); /* Match panel color */
+  color: var(--color-text);
+  border-radius: var(--border-radius-md); /* Rounded corners */
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--font-size-sm); /* Smaller font size */
+
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.side-panel-options-button.active {
+  background-color: var(--color-primary); /* Use primary accent for active */
+  font-weight: bold;
+ 
+}
+
+.side-panel-options-button:hover {
+  background-color: var(--color-primary); /* Slightly darker hover state */
 }

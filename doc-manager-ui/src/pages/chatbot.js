@@ -8,8 +8,7 @@ const ChatbotUI = () => {
     { id: 1, text: 'Hello! How can I assist you today?', isBot: true },
   ]);
   const [input, setInput] = useState('');
-  const [isDimVisible, setIsDimVisible] = useState(false);  // State for dim overlay visibility
-  const [isPdfVisible, setIsPdfVisible] = useState(false);  // State for PDF visibility
+
   const chatHistoryRef = useRef(null); // Create a reference for the chat container
 
 
@@ -73,10 +72,7 @@ const ChatbotUI = () => {
     }
   };
 
-  const handleBackArrowClick = () => {
-    setIsDimVisible(false);  // Hide dim overlay when back arrow is clicked
-    setIsPdfVisible(false);  // Hide PDF viewer
-  };
+
 
   // Scroll to the most recent message
   useEffect(() => {
@@ -88,28 +84,7 @@ const ChatbotUI = () => {
     
 
   return (
-    <div className="app-container">
-
-
-      {isDimVisible && (
-        <div className="dim">
-          {/* Back arrow button to restore lights */}
-          <button className="back-arrow-button" onClick={handleBackArrowClick}>
-            ←
-          </button>
-        </div>
-      )}
-
-      {/* PDF Viewer */}
-      {isPdfVisible && (
-        <div className="pdf-container">
-          {/* Using iframe to display the PDF */}
-          <iframe
-            src="/pdfs/aaa.pdf"  // Assuming the PDF is in the public folder
-            title="PDF Viewer"
-          ></iframe>
-        </div>
-      )}
+    <div className="chat-interaction-container">
 
       <div className="chat-container">
         {/*<div className="chat-header"><h2>SUDoc</h2></div> */}
@@ -130,7 +105,8 @@ const ChatbotUI = () => {
         </div>
 
         <div className="input-container">
-          <input
+
+          <textarea
             type="text"
             className="text-input"
             value={input}
@@ -140,7 +116,12 @@ const ChatbotUI = () => {
           <button className="send-button" onClick={handleSendMessage}>
             Send
           </button>
+
+    
         </div>
+        <div className="feedback-link">Give us feedback!</div>
+
+
       </div>
     </div>
   );

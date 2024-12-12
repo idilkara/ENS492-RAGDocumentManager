@@ -1,192 +1,143 @@
-/* Simplified chatbot CSS */
-.dim {
-  position: absolute;
-  top: 0;
-  left: 480;
-  width: 100%;
+/* Chatbot Container */
+.chat-interaction-container {
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  
-}
-
-.back-arrow-button {
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  font-size: 28px;
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  z-index: 1001;  /* Ensure it is on top of other content */
-}
-
-.pdf-container {
-  position: fixed;
-  top: 50%;
-  left: 63.5%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.15); /* Semi-transparent white for glass effect */
-  backdrop-filter: blur(15px); /* Frosted glass effect */
-  padding: 20px;
-  z-index: 1002;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  width: 50vw;
-  height: 70vh;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pdf-container iframe {
   width: 100%;
-  height: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.3); /* Soft glassy border */
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.8); /* Light background to resemble paper */
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.app-container {
-  display: flex;
-  height: 100vh;
-  background-color: #f5f5f5; /* Light background for the whole app */
-  margin-left: 210px;
+  flex-shrink: 1;
+  background: var(--color-surface); /* Use surface color */
+  font-family: var(--font-family-primary); /* Smaller font size for buttons */
+  display: flex; /* Flexbox for internal layout */
+  flex-direction: column;
+  overflow-x: hidden;
 }
 
 .chat-container {
-   /* flex: 3;Take up 3/4 of the page */
-  flex: 1;
-  flex-grow: 1;
-  background: linear-gradient(145deg, #3a5977, #88a0bb, #d5e0f7);
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  
+  flex-grow: 1; /* Allow the chatbot to take all available space in its parent */
+  height: 100%; /* Ensure full height */
+  width: 99%; /* Ensure full width */
+  background-color: var(--color-background); /* Background using root variable */
+  display: flex; /* Flexbox for internal layout */
+  flex-direction: column; /* Stack elements vertically */
+
+ margin: 5px;
+  border-radius: var(--border-radius-md); /* Rounded corners from root */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 .chat-header {
-  padding: 10px;
-  background-color: rgba(255, 255, 255, 0.2); /* Light glassy color for bot messages */
-  color: #ffffff;
+  background-color: var(--color-surface); /* Use surface color */
+  color: var(--color-text); /* Near-white text */
   text-align: center;
-  font-size: 18px;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  font-size: var(--font-size-lg); /* Large text size for the header */
+  border-top-left-radius: var(--border-radius-md);
+  border-top-right-radius: var(--border-radius-md);
 }
 
 .chat-history {
   flex-grow: 1;
-  padding: 40px;
-  overflow-y: auto;
-  max-height: 700px;
-  color: white;
+  padding: var(--spacing-sm); /* Padding using root variable */
+  overflow-y: auto; /* Allow scrolling for overflow */
+  color: var(--color-text); /* Use near-white text */
   display: flex; /* Add flexbox layout */
-  flex-direction: column; /* Reverse the order of messages */
+  flex-direction: column; /* Stack messages vertically */
+  gap: var(--spacing-xxs); /* Spacing between messages */
 }
-
 
 .message {
   display: flex;
-  flex-direction: column; /* Ensures messages are stacked vertically */
-  padding: 10px;
-  /*margin: 20px 20px;*/
-  border-radius: 10px;
-  max-width: 100%;  /* Ensures the message container stays within a specific width */
-  margin-bottom: 10px;
-  animation: fadeInUp 0.5s ease both;
-  word-break: break-word; /* Force long words to break and wrap within the container */
-  overflow-wrap: break-word; /* Alternative for word wrapping */
-  white-space: normal; /* Ensures the text wraps properly */
-  word-wrap: break-word; /* Additional support for breaking words */
+  flex-direction: column; /* Stack messages vertically */
+  font-size: var(--font-size-sm); /* Large text size for the header */
+  padding: 0 var(--spacing-xs) 0 var(--spacing-xs); /* Compact padding  */ 
+  border-radius: var(--border-radius-ll); /* Rounded corners */
+  max-width: 100%; /* Ensure the message container stays within a specific width */
+  margin-bottom: var(--spacing-xs); /* Space between messages */
+  animation: fadeInUp 0.5s ease both; /* Smooth animation */
+  word-break: break-word; /* Force long words to wrap */
+  overflow-wrap: break-word;
+  white-space: normal; /* Ensures text wraps properly */
 }
 
 .message.bot {
-  background-color: rgba(255, 255, 255, 0.4); /* Light glassy color for bot messages */
-  color: #000000;
+  background-color: rgba(255, 255, 255, 0.4); /* Light glassy color */
+  color: var(--color-background); /* Contrast against background */
   align-self: flex-start;
 }
 
 .message.user {
-  background-color: rgba(255, 255, 255, 0.2); /* Navy blue for user messages */
-  color: #000000;
+  background-color: rgba(255, 255, 255, 0.2); /* Slightly darker glassy color */
+  color: var(--color-background);
   align-self: flex-end;
 }
 
 .input-container {
   display: flex;
+  background-color: var(--color-background); /* Background using root variable */
 
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-color: rgba(10, 37, 86, 0.8) ;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  padding: 0 var(--spacing-sm); /* Horizontal padding */
 
-  padding: 0px 40px 0px 40px;
+  padding-bottom: 8px;
 }
 
 .text-input {
-  flex-grow: 1;
-  padding: 10px;
-  border: 3px solid  rgba(10, 37, 86, 0.5) ;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: black;
-  margin: 10px 10px 10px 0px;
+  appearance: none; /* Remove native styling */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+  border: 1px solid  rgba(255, 255, 255, 0.0);; /* Flat border */
+  box-shadow: none; /* Remove any shadow */
+  outline: none; /* Remove focus outline */
+  padding: var(--spacing-xxs); /* Compact padding */
+  background-color: rgba(255, 255, 255, 0.2); /* Glassy background */
+  border-radius: var(--border-radius-sm); /* Subtle rounding */
+  color: var(--color-text); /* Use near-white text */
+  margin: var(--spacing-xxs) var(--spacing-xxs) var(--spacing-xxs) 0;
+  width: 90%;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+
 }
+
+
+
 
 .send-button {
   width: 100px;
-  padding: 10px 10px;
-  background-color: rgba(10, 37, 86, 0.8);
-  color: #ffffff;
+  padding: var(--spacing-xxs);
+  background-color: var(--color-primary); /* Accent color for button */
+  color: var(--color-text); /* Text color */
   border: none;
-  border-radius: 5px;
+  border-radius: var(--border-radius-sm); /* Subtle rounding */
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin: 10px 0px 10px 0px;
+  transition: background-color 0.3s ease; /* Smooth transition */
+  margin: var(--spacing-xxs) 0;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
   font-weight: bold;
-  
 }
 
 .send-button:hover {
-  background-color: rgba(0, 90, 160, 0.8);
-}
-
-.toggle-panel-button {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  padding: 10px;
-  background-color: rgba(0, 120, 212, 0.8);
-  color: #ffffff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  z-index: 1001;
+  background-color: rgba(10, 37, 86, 0.8); /* Darker shade on hover */
 }
 
 .display-button {
-  padding: 6px 12px;  /* Reduced padding for a smaller button */
-  background-color: rgba(10, 37, 86, 0.8);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;  /* Less rounded corners */
+  padding: var(--spacing-xxs); /* Compact padding */
+  background-color: var(--color-primary); /* Accent button color */
+  color: var(--color-text); /* Text color */
+  border: 1px solid var(--color-border); /* Border color */
+  border-radius: var(--border-radius-md); /* Subtle rounding */
   cursor: pointer;
-  font-size: 14px;  /* Slightly smaller font */
-  margin-top: 10px;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  margin-top: var(--spacing-xxs); /* Spacing between buttons */
   display: block;
 }
 
-.display-button:hover{
-  background-color:rgba(0, 120, 212, 0.8);
+.display-button:hover {
+  background-color: rgba(20, 40, 60, 0.8); /* Slightly darker hover */
 }
 
-.pdfLabel{
-  color: #ffffff;
-  font-weight: bold;
+
+
+.feedback-link {
+  width: 100%;
+  color: var(--color-text);
+  text-align: center;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  padding-bottom: 10px;
+  
 }

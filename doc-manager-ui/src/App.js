@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Main from './pages/Main'; // Adjust the path if your `main.js` is located elsewhere
+import './root.css';
 
 const App = () => {
   return (

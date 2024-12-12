@@ -1,0 +1,113 @@
+:root {
+    /* Base sizing
+       Set base font-size (16px = 1rem).
+       Adjust with media queries for responsiveness.
+     */
+    font-size: 16px;
+  
+    /* Typography:
+       Swiss style often uses neutral, sans-serif typefaces.
+       Helvetica Neue is a classic choice. Fallback to system sans-serif.
+    */
+    --font-family-primary: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    
+    /* Modular scale for typography:
+       Start from a base size and step up for headings. 
+       Using a ratio like 1.333 for modest scale.
+    */
+ 
+
+      /* Typography (from smallest to largest) */
+      --font-size-sm: 0.75rem;   /* 12px small text */
+      --font-size-md: 0.875rem;  /* 14px body text */
+      --font-size-base: 1rem;    /* 16px base body text */
+      --font-size-lg: 1.125rem;  /* 18px */
+      --font-size-xl: 1.25rem;   /* 20px */
+      --font-size-xxl: 1.5rem;   /* 24px large heading */
+
+  
+    /* Line-height for comfortable reading:
+       Slightly generous line-height. */
+    --line-height-base: 1.5;
+  
+    /* Colors:
+       Swiss style often uses a minimal color palette.
+       We'll use a dark navy background and near-white text,
+       with subtle accents.
+    */
+    --color-background: #0A192F;     /* Dark navy */
+    --color-surface: #112240;        /* Slightly lighter for cards/panels */
+    --color-primary: #0D47A1;        /* Accent blue */
+    --color-text: #F0F4F8;           /* Near-white text */
+    --color-text-muted: #B0BEC5;     /* Muted text for subtitles */
+    --color-border: #33475E;         /* Soft border color */
+
+
+  
+    /* Spacing:
+       Establish a baseline grid. Using multiples of 0.5rem (8px at 16px base).
+    */
+    --spacing-xxs: 0.5rem;   /* 8px */
+    --spacing-xs: 1rem;       /* 16px */
+    --spacing-sm: 1.5rem;     /* 24px */
+    --spacing-md: 2rem;       /* 32px */
+    --spacing-lg: 3rem;       /* 48px */
+    --spacing-xl: 4rem;       /* 64px */
+    
+    /* Border radius:
+       Keep minimal. Swiss design typically minimalizes ornamentation.
+    */
+    --border-radius-sm: 0.25rem; /* 4px subtle rounding */
+    --border-radius-md: 0.5rem;  /* 8px */
+    --border-radius-ll: 1.0rem;  /* 16px */
+  }
+  
+  /* Global reset */
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family-primary);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    background-color: var(--color-background);
+    color: var(--color-text);
+  }
+  
+  /* Example utility classes to support a Swiss-style grid:
+     A simple CSS Grid-based system (e.g., 12-column) can be established.
+     This is optional and can be expanded upon as needed.
+  */
+  .container {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+  }
+  
+  .text-center {
+    text-align: center;
+  }
+  
+  .text-left {
+    text-align: left;
+  }
+  
+  .muted {
+    color: var(--color-text-muted);
+  }
+  
+
+  
+  /* Responsive scaling: Increase base size on larger screens */
+  @media (min-width: 768px) {
+    :root {
+      font-size: 17px; /* Slight scaling up */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    :root {
+      font-size: 18px; /* Further scaling for large displays */
+    }
+  }
+  

@@ -1,0 +1,52 @@
+.logout-button {
+    padding: var(--spacing-xxs); /* Use spacing variables */
+    background-color: var(--color-primary); /* Primary button color */
+    color: var(--color-text); /* Near-white text */
+    border: none; /* Remove default border */
+    border-radius: var(--border-radius-md); /* Rounded corners */
+    cursor: pointer; /* Pointer cursor for interactivity */
+    font-size: var(--font-size-sm); /* Smaller font size */
+    font-weight: bold; /* Emphasize the button */
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+  }
+  
+  .logout-button:hover {
+    background-color: var(--color-border); /* Change to border color on hover */
+  }
+  
+  .dark-light-mode-toggle {
+    padding: var(--spacing-xxs); /* Compact padding */
+    background: var(--linearPrimaryAccent); /* Gradient background */
+    color: var(--color-text); /* Text color for contrast */
+    border: none; /* No border */
+    border-radius: var(--border-radius-sm); /* Rounded corners */
+    cursor: pointer; /* Pointer cursor for interactivity */
+    font-size: var(--font-size-sm); /* Small font size */
+    display: flex; /* Flexbox for internal layout */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    transition: transform 0.2s ease; /* Smooth toggle interaction */
+  }
+  
+  .dark-light-mode-toggle:hover {
+    transform: scale(1.05); /* Slight zoom effect on hover */
+  }
+  
+  .feedback-button {
+    padding: var(--spacing-xxs); /* Compact padding */
+    background-color: var(--color-surface); /* Neutral surface color */
+    color: var(--color-primary); /* Use primary color for text */
+    border: 1px solid var(--color-border); /* Subtle border */
+    border-radius: var(--border-radius-md); /* Rounded corners */
+    font-size: var(--font-size-sm); /* Smaller font size */
+    cursor: pointer; /* Pointer cursor for interactivity */
+    text-align: center; /* Center text inside button */
+    margin-top: var(--spacing-xs); /* Add spacing at the top */
+    transition: box-shadow 0.3s ease; /* Smooth shadow transition */
+  }
+  
+  .feedback-button:hover {
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Add shadow effect on hover */
+    color: var(--color-text); /* Change text color on hover */
+  }
+  

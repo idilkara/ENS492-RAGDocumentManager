@@ -1,26 +1,24 @@
 import React, { useState } from 'react';
-import ChatbotUI from './chatbot'; // Assuming the ChatbotUI component is in 'chatbot.js'
-import SidePanel from './sidepanel'; // Assuming the SidePanel component is in 'sidepanel.js'
+import ChatbotUI from './chatbot'; // Assuming ChatbotUI is defined in 'chatbot.js'
+import SidePanel from './sidepanel'; // Assuming SidePanel is defined in 'sidepanel.js'
+import './Main.css';
 
 const Main = () => {
-  const [isPanelOpen] = useState(true); // Toggle this state to open/close the panel
-
-  console.log('Rendering Main Component');
+  const [chatID, setChatID] = useState("NONE");
+  console.log('Rendering Main Component with chatID:', chatID);
 
   return (
-
-
     <div className="main-container">
-          {/* Left panel - Pink */}
+      {/* Left Panel */}
+      <div className="left-panel">
+        <SidePanel chatID={chatID} />
+      </div>
 
-
-          <SidePanel isOpen={isPanelOpen} />
-
-        
-
-          <ChatbotUI />
-
-        </div>
+      {/* Right Panel */}
+      <div className="right-panel">
+        <ChatbotUI chatID={chatID} />
+      </div>
+    </div>
   );
 };
 
