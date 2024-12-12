@@ -94,7 +94,7 @@
 .side-panel-options-button {
   width: 90%; /* Adjust button width */
   padding: var(--spacing-xxs); /* Compact padding */
-  background-color: var(--color-surface); /* Match panel color */
+  background-color: var(--color-border); /* Match panel color */
   color: var(--color-text);
   border-radius: var(--border-radius-md); /* Rounded corners */
   text-align: left;
