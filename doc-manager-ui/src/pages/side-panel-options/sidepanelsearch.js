@@ -35,8 +35,9 @@ const SearchDocument = () => {
 
   return (
     <div className="search-container">
-      <h2 className="search-title">Search for a Document</h2>
+
       <div className="search-bar">
+        
         <input
           type="text"
           className="search-input"
@@ -44,9 +45,13 @@ const SearchDocument = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Enter document title or keyword"
         />
+
+
         <button className="search-button" onClick={handleSearch} disabled={isSearching}>
           {isSearching ? 'Searching...' : 'Search'}
         </button>
+
+        
       </div>
 
       {/* Display search results */}

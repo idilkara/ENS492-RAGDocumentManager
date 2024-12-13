@@ -1,92 +1,47 @@
-/* Container Styling */
-.search-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-md); /* Space between elements */
-    background-color: var(--color-surface); /* Background surface color */
-    padding: var(--spacing-md); /* Add padding */
-    border-radius: var(--border-radius-md); /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-  }
+/* Search Bar Styling */
+.search-bar {
+  display: flex;
+  width: 100%;
+  max-width: 600px; /* Constrain max width */
+}
+
+.search-input {
   
-  /* Title Styling */
-  .search-title {
-    font-size: var(--font-size-lg); /* Large font size */
-    font-weight: bold;
-    color: var(--color-primary); /* Accent color for title */
-  }
-  
-  /* Search Bar Styling */
-  .search-bar {
-    display: flex;
-    gap: var(--spacing-xs); /* Space between input and button */
-    width: 100%;
-    max-width: 600px; /* Constrain max width */
-  }
-  
-  .search-input {
-    flex-grow: 1;
-    padding: var(--spacing-sm); /* Padding for input */
-    font-size: var(--font-size-md); /* Medium font size */
-    border: 1px solid var(--color-border); /* Border color */
-    border-radius: var(--border-radius-sm); /* Subtle rounding */
-    background-color: var(--color-background); /* Input background */
-    color: var(--color-text); /* Input text color */
-    outline: none; /* Remove focus outline */
-    transition: border-color 0.3s ease; /* Smooth border color transition */
-  }
-  
-  .search-input:focus {
-    border-color: var(--color-primary); /* Highlight border on focus */
-  }
-  
-  .search-button {
-    padding: var(--spacing-sm);
-    background: var(--linearPrimaryAccent); /* Gradient background */
-    color: var(--color-text); /* Button text color */
-    border: none; /* Remove border */
-    border-radius: var(--border-radius-md); /* Rounded corners */
-    cursor: pointer;
-    font-size: var(--font-size-md); /* Medium font size */
-    transition: transform 0.2s ease, background 0.3s ease; /* Smooth effects */
-  }
-  
-  .search-button:disabled {
-    background: var(--linearSecondaryAccent); /* Lighter gradient for disabled */
-    cursor: not-allowed; /* Change cursor to indicate disabled */
-  }
-  
-  .search-button:hover:enabled {
-    background: var(--linearPrimarySecondary); /* Hover gradient */
-    transform: scale(1.05); /* Slight zoom effect */
-  }
-  
-  /* Results Styling */
-  .search-results {
-    width: 100%;
-    max-width: 600px; /* Constrain max width */
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs); /* Space between results */
-  }
-  
-  .search-result-item {
-    padding: var(--spacing-sm);
-    background-color: rgba(20, 40, 60, 0.9); /* Background for result items */
-    border-radius: var(--border-radius-sm); /* Rounded corners */
-    color: var(--color-text); /* Text color */
-    font-size: var(--font-size-sm); /* Small font size */
-    transition: background-color 0.3s ease; /* Smooth background change */
-  }
-  
-  .search-result-item:hover {
-    background-color: rgba(20, 40, 60, 0.7); /* Lighter hover background */
-  }
-  
-  .no-results {
-    font-size: var(--font-size-sm); /* Small font size */
-    color: var(--color-text-muted); /* Muted text color */
-    text-align: center;
-  }
-  
+  border: 1px solid  rgba(255, 255, 255, 0.0);; /* Flat border */
+  /*box-shadow: none;  Remove any shadow */
+   /*outline: none; Remove focus outline */
+  padding: var(--spacing-xxs); /* Compact padding */
+  background-color: var(--color-secondary); /* Glassy background */
+ 
+  color: var(--color-text); /* Use near-white text */
+  margin: var(--spacing-xxs) var(--spacing-xxs) var(--spacing-xxs) 0;
+  width: 90%;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  font-weight: bold;
+  border-radius: var(--border-radius-md ); 
+
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+}
+
+.search-button {
+  width: 100px;
+  padding: var(--spacing-xxs);
+  background-color: var(--color-primary); /* Accent color for button */
+  color: var(--color-background); /* Text color */
+  border: none;
+  border-radius: var(--border-radius-md); /* Subtle rounding */
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth transition */
+  margin: var(--spacing-xxs) 0;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  font-weight: bold;
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+}
+
+.search-button:hover{
+
+  background-color: var(--color-accent); /* Use accent color on hover */
+  color: var(--color-background); /* Use accent color on hover */
+
+
+}

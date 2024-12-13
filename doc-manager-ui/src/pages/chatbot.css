@@ -1,5 +1,7 @@
 /* Chatbot Container */
 .chat-interaction-container {
+  font-size: var(--font-size-ll);
+  font-family: Helvetica, sans-serif;
   height: 100%;
   width: 100%;
   flex-shrink: 1;
@@ -8,6 +10,7 @@
   display: flex; /* Flexbox for internal layout */
   flex-direction: column;
   overflow-x: hidden;
+
 }
 
 .chat-container {
@@ -43,9 +46,11 @@
 }
 
 .message {
+
+
   display: flex;
   flex-direction: column; /* Stack messages vertically */
-  font-size: var(--font-size-sm); /* Large text size for the header */
+  font-size: var(--font-size-md); /* Large text size for the header */
   padding: 0 var(--spacing-xs) 0 var(--spacing-xs); /* Compact padding  */ 
   border-radius: var(--border-radius-ll); /* Rounded corners */
   max-width: 100%; /* Ensure the message container stays within a specific width */
@@ -54,65 +59,74 @@
   word-break: break-word; /* Force long words to wrap */
   overflow-wrap: break-word;
   white-space: normal; /* Ensures text wraps properly */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+
 }
 
 .message.bot {
-  background-color: rgba(255, 255, 255, 0.4); /* Light glassy color */
-  color: var(--color-background); /* Contrast against background */
+  background-color:  var(--color-border); /* Light glassy color */
+  color:var(--color-text); /* Contrast against background */
+  font-weight: bold;
   align-self: flex-start;
+  margin-right: 20px;
 }
 
 .message.user {
-  background-color: rgba(255, 255, 255, 0.2); /* Slightly darker glassy color */
-  color: var(--color-background);
+  background-color: var(--color-border); /* Slightly darker glassy color */
+  color: var(--color-text);
   align-self: flex-end;
+  margin-left: 20px;
 }
 
 .input-container {
   display: flex;
   background-color: var(--color-background); /* Background using root variable */
-
   padding: 0 var(--spacing-sm); /* Horizontal padding */
-
   padding-bottom: 8px;
 }
 
+
 .text-input {
-  appearance: none; /* Remove native styling */
-  -webkit-appearance: none; /* For Safari */
-  -moz-appearance: none; /* For Firefox */
-  border: 1px solid  rgba(255, 255, 255, 0.0);; /* Flat border */
-  box-shadow: none; /* Remove any shadow */
-  outline: none; /* Remove focus outline */
+  font-size: var(--font-size-md);
+  border: 1px solid var(--color-border); /* Flat border */
+  /*box-shadow: none;  Remove any shadow */
+   /*outline: none; Remove focus outline */
   padding: var(--spacing-xxs); /* Compact padding */
-  background-color: rgba(255, 255, 255, 0.2); /* Glassy background */
-  border-radius: var(--border-radius-sm); /* Subtle rounding */
+  background-color: var(--color-secondary); /* Glassy background */
+ 
   color: var(--color-text); /* Use near-white text */
   margin: var(--spacing-xxs) var(--spacing-xxs) var(--spacing-xxs) 0;
   width: 90%;
-  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+ 
+  font-weight: bold;
+  border-radius: var(--border-radius-ll); 
 
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
 }
 
-
-
+.textarea{
+  resize: none; /* Disable resizing */
+}
 
 .send-button {
   width: 100px;
   padding: var(--spacing-xxs);
   background-color: var(--color-primary); /* Accent color for button */
-  color: var(--color-text); /* Text color */
+  color: var(--color-background); /* Text color */
   border: none;
-  border-radius: var(--border-radius-sm); /* Subtle rounding */
+  border-radius: var(--border-radius-ll); /* Subtle rounding */
   cursor: pointer;
   transition: background-color 0.3s ease; /* Smooth transition */
   margin: var(--spacing-xxs) 0;
-  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  font-size: var(--font-size-md); /* Smaller font size for buttons */
   font-weight: bold;
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+
 }
 
 .send-button:hover {
-  background-color: rgba(10, 37, 86, 0.8); /* Darker shade on hover */
+  background-color: var(--color-accent); /* Darker shade on hover */
+  color: var(--color-background)
 }
 
 .display-button {
@@ -122,7 +136,7 @@
   border: 1px solid var(--color-border); /* Border color */
   border-radius: var(--border-radius-md); /* Subtle rounding */
   cursor: pointer;
-  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  font-size: var(--font-size-md); /* Smaller font size for buttons */
   margin-top: var(--spacing-xxs); /* Spacing between buttons */
   display: block;
 }
@@ -130,7 +144,6 @@
 .display-button:hover {
   background-color: rgba(20, 40, 60, 0.8); /* Slightly darker hover */
 }
-
 
 
 .feedback-link {

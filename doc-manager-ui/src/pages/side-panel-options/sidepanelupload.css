@@ -1,61 +1,63 @@
 /* Container Styling */
 .file-upload-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-md); /* Add spacing between elements */
-    background-color: var(--color-surface); /* Background surface color */
-    padding: var(--spacing-md); /* Add padding */
-    border-radius: var(--border-radius-md); /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-  }
-  
-  /* Title Styling */
-  .file-upload-title {
-    font-size: var(--font-size-lg); /* Use larger font size for the title */
-    font-weight: bold;
-    color: var(--color-primary); /* Accent color for title */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface); /* Use surface color as background */
+  border-radius: var(--border-radius-md); /* Rounded corners */
+  box-shadow:var(--color-background-shadow); /* Subtle shadow */
+  height: 100%;
   }
   
   /* Upload Button Styling */
   .upload-button {
-    display: inline-block;
-    padding: var(--spacing-sm); /* Padding for button */
-    background: var(--linearPrimaryAccent); /* Gradient background */
-    color: var(--color-text); /* Text color */
-    border: none; /* Remove border */
+    font-size: var(--font-size-md);
+    padding: var(--spacing-xxs) ; /* Consistent padding */
+    color: var(--color-text); /* Use surface color as text color */
+    margin: var(--spacing-xxs) ; 
+    font-weight: bold;
+    background-color: var(--color-border);
     border-radius: var(--border-radius-md); /* Rounded corners */
-    cursor: pointer; /* Pointer cursor for interactivity */
-    font-size: var(--font-size-md); /* Medium font size */
-    text-align: center;
-    transition: transform 0.2s ease, background 0.3s ease; /* Smooth transition effects */
+    text-align: left;
+    width: 90%;
+    box-shadow: var(--color-background-shadow); /* Subtle shadow */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
   }
   
   .upload-button:hover {
-    background: var(--linearSecondaryAccent); /* Darker gradient on hover */
-    transform: scale(1.05); /* Slight zoom effect */
-  }
+    background-color: var(--color-accent); /* Use accent color on hover */
+    color: var(--color-background); /* Use accent color on hover */
   
-  .upload-button:active {
-    transform: scale(1); /* Reset zoom effect on click */
-  }
+}
   
   /* Feedback Styling */
   .upload-feedback {
-    padding: var(--spacing-sm); /* Padding around feedback message */
+    font-weight: bold;
+
     border-radius: var(--border-radius-sm); /* Rounded corners */
-    font-size: var(--font-size-sm); /* Smaller font size */
+    font-size: var(--font-size-md); /* Smaller font size */
     text-align: center;
     width: 90%; /* Constrain the width */
+    
   }
   
   .upload-feedback.success {
+
+    font-size: var(--font-size-md);
+    padding: var(--spacing-xxs) ; /* Consistent padding */
+    color: var(--color-text); /* Use surface color as text color */
+    margin: var(--spacing-xxs) ; 
+
     background-color: rgba(56, 142, 60, 0.9); /* Success green background */
-    color: white; /* White text */
+    
   }
   
   .upload-feedback.error {
+    font-size: var(--font-size-md);
+    padding: var(--spacing-xxs) ; /* Consistent padding */
+    color: var(--color-background); /* Use surface color as text color */
+    margin: var(--spacing-xxs) ; 
+
+
     background-color: rgba(211, 47, 47, 0.9); /* Error red background */
-    color: white; /* White text */
+   
   }
-  

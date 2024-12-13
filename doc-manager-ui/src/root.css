@@ -35,14 +35,17 @@
        We'll use a dark navy background and near-white text,
        with subtle accents.
     */
-    --color-background: #0A192F;     /* Dark navy */
-    --color-surface: #112240;        /* Slightly lighter for cards/panels */
-    --color-primary: #0D47A1;        /* Accent blue */
-    --color-text: #F0F4F8;           /* Near-white text */
-    --color-text-muted: #B0BEC5;     /* Muted text for subtitles */
-    --color-border: #33475E;         /* Soft border color */
 
 
+    --color-background: #f2f4f8; /* Light, airy gray-blue background */
+    --color-surface: #2c3e50; /* Soft blue-gray for panels */
+    --color-primary: #3d5c8a ; /* Muted navy blue for primary elements */
+    --color-secondary: #dfe6ed; /* Light neutral gray-blue for secondary accents */
+    --color-accent: #6080af; /* Deep navy for highlights and interactive elements */
+    --color-text: #333333; /* Dark gray for high-contrast text */
+    --color-text-muted: #7a7a7a; /* Medium gray for muted or secondary text */
+    --color-border: #e0e0e0; /* Soft gray border for subtle dividers */
+    --color-background-shadow: rgba(0,0,0, 0.2); 
   
     /* Spacing:
        Establish a baseline grid. Using multiples of 0.5rem (8px at 16px base).

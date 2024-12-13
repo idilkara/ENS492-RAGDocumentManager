@@ -11,19 +11,12 @@ const Settings = () => {
     return (
       <div className="settings-container">
     
-        <div className="settings-options">
-          <div className="settings-option">
+
+
+            <label className="settings-button">Give Feedback</label>
+            <label className="settings-button">Logout</label>
           
-          </div>
-          <div className="settings-option">
-
-            <button className="settings-button">Give Feedback</button>
-          </div>
-          <div className="settings-option">
-
-            <button className="settings-button">Logout</button>
-          </div>
-        </div>
+   
       </div>
     );
   };

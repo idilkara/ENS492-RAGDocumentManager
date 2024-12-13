@@ -107,6 +107,7 @@ const ChatbotUI = () => {
         <div className="input-container">
 
           <textarea
+            
             type="text"
             className="text-input"
             value={input}

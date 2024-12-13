@@ -7,10 +7,10 @@
 
 .left-panel {
   flex: 1; /* Take 3 parts of the available space */
-  background-color: #f0f0f0; /* Optional background color for visual distinction */
+  background-color: var(--color-surface); /* Optional background color for visual distinction */
   overflow: auto; /* Prevent content overflow */
 
-  width: 100%;
+
   height: 100%; /* Ensure it spans the full height */
   justify-content: center;
 
@@ -20,12 +20,10 @@
 
 .right-panel {
   flex: 3; /* Take 1 part of the available space */
-  background-color: #ffffff; /* Optional background color for visual distinction */
+  background-color: var(--color-surface); /* Optional background color for visual distinction */
   overflow: auto; /* Prevent content overflow */
   height: 100%; /* Ensure it spans the full height */
   width: 100%;
   padding: 0;
   margin: 0;
-  display: flex; /* Make it a Flexbox container */
-  flex-direction: column; /* Stack elements vertically */
 }

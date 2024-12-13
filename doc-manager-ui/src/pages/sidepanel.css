@@ -18,11 +18,27 @@
 }
 
 .side-panel-title {
+  
+  color: var(--color-text);
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-md);
+  margin-bottom:10px;
+  background-color: var(--color-border); /* Accent color for emphasis */
+  box-shadow: 0 2px 0px 0 var(--color-background-shadow); /* Subtle shadow */
+}
+
+.side-panel-title-text {
   font-size: var(--font-size-lg); /* Use defined large size */
   font-weight: bold;
   margin: 0;
-  /* color: var(--color-primary); Accent color for emphasis */
+  text-align: left;
+  color: var(--color-text);
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-md);
+
+  background-color: var(--color-border); /* Accent color for emphasis */
 }
+
 
 /* Lower Section */
 .side-panel-lower {
@@ -38,40 +54,66 @@
 .side-panel-listing-title {
 
   padding: var(--spacing-xxs); /* Compact padding */
+  margin-top: var(--spacing-xxs);
  /* background-color: var(--color-primary);  Match panel color */
-  color: var(--color-text);
-  border-radius: var(--border-radius-md); /* Rounded corners */
+  color: var(--color-background);
+  /* border-radius: var(--border-radius-md); Rounded corners */
   font-size: var(--font-size-lg); /* Medium size for listing titles */
   font-weight: bold;
-  margin-bottom: var(--spacing-xxs);
 }
 
-.side-panel-listing {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xxs); /* Space between chat listing elements */
-  overflow-y: auto; /* Enable independent scrolling */
-}
 
 .side-panel-listing-element {
-  background-color: rgba(17, 34, 64, 0.9); /* Use a subdued background */
-  padding: var(--spacing-xxs); /* Compact spacing */
+  color: var( --color-text);
+  background-color: var(--color-border); /* Use a subdued background */
+  padding: var(--spacing-xs); /* Compact spacing */
   border-radius: var(--border-radius-md); /* Consistent rounding */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
   font-size: var(--font-size-md); /* Use small font size for compactness */
+  margin: var(--spacing-xxs); /* Space between chat title and references */
+}
+
+.side-panel-listing-element-subtitle-container {
+  display: flex;
+  justify-content: space-between; /* Push items to edges */
+  align-items: center; /* Vertically align items */
+  margin-bottom: var(--spacing-xxs); 
+}
+
+.side-panel-listing-createchat{
+  display: flex;
+  justify-content: space-between; /* Push items to edges */
+  align-items: center; /* Vertically align items */
+
+
+  font-weight:bold;
+  background-color: var(--color-border); /* Use a subdued background */
+  padding: var(--spacing-xs); /* Compact spacing */
+  border-radius: var(--border-radius-md); /* Consistent rounding */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  font-size: var(--font-size-md); /* Use small font size for compactness */
+  margin: var(--spacing-xxs); /* Space between chat title and references */
+}
+
+.side-panel-listing-createchat:hover{
+
+  background-color: var(--color-accent);
+  color:var(--color-background);
 }
 
 .side-panel-listing-element-references {
-  margin-top: var(--spacing-xxs); /* Space between chat title and references */
+  /*margin: var(--spacing-xxs);  Space between chat title and references */
   overflow-y: auto; /* Allow scrolling for overflow */
   max-height: 70px; /* Limit height */
+  background-color: var(--color-border); /* Use muted color */
+
 }
 
 .side-panel-listing-element-reference {
-  background-color: rgba(20, 40, 60, 0.9); /* Use muted color */
-  padding: var(--spacing-xxs); /* Compact padding */
-  border-radius: var(--border-radius-sm); /* Rounded corners */
-  margin-bottom: var(--spacing-xxs); /* Space between references */
+  /* Use muted color  background-color: var(--color-background);*/
+  /* padding: var(--spacing-xxs); Compact padding */
+  /*border-radius: var(--border-radius-sm);  Rounded corners */
+  margin: var(--spacing-xxs); /* Space between references */
   font-size: var(--font-size-sm); /* Smaller font size */
   color: var(--color-text-muted); /* Use muted text color */
 }
@@ -81,35 +123,47 @@
   text-align: left;
   flex: 0 0 auto; /* Fixed height for the bottom section */
   margin-top: auto; /* Push this section to the bottom */
-  padding: var(--spacing-xs) 0; /* Add padding around the bottom section */
+  padding-bottom: var(--spacing-xs); /* Add padding around the bottom section */
 }
 
 .side-panel-options {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xxs); /* Space between buttons */
+  /*  gap: var(--spacing-xxs);Space between buttons */
   align-items: center; /* Center align buttons */
+  padding: var(--spacing-xxs);
+  
 }
 
 .side-panel-options-button {
-  width: 90%; /* Adjust button width */
+  display: flex;
+gap: var(--spacing-xxs);
+  align-items: center; /* Vertically align items */
+
+
+
+  width: 100%; /* Adjust button width */
   padding: var(--spacing-xxs); /* Compact padding */
   background-color: var(--color-border); /* Match panel color */
   color: var(--color-text);
+  margin:var(--spacing-xxs); 
   border-radius: var(--border-radius-md); /* Rounded corners */
   text-align: left;
   cursor: pointer;
   font-size: var(--font-size-sm); /* Smaller font size */
-
+  transition: background-color 0.3s ease; /* Smooth transition on hover */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 .side-panel-options-button.active {
   background-color: var(--color-primary); /* Use primary accent for active */
   font-weight: bold;
+  color:var(--color-background);
  
 }
 
 .side-panel-options-button:hover {
-  background-color: var(--color-primary); /* Slightly darker hover state */
+  font-weight:bold;
+  background-color: var(--color-accent);
+  color:var(--color-background);
 }
