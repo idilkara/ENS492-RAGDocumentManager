@@ -26,11 +26,11 @@ const SidePanel = ({ chatID, setChatID, sessions }) => {
             {sessions.map((session) => (
               <div className="side-panel-listing-element" key={session.session_id} onClick={() => setChatID(session.session_id)}>
                 <div className="side-panel-listing-element-subtitle-container">
-                  <div>{session.session_id}</div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }} />
+                  <div>{session.name}</div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }} />
                 </div>
-                <div className="side-panel-listing-element-references">
+                {/* <div className="side-panel-listing-element-references">
                   <div className="side-panel-listing-element-reference">Created on: {session.created_at}</div>
-                </div>
+                </div> */}
               </div>
             ))}
           </div>

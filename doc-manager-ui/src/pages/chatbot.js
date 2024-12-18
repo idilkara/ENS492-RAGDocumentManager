@@ -14,11 +14,14 @@ const ChatbotUI = ({ chatID, chats }) => {
 
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
+    console.log(chatID);
+
     try {
       const response = await axios.post("http://127.0.0.1:5000/user_query", {
           query: input,
           user_id: '1',
-          session_id: '1'
+
+          session_id: chatID
       });
 
       const data = response.data;
@@ -89,7 +92,7 @@ const ChatbotUI = ({ chatID, chats }) => {
     
               {/* Show the button below the chatbot message only if filePath exists */}
               {msg.isBot && msg.filePath && (
-                <button className="display-button" onClick={() => handleViewPDFClick(msg.filePath)}>
+                <button className="display-button" onClick={() => handleViewPDFClick(msg.gridfs_id)}>
                   <div className= "pdfLabel">View PDF</div >
                 </button>
               )}
