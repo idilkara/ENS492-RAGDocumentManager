@@ -3,7 +3,12 @@ from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 import os
 from flask import send_file
-from vector_store import add_document, list_documents, search_query, delete_document, UPLOAD_FOLDER
+from vector_store import add_document, search_query, highlight_text_in_pdf
+import uuid
+from session_manager import create_empty_session, get_chat_session, get_session_list
+import gridfs
+from documents import get_document_by_id, delete_document_from_mongo
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -15,50 +20,37 @@ CORS(app)
 # app.config['CAS_SERVER'] = 'https://sso.pdx.edu'
 # app.config['CAS_AFTER_LOGIN'] = 'route_root'
 
+
 #AAAAAAAAAAAAAAA
-@app.route("/upload", methods=["POST"])
-def upload_document():
-    """Endpoint to upload a document."""
-    if "file" not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
+# ===============================
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files['file']
+    replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'
 
-    print("file gelmissss")
+    if not file:
+        return jsonify({"error": "No file uploaded"}), 400
 
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "No file selected for uploading"}), 400
+    file_entry = {
+        "file_data": file.read(),
+        "filename": file.filename
+    }
 
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-
-    # Check if the document already exists in the upload folder
-    if os.path.exists(file_path):
-        return jsonify({"error": f"File {file.filename} already exists in the upload directory."}), 400
-
-    file.save(file_path)
+    result = add_document(file_entry, replace_existing=replace_existing)
     
-    # Add document to vector store
-    add_document(file_path)
-    return jsonify({"message": f"File {file.filename} has been uploaded and processed."}), 200
+    if "error" in result:
+        return jsonify({"error": result["error"]}), 500
+    elif "warning" in result:
+        return jsonify({
+            "warning": result["warning"],
+            "options": "Set 'replace_existing' to True to replace the file."
+        }), 200
+    else:
+        return jsonify({"message": result["message"]}), 200
 
-@app.route("/documents", methods=["GET"])
-def get_documents():
-    """Endpoint to retrieve all uploaded documents."""
-    documents = list_documents()
-    return jsonify({"documents": documents})
 
-# @app.route("/user_query", methods=["POST"])
-# def user_query():
-#     """Endpoint to receive a query from the user and return a response."""
-#     data = request.get_json()
-#     user_query = data.get("query")
-    
-#     if not user_query:
-#         return jsonify({"error": "No query provided"}), 400
-    
-#     # Call the vector store's search function
-#     response = search_query(user_query)
-#     return jsonify({"response": response})
-
+# ===============================
+#delete document
 @app.route("/delete", methods=["POST"])
 def delete_document_endpoint():
     """Endpoint to delete a document."""
@@ -68,9 +60,10 @@ def delete_document_endpoint():
         return jsonify({"error": "No file path provided"}), 400
 
     # Delete the document from the vector store and the file system
-    delete_document(file_path)
+    delete_document_from_mongo(file_path)
     return jsonify({"message": f"File {file_path} has been deleted."}), 200
 
+# ===============================
 @app.route('/get_pdf', methods=['GET'])
 def get_pdf():
     file_path = request.args.get('file_path')  # File path from the query string
@@ -82,15 +75,118 @@ def get_pdf():
     # Serve the file
     return send_file(file_path, as_attachment=True)
 
+# ===============================
 @app.route("/user_query", methods=["POST"])
 def user_query():
     data = request.get_json()
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")
     query = data.get("query")
-    if not query:
-        return jsonify({"error": "No query provided"}), 400
 
-    response_text = search_query(query)
-    return jsonify(response_text)
+    if not query or not user_id or not session_id:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    response_text = search_query(query, user_id, session_id)
+    highlighted_pdf_path = response_text.get("highlighted_pdf_path")
+
+    return jsonify({
+        "response": response_text.get("response"),
+        "file_path": response_text.get("file_path"),
+        "highlighted_pdf_path": highlighted_pdf_path,
+        "gridfs": response_text.get("gridfs")
+    })
+
+# ===============================
+
+@app.route('/get_highlighted_pdf', methods=['GET'])
+def get_highlighted_pdf():
+    gridfs_id = request.args.get('gridfs_id')  # GridFS ID from the query string
+    print("get_highlighted_pdf GridFS ID: ", gridfs_id)
+
+    if not gridfs_id:
+        return jsonify({"error": "GridFS ID not provided"}), 400
+
+    # Retrieve the file from GridFS
+    pdf_file = get_document_by_id(gridfs_id)
+    if pdf_file is None:
+        return jsonify({"error": "File not found"}), 404
+
+    # Serve the file
+    return send_file(BytesIO(pdf_file.read()), as_attachment=True, download_name=pdf_file.filename)
+
+
+
+# ===============================
+# create new chat
+@app.route("/create_chat_session", methods=["POST"])
+def create_chat_session():
+    """
+    Create a new empty chat session for a user.
+    """
+    data = request.get_json()
+    user_id = data.get("user_id")
+    print("user id:", user_id)
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    result = create_empty_session(user_id)
+    if "error" in result:
+        return jsonify({"error": result["error"]}), 400
+
+    return jsonify({"message": result["message"], "session_id": result["session_id"]}), 200
+
+
+# ===============================
+# Retrieve an existing chat session
+@app.route("/get_chat_session", methods=["GET"])
+def retrieve_chat_session():
+    """
+    Retrieve an existing chat session.
+    """
+    user_id = request.args.get("user_id")
+    session_id = request.args.get("session_id")
+    print("user id:", user_id)
+    print("session id:", session_id)
+
+
+    if not user_id or not session_id:
+        return jsonify({"error": "Missing user_id or session_id"}), 400
+
+    result = get_chat_session(user_id, session_id)
+    if "error" in result:
+        return jsonify({"error": result["error"]}), 404
+
+    return jsonify(result), 200
+
+
+@app.route('/get_user_sessions', methods=['GET'])
+def get_user_sessions():
+    """
+    Retrieve all sessions for a given user, excluding the conversation.
+    This returns session metadata for all sessions of a user.
+    """
+    user_id = request.args.get('user_id')
+    print("user id:", user_id)
+
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    # Query MongoDB for sessions associated with the user
+    sessions = get_session_list(user_id)
+
+    # if sessions.count() == 0:
+    #     return jsonify({"error": "No sessions found for the given user_id"}), 404
+
+    # Prepare a list of session metadata (without conversation)
+    session_list = [{
+        "user_id": session["user_id"],
+        "session_id": session["session_id"],
+        "created_at": session["created_at"]
+    } for session in sessions]
+
+    return jsonify(session_list)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=5000)

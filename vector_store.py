@@ -1,4 +1,5 @@
 # vector_store.py
+
 from history_manage import get_history, add_to_history
 import os
 from langchain_chroma import Chroma
@@ -11,17 +12,15 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from uuid import uuid4
 from langchain.schema import Document
+import fitz  # PyMuPDF
+from documents import add_document_to_mongo, delete_document_from_mongo, is_file_already_uploaded, get_document_by_id
+import traceback
+from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR, LLAMA_MODEL
+import tempfile
+import uuid
+from bson import ObjectId
+from session_manager import add_message
 
-
-# Constants
-CHROMADB_DIR = "db"
-UPLOAD_FOLDER = "upload"
-EMBEDDING_MODEL_URL = "http://localhost:11434"
-EMBEDDING_MODEL_NAME = "nomic-embed-text"
-
-
-# Create upload folder if not exists
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize embeddings
 embeddings = OllamaEmbeddings(base_url=EMBEDDING_MODEL_URL, model=EMBEDDING_MODEL_NAME)
@@ -29,73 +28,103 @@ embeddings = OllamaEmbeddings(base_url=EMBEDDING_MODEL_URL, model=EMBEDDING_MODE
 # Initialize vector store
 vectorstore = Chroma(persist_directory=CHROMADB_DIR, embedding_function=embeddings)
 
-def add_document(file_path):
-    print(f"Processing document: {file_path}")
-    if file_path.endswith(".pdf"):
-        loader = PyPDFLoader(file_path)
-    else:
-        loader = TextLoader(file_path)
+def add_document(file_entry, replace_existing=False):
+    """
+    Adds a document to the vector store and MongoDB.
+    If the file already exists, prompts the user to decide whether to replace it.
+    """
+    file_data = file_entry["file_data"]
+    filename = file_entry["filename"]
+    print("Processing document: " + filename)
 
-    documents = loader.load()
-    print(f"Loaded {len(documents)} document(s) from {file_path}")
+    try:
+        # Check if the file already exists in MongoDB
+        existing_file = is_file_already_uploaded(filename)
+        if existing_file and not replace_existing:
+            print("file already exists")
+            return {
+                "warning": f"File '{filename}' already exists in the system.",
+                "options": "Keep the existing file or replace it with the new one."
+            }
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    text_chunks = text_splitter.split_documents(documents)
-    print(f"Split document into {len(text_chunks)} chunks")
+        # If replacing, delete the existing file
+        if existing_file and replace_existing:
+            print(f"Replacing existing file: {filename}")
+            delete_document(filename)
 
-    # Process and add documents to the vector store
-    document_id = str(uuid4())
-    text_chunks_with_metadata = [
-        {"text": chunk.page_content, "metadata": {"document_id": document_id, "file_path": file_path}}
-        for chunk in text_chunks
-    ]
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
+            temp_file.write(file_data)
+            temp_file_path = temp_file.name
 
-    documents = [
-        Document(
-            id=str(uuid4()),
-            page_content=chunk['text'],
-            metadata=chunk['metadata']
-        )
-        for chunk in text_chunks_with_metadata
-    ]
+        print(f"Temporary File Path: {temp_file_path}")
 
-    # Check existing document IDs
-    existing_ids = set(vectorstore.get()['ids'])
-    print(f"Existing IDs: {existing_ids}")
+        # Choose loader based on file extension
+        if filename.lower().endswith('.pdf'):
+            loader = PyPDFLoader(temp_file_path)
+        else:
+            loader = TextLoader(temp_file_path)
 
-    new_documents = []
-    for doc in documents:
-        while doc.id in existing_ids:
-            doc.id = str(uuid4())  # Generate new ID if a duplicate is found
-        new_documents.append(doc)
+        # Load documents
+        documents = loader.load()
+        print(f"Loaded {len(documents)} document(s) from {filename}")
 
-    # Add documents to the vector store
-    print(f"Adding {len(new_documents)} documents to vector store...")
-    vectorstore.add_documents(new_documents)
-    print(f"Added {len(new_documents)} documents successfully.")
+        # Split documents into chunks
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        text_chunks = text_splitter.split_documents(documents)
+        print(f"Split document into {len(text_chunks)} chunks")
 
+        # Generate a MongoDB ObjectId for the document
+        document_id = ObjectId()
 
+        # Add to MongoDB GridFS
+        gridfs_id = add_document_to_mongo(temp_file_path, {
+            "document_id": document_id,
+            "file_name": filename
+        })
 
-# def list_documents():
-#     """List all documents in the vector store."""
-#     dblist = vectorstore.get()
-#     embedded_docs = [item['source'] for item in dblist['metadatas']]
-#     return embedded_docs
-    
-def list_documents():
-    """List all documents in the vector store."""
-
-    dblist = vectorstore.get()
-    embedded_docs = [item['source'] for item in dblist['metadatas']]
-    return embedded_docs
+        print("gridfs in ADD:  ", gridfs_id)
 
 
+
+        doc_id_vector = str(document_id)
+        gridfs_id_vector = str(gridfs_id)
+        # Prepare documents for vector store
+        vector_documents = [
+            Document(
+                page_content=chunk.page_content,
+                metadata={
+                    "document_id": doc_id_vector,  # Use ObjectId for document_id
+                    "source": filename,
+                    "gridfs_id": gridfs_id_vector  # GridFS ID as a string
+                }
+            )
+            for chunk in text_chunks
+        ]
+
+        # Add documents to vector store
+        vectorstore.add_documents(vector_documents)
+        print(f"Added {len(vector_documents)} documents successfully.")
+
+        return {"message": f"File '{filename}' uploaded successfully.", "gridfs_id": gridfs_id}
+
+    except Exception as e:
+        print(f"Error processing document: {str(e)}")
+        traceback.print_exc()  # Print full traceback
+        return {"error": str(e)}
+    finally:
+        # Clean up temporary file
+        if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
+            os.unlink(temp_file_path)
+
+        
+
+# delete docs
 def delete_document(file_path):
     """Delete a document from the vector store and the file system."""
-    # Remove the file from the file system
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
+    # Remove the file from the db
+    delete_document_from_mongo(file_path)
+    
     # Remove the document from the vector store
     document_id = None
     dblist = vectorstore.get()
@@ -107,26 +136,45 @@ def delete_document(file_path):
     if document_id:
         vectorstore.delete_documents([document_id])
 
-
-def search_query(query):
+#BUG : doc yoksa yine de cevap veriyo
+def search_query(query, user_id, session_id):
     """Query the vector store with history context and retrieve the relevant document file path."""
-    session_history = get_history()
-    combined_query = "\n".join([f"User: {entry[0]}\nAgent: {entry[1]}" for entry in session_history])
-    combined_query += f"\nUser: {query}"
+    # session_history = get_history(user_id, session_id)
+
+    # print("history: ", session_history)
+    # print("burda history döndürürken sorun cikabilir!!!!")
+
+    # if len(session_history) > 0:
+    #     combined_query = "\n".join([f"User: {entry['user_query']}\nAgent: {entry['agent_response']}" for entry in session_history])
+    #     combined_query += f"\nUser: {query}"
+    # else:
+    #     combined_query = query
 
     llm = load_model()
     qa = RetrievalQA.from_llm(llm, retriever=vectorstore.as_retriever())
-    response = qa(combined_query)['result']
 
-    combined_text = f"User Query: {query}\nAgent Response: {response}"
-    relevant_file_path = get_most_relevant_doc(combined_text)
+    response = qa(query)['result']
 
-    add_to_history(query, response)
-    
-    print("search_query file path: ", relevant_file_path)
-    
-    return {"response": response, "file_path": relevant_file_path}
+    # Get the most relevant chunks from the vector store
+    relevant_chunks = get_most_relevant_chunks(query)
 
+    add_message(user_id, session_id, query, response)
+
+    # Highlight the relevant parts in the PDF
+    highlighted_pdf_path = None
+    if relevant_chunks:
+        print("relevant chunks:  ", relevant_chunks[0])
+        gridfs_id = relevant_chunks[0].metadata.get("document_id")
+        highlighted_pdf_path = highlight_pdf_in_gridfs(gridfs_id, relevant_chunks)
+
+    print("search_query file path: ", relevant_chunks[0].metadata.get("file_path"))
+
+    return {
+        "response": response,
+        "file_path": relevant_chunks[0].metadata.get("file_path"),
+        "highlighted_pdf_path": highlighted_pdf_path,
+        "gridfs_id": gridfs_id
+    }
 
 def get_most_relevant_doc(query):
     search_results = vectorstore.similarity_search(query)
@@ -140,20 +188,89 @@ def get_most_relevant_doc(query):
     relevant_file_path = most_relevant.metadata.get("file_path") if most_relevant else None
     return relevant_file_path
 
-#AAAAAAAAAAAA
-# Function to retrieve documents grouped by document_id to avoid duplicates
-# def retrieve_documents(query):
-#     results = vectorstore.similarity_search(query)
-    
-#     # Group by unique document_id to avoid duplicate entries
-#     unique_results = {}
-#     for result in results:
-#         doc_id = result.metadata["document_id"]
-#         if doc_id not in unique_results:
-#             unique_results[doc_id] = result
-    
-#     # Return only unique documents based on document_id
-#     return list(unique_results.values())
+def get_most_relevant_chunks(query):
+    search_results = vectorstore.similarity_search(query)
+    return search_results
+
+# # highlighting the most relevant part of the pdf
+# # doc.py a alinsa iyi olur
+def highlight_pdf_in_gridfs(gridfs_id, relevant_chunks):
+    try:
+        # Convert gridfs_id from string to ObjectId
+        gridfs_id_obj = ObjectId(gridfs_id)
+
+        # Retrieve the PDF from GridFS
+        pdf_file = get_document_by_id(gridfs_id_obj)
+        if pdf_file is None:
+            raise FileNotFoundError(f"File not found in GridFS for ID: {gridfs_id}")
+
+        # Create a temporary file to store the PDF
+        temp_pdf_path = f"/tmp/{gridfs_id}_temp.pdf"
+        with open(temp_pdf_path, 'wb') as temp_file:
+            temp_file.write(pdf_file.read())
+
+        # Verify the temporary file exists
+        if not os.path.exists(temp_pdf_path):
+            raise FileNotFoundError(f"Temporary file not created: {temp_pdf_path}")
+
+        print(f"Temporary file created at: {temp_pdf_path}")
+
+        # Highlight the relevant parts in the PDF
+        highlighted_pdf_path = temp_pdf_path.replace(".pdf", "_highlighted.pdf")
+        highlight_text_in_pdf(temp_pdf_path, relevant_chunks, highlighted_pdf_path)
+
+        # Verify the highlighted PDF exists
+        if not os.path.exists(highlighted_pdf_path):
+            raise FileNotFoundError(f"Highlighted PDF not created: {highlighted_pdf_path}")
+
+        print(f"Highlighted PDF created at: {highlighted_pdf_path}")
+
+        # Store the highlighted PDF back in GridFS
+        highlighted_gridfs_id = add_document_to_mongo(highlighted_pdf_path, {
+            "document_id": str(uuid.uuid4()),
+            "file_name": f"highlighted_{gridfs_id}.pdf",
+            "original_gridfs_id": gridfs_id
+        })
+
+        # Clean up temporary files
+        os.remove(temp_pdf_path)
+        os.remove(highlighted_pdf_path)
+
+        return highlighted_gridfs_id
+
+    except Exception as e:
+        print(f"Error highlighting PDF: {e}")
+        traceback.print_exc()
+        return None
+
+
+def highlight_text_in_pdf(pdf_path, relevant_chunks, output_path):
+    print("highlight func a girdiiikkkkk")
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"File not found: {pdf_path}")
+
+    doc = fitz.open(pdf_path)
+    print("doc openlandi")
+    for page in doc:
+        print("for da")
+        for chunk in relevant_chunks:
+            text_instances = page.search_for(chunk.page_content)
+            print("searchfor eylendi")
+            for inst in text_instances:
+                # Highlight the found text
+                print("highlighttt")
+                page.add_highlight_annot(inst)
+                print("eylendii")
+
+    # Save the highlighted PDF to a new file
+    doc.save(output_path, garbage=4, deflate=True)
+    doc.close()
+
+    return output_path
+
+def get_vectorstore_dblist():
+    return vectorstore.get()
+
 
 def load_model():
-    return ChatOllama(model="llama3.2:3b")
+    return ChatOllama(model=LLAMA_MODEL)
