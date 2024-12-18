@@ -10,7 +10,7 @@ import ChatsIcon from "../assets/chat-conversation-circle-svgrepo-com.svg"
 import SettingsIcon from "../assets/settings-svgrepo-com.svg" 
 import UploadIcon from "../assets/upload-file-2-svgrepo-com.svg"
 
-const SidePanel = ( ) => {
+const SidePanel = ( { chatID, setChatID } ) => {
 
   //states 
 
@@ -26,15 +26,22 @@ const SidePanel = ( ) => {
         return (
 
           <div className="side-panel-listing">
-            <div className="side-panel-listing-createchat">
-            <div>Create New Chat</div> <img src={CreateIcon} alt="createicon" style={{ width: '20px', height: 'auto' }}  />
-      
-              </div> 
+          
+        <div className="side-panel-listing-createchat"
+        onClick={() => setChatID("NONE")}>
+          
+    
+          <div>New Chat</div>
+          <img src={CreateIcon} alt="createicon" style={{ width: '20px', height: 'auto' }} />
+        </div>
 
-            <div className="side-panel-listing-element">
+ 
+
+            <div className="side-panel-listing-element"
+            onClick={() => setChatID("chat1")}>
             <div className="side-panel-listing-element-subtitle-container">
          
-                 <div>chat q </div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }}  />
+                 <div>chat1 </div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }}  />
               
               </div>
 
@@ -44,10 +51,11 @@ const SidePanel = ( ) => {
                 <div className="side-panel-listing-element-reference">Document2 ref2</div>
               </div>
             </div>
-            <div className="side-panel-listing-element">
+            <div className="side-panel-listing-element"
+            onClick={() => setChatID("chat2")}>
               
             <div className="side-panel-listing-element-subtitle-container">
-                 <div>chat 2 </div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }}  />
+                 <div>chat2 </div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }}  />
               </div>
 
               <div className="side-panel-listing-element-references">
@@ -58,10 +66,11 @@ const SidePanel = ( ) => {
               </div>
             </div>
 
-            <div className="side-panel-listing-element">
+            <div className="side-panel-listing-element"
+            onClick={() => setChatID("chat3")} >
               
             <div className="side-panel-listing-element-subtitle-container">
-                 <div>chat 2 </div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }}  />
+                 <div>chat3</div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }}  />
               </div>
 
               <div className="side-panel-listing-element-references">
@@ -71,21 +80,7 @@ const SidePanel = ( ) => {
                 <div className="side-panel-listing-element-reference">Document2 ref5</div>
               </div>
             </div>
-            <div className="side-panel-listing-element">
-              
-            <div className="side-panel-listing-element-subtitle-container">
-                 <div>chat 2 </div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }}  />
-              </div>
-
-              <div className="side-panel-listing-element-references">
-                <div className="side-panel-listing-element-reference">Document2 ref</div>
-                <div className="side-panel-listing-element-reference">Document2 ref2</div>
-                <div className="side-panel-listing-element-reference">Document2 ref23</div>
-                <div className="side-panel-listing-element-reference">Document2 ref5</div>
-              </div>
-  
-      
-            </div>
+            
           </div>
         );
       // case 1: // Settings

@@ -108,6 +108,11 @@
   background-color: var(--color-border); /* Use muted color */
 
 }
+.side-panel-listing-element:hover{
+
+  background-color: var(--color-accent);
+  color:var(--color-background);
+}
 
 .side-panel-listing-element-reference {
   /* Use muted color  background-color: var(--color-background);*/

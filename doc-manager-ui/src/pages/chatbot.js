@@ -3,11 +3,12 @@ import ReactMarkdown from "react-markdown";
 import './chatbot.css';
 import axios from 'axios';
 
-const ChatbotUI = () => {
-  const [messages, setMessages] = useState([
+const ChatbotUI = ({ chatID, chats }) => {
+  /*const [messages, setMessages] = useState([
     { id: 1, text: 'Hello! How can I assist you today?', isBot: true },
-  ]);
+  ]); */
   const [input, setInput] = useState('');
+  const [messages, setMessages] = useState(chats[chatID]);
 
   const chatHistoryRef = useRef(null); // Create a reference for the chat container
 
@@ -75,12 +76,16 @@ const ChatbotUI = () => {
 
 
   // Scroll to the most recent message
+  /*
   useEffect(() => {
     if (chatHistoryRef.current) {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
   }, [messages]); // Triggered whenever messages are updated
-
+*/
+useEffect(() => {
+    setMessages(chats[chatID]);
+  }, [chatID, chats]);
     
 
   return (
