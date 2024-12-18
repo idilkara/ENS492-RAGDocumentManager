@@ -9,6 +9,7 @@ from session_manager import create_empty_session, get_chat_session, get_session_
 import gridfs
 from documents import get_document_by_id, delete_document_from_mongo
 from io import BytesIO
+from bson.objectid import ObjectId
 
 app = Flask(__name__)
 CORS(app)
@@ -81,6 +82,7 @@ def user_query():
     data = request.get_json()
     user_id = data.get("user_id")
     session_id = data.get("session_id")
+    session_id = ObjectId(session_id)
     query = data.get("query")
 
     if not query or not user_id or not session_id:
@@ -146,6 +148,7 @@ def retrieve_chat_session():
     """
     user_id = request.args.get("user_id")
     session_id = request.args.get("session_id")
+    session_id = ObjectId(session_id)
     print("user id:", user_id)
     print("session id:", session_id)
 
@@ -159,7 +162,8 @@ def retrieve_chat_session():
 
     return jsonify(result), 200
 
-
+# ===============================
+# get all sessions of the user
 @app.route('/get_user_sessions', methods=['GET'])
 def get_user_sessions():
     """
@@ -179,11 +183,26 @@ def get_user_sessions():
     #     return jsonify({"error": "No sessions found for the given user_id"}), 404
 
     # Prepare a list of session metadata (without conversation)
-    session_list = [{
-        "user_id": session["user_id"],
-        "session_id": session["session_id"],
-        "created_at": session["created_at"]
-    } for session in sessions]
+    session_list = []  # Create a list to hold all sessions
+
+    for session in sessions:
+        # Check if the session has any conversations
+        if session.get("conversation") and len(session["conversation"]) > 0:
+            session_data = {
+                "user_id": session["user_id"],
+                "session_id": session["session_id"],
+                "created_at": session["created_at"],
+                "name": session["conversation"][0]["user_query"]
+            }
+        else:
+            session_data = {
+                "user_id": session["user_id"],
+                "session_id": session["session_id"],
+                "created_at": session["created_at"],
+                "name": "Empty Chat"
+            }
+        session_list.append(session_data)  # Add each session to the list
+
 
     return jsonify(session_list)
 
