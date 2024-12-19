@@ -26,7 +26,8 @@ const ChatbotUI = ({ chatID, chats }) => {
 
       const data = response.data;
       const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
-      const gridfs_id = data.gridfs_id || null; // Use gridfs_id
+      const gridfs_id = data.gridfs || null; // Use gridfs_id
+      console.log("GRIDFS:", gridfs_id)
 
       setMessages((prev) => [
         ...prev,
@@ -91,7 +92,7 @@ const ChatbotUI = ({ chatID, chats }) => {
              <ReactMarkdown>{msg.text}</ReactMarkdown> 
     
               {/* Show the button below the chatbot message only if filePath exists */}
-              {msg.isBot && msg.filePath && (
+              {msg.isBot && msg.gridfs_id && (
                 <button className="display-button" onClick={() => handleViewPDFClick(msg.gridfs_id)}>
                   <div className= "pdfLabel">View PDF</div >
                 </button>
