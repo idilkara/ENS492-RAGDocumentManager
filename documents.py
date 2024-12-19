@@ -131,3 +131,8 @@ def is_file_already_uploaded(filename):
 
     return db['fs.files'].find_one({"filename": filename})
 
+
+def get_file_by_highlighted_name(id):
+    documents_collection = db[DOCUMENTS_COLLECTION]
+    query = {"filename": {"$regex": f"^highlighted_{id}.*\.pdf$"}}
+    return documents_collection.find(query)

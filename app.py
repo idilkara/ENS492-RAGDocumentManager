@@ -91,6 +91,8 @@ def user_query():
     response_text = search_query(query, user_id, session_id)
     highlighted_pdf_path = response_text.get("highlighted_pdf_path")
 
+    print("ENDPOİNTTE GRIDFS:::::::::", response_text.get("gridfs"))
+
     return jsonify({
         "response": response_text.get("response"),
         "file_path": response_text.get("file_path"),
@@ -103,7 +105,10 @@ def user_query():
 @app.route('/get_highlighted_pdf', methods=['GET'])
 def get_highlighted_pdf():
     gridfs_id = request.args.get('gridfs_id')  # GridFS ID from the query string
+    gridfs_id = ObjectId(gridfs_id)
+
     print("get_highlighted_pdf GridFS ID: ", gridfs_id)
+
 
     if not gridfs_id:
         return jsonify({"error": "GridFS ID not provided"}), 400

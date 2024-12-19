@@ -86,21 +86,19 @@ def add_document(file_entry, replace_existing=False):
         print("gridfs in ADD:  ", gridfs_id)
 
 
-
-        doc_id_vector = str(document_id)
-        gridfs_id_vector = str(gridfs_id)
         # Prepare documents for vector store
         vector_documents = [
-            Document(
-                page_content=chunk.page_content,
-                metadata={
-                    "document_id": doc_id_vector,  # Use ObjectId for document_id
-                    "source": filename,
-                    "gridfs_id": gridfs_id_vector  # GridFS ID as a string
-                }
-            )
-            for chunk in text_chunks
-        ]
+        Document(
+            page_content=chunk.page_content,
+            metadata={
+                "document_id": str(document_id),  # Ensure this is a string
+                "source": filename,
+                "gridfs_id": str(gridfs_id),  # Ensure this is a string
+                "file_path": temp_file_path  # Include the file path
+            }
+        )
+        for chunk in text_chunks
+    ]
 
         # Add documents to vector store
         vectorstore.add_documents(vector_documents)
@@ -157,24 +155,26 @@ def search_query(query, user_id, session_id):
 
     # Get the most relevant chunks from the vector store
     relevant_chunks = get_most_relevant_chunks(query)
+    print("RELEVANT CHUNK;", relevant_chunks[0])
 
     add_message(user_id, session_id, query, response)
 
     # Highlight the relevant parts in the PDF
     highlighted_pdf_path = None
+    gridfs_id = None
     if relevant_chunks:
-        print("relevant chunks:  ", relevant_chunks[0])
-        gridfs_id = relevant_chunks[0].metadata.get("document_id")
+        gridfs_id = relevant_chunks[0].metadata.get("gridfs_id")
         highlighted_pdf_path = highlight_pdf_in_gridfs(gridfs_id, relevant_chunks)
 
-    print("search_query file path: ", relevant_chunks[0].metadata.get("file_path"))
-
+    print("THE GRIDFS?????", highlighted_pdf_path)
     return {
-        "response": response,
-        "file_path": relevant_chunks[0].metadata.get("file_path"),
-        "highlighted_pdf_path": highlighted_pdf_path,
-        "gridfs_id": gridfs_id
+        "response": str(response),  # Ensure response is a string
+        "file_path": str(relevant_chunks[0].metadata.get("file_path")) if relevant_chunks else None,
+        "highlighted_pdf_path": str(highlighted_pdf_path) if highlighted_pdf_path else None,
+        "gridfs": str(highlighted_pdf_path)  # Convert ObjectId to string
     }
+
+
 
 def get_most_relevant_doc(query):
     search_results = vectorstore.similarity_search(query)
