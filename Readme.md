@@ -4,5 +4,8 @@ There is a shell script for this that you can modify or just run your model expo
 
 example command to run: 
 
-    bash ollama-config.sh llama2
+    bash ollama-config.sh llama3
+
+dont forget to 
+    docker stop ollama
 
