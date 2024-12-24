@@ -1,8 +1,0 @@
-on win11
-    python -m venv myenv
-    myenv\Scripts\activate
-
-streamlit run streamlitapp.py
-
-on macOS
-    -- 
