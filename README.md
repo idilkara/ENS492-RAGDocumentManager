@@ -10,4 +10,4 @@ Mainly as,
 But there are other branches as well for trying some additional features.
 
 
-TO RUN THE APPLICATION ON YOUR MACHINE, it only requires docker
+TO RUN THE APPLICATION ON YOUR MACHINE, it only requires docker and running the script
