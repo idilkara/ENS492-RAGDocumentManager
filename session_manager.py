@@ -89,5 +89,5 @@ def get_session_list(user_id):
         session['_id'] = str(session['_id'])
         session['created_at'] = session['created_at'].isoformat()
     
-    print("sessions: ", sessions)
+    #print("sessions: ", sessions)
     return sessions

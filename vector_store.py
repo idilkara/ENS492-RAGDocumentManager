@@ -20,6 +20,10 @@ import tempfile
 import uuid
 from bson import ObjectId
 from session_manager import add_message
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
+from langchain.prompts import PromptTemplate
+
 
 
 # Initialize embeddings
@@ -134,59 +138,88 @@ def delete_document(file_path):
     if document_id:
         vectorstore.delete_documents([document_id])
 
-#BUG : doc yoksa yine de cevap veriyo
+
+def create_qa_chain(vectorstore, llm):
+    """
+    Creates a ConversationalRetrievalChain with improved memory and context management.
+    """
+    # Use WindowMemory to limit the conversation history
+    memory = ConversationBufferWindowMemory(
+        memory_key="chat_history",
+        return_messages=True,
+        output_key='answer',
+        k=2  # Only keep last 2 interactions
+    )
+
+    # Updated prompt template with better context management
+    prompt_template = """
+    Answer the question based on the following context and recent conversation history.
+    If asking for a longer answer, expand on the details from the relevant context.
+    If asking for a shorter answer, summarize the key points from the relevant context.
+    If the context is not relevant to the question, respond with: "I cannot answer this question based on the available context."
+    Only use information from the relevant context.
+
+    Recent Context: {context}
+    Recent Chat History: {chat_history}
+    Current Question: {question}
+
+    Provide a direct, concise answer:"""
+
+    PROMPT = PromptTemplate(
+        input_variables=["context", "chat_history", "question"],
+        template=prompt_template
+    )
+
+    # Create the chain with modified settings
+    qa_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=vectorstore.as_retriever(
+            search_kwargs={"k": 2}  # Limit to 2 most relevant documents
+        ),
+        memory=memory,
+        combine_docs_chain_kwargs={"prompt": PROMPT},
+        return_source_documents=True,
+        verbose=True
+    )
+
+    return qa_chain
+
+
+
+#BUG : doc yoksa yine de cevap veriyo mu?
 def search_query(query, user_id, session_id):
     """Query the vector store with history context and retrieve the relevant document file path."""
-    # session_history = get_history(user_id, session_id)
-
-    # print("history: ", session_history)
-    # print("burda history döndürürken sorun cikabilir!!!!")
-
-    # if len(session_history) > 0:
-    #     combined_query = "\n".join([f"User: {entry['user_query']}\nAgent: {entry['agent_response']}" for entry in session_history])
-    #     combined_query += f"\nUser: {query}"
-    # else:
-    #     combined_query = query
-
+    
     llm = load_model()
-    qa = RetrievalQA.from_llm(llm, retriever=vectorstore.as_retriever())
-
-    response = qa(query)['result']
-
-    # Get the most relevant chunks from the vector store
-    relevant_chunks = get_most_relevant_chunks(query)
-    print("RELEVANT CHUNK;", relevant_chunks[0])
-
-    add_message(user_id, session_id, query, response)
-
-    # Highlight the relevant parts in the PDF
+    qa_chain = create_qa_chain(vectorstore, llm)
+    
+    # Get the response from the chain
+    result = qa_chain({"question": query})
+    
+    # Extract the response and source documents
+    response = result['answer']
+    source_docs = result.get('source_documents', [])
+    print("SOURCEDOCS????  ", source_docs)
+    
+    # Get the most relevant chunks for highlighting
+    relevant_chunks = source_docs if source_docs else get_most_relevant_chunks(query)
+    
+    # Highlight PDF if relevant chunks exist
     highlighted_pdf_path = None
     gridfs_id = None
     if relevant_chunks:
         gridfs_id = relevant_chunks[0].metadata.get("gridfs_id")
         highlighted_pdf_path = highlight_pdf_in_gridfs(gridfs_id, relevant_chunks)
-
-    print("THE GRIDFS?????", highlighted_pdf_path)
+    
+    # Add the interaction to your existing message history
+    add_message(user_id, session_id, query, response)
+    
     return {
-        "response": str(response),  # Ensure response is a string
+        "response": str(response),
         "file_path": str(relevant_chunks[0].metadata.get("file_path")) if relevant_chunks else None,
         "highlighted_pdf_path": str(highlighted_pdf_path) if highlighted_pdf_path else None,
-        "gridfs": str(highlighted_pdf_path)  # Convert ObjectId to string
+        "gridfs": str(highlighted_pdf_path)
     }
-
-
-
-def get_most_relevant_doc(query):
-    search_results = vectorstore.similarity_search(query)
-    
-    most_relevant = None
-    for i in range(len(search_results)):
-        most_relevant = search_results[i] 
-        if search_results:
-            break
-        
-    relevant_file_path = most_relevant.metadata.get("file_path") if most_relevant else None
-    return relevant_file_path
 
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
@@ -252,15 +285,11 @@ def highlight_text_in_pdf(pdf_path, relevant_chunks, output_path):
     doc = fitz.open(pdf_path)
     print("doc openlandi")
     for page in doc:
-        print("for da")
         for chunk in relevant_chunks:
             text_instances = page.search_for(chunk.page_content)
-            print("searchfor eylendi")
             for inst in text_instances:
                 # Highlight the found text
-                print("highlighttt")
                 page.add_highlight_annot(inst)
-                print("eylendii")
 
     # Save the highlighted PDF to a new file
     doc.save(output_path, garbage=4, deflate=True)
