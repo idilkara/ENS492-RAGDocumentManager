@@ -29,59 +29,56 @@ from langchain.prompts import PromptTemplate
 # Initialize embeddings
 embeddings = OllamaEmbeddings(base_url=EMBEDDING_MODEL_URL, model=EMBEDDING_MODEL_NAME)
 
+
+#BUG: ilk seferde db yoksa hata veriyo
+os.makedirs(CHROMADB_DIR, exist_ok=True)
+
 # Initialize vector store
 vectorstore = Chroma(persist_directory=CHROMADB_DIR, embedding_function=embeddings)
 
+
 def add_document(file_entry, replace_existing=False):
     """
-    Adds a document to the vector store and MongoDB.
-    If the file already exists, prompts the user to decide whether to replace it.
+    Adds a document to the vector store and MongoDB with improved error handling.
     """
     file_data = file_entry["file_data"]
     filename = file_entry["filename"]
     print("Processing document: " + filename)
+    temp_file_path = None
 
     try:
-        # Check if the file already exists in MongoDB
+        # Check if file exists
         existing_file = is_file_already_uploaded(filename)
         if existing_file and not replace_existing:
-            print("file already exists")
             return {
                 "warning": f"File '{filename}' already exists in the system.",
                 "options": "Keep the existing file or replace it with the new one."
             }
 
-        # If replacing, delete the existing file
+        # Replace existing file if requested
         if existing_file and replace_existing:
             print(f"Replacing existing file: {filename}")
             delete_document(filename)
 
-        # Create a temporary file
+        # Create temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
             temp_file.write(file_data)
             temp_file_path = temp_file.name
 
         print(f"Temporary File Path: {temp_file_path}")
 
-        # Choose loader based on file extension
-        if filename.lower().endswith('.pdf'):
-            loader = PyPDFLoader(temp_file_path)
-        else:
-            loader = TextLoader(temp_file_path)
-
-        # Load documents
+        # Load and process document
+        loader = PyPDFLoader(temp_file_path) if filename.lower().endswith('.pdf') else TextLoader(temp_file_path)
         documents = loader.load()
         print(f"Loaded {len(documents)} document(s) from {filename}")
 
-        # Split documents into chunks
+        # Split into chunks
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         text_chunks = text_splitter.split_documents(documents)
         print(f"Split document into {len(text_chunks)} chunks")
 
-        # Generate a MongoDB ObjectId for the document
+        # Generate document ID and add to MongoDB
         document_id = ObjectId()
-
-        # Add to MongoDB GridFS
         gridfs_id = add_document_to_mongo(temp_file_path, {
             "document_id": document_id,
             "file_name": filename
@@ -89,22 +86,20 @@ def add_document(file_entry, replace_existing=False):
 
         print("gridfs in ADD:  ", gridfs_id)
 
-
-        # Prepare documents for vector store
+        # Prepare and add documents to vector store
         vector_documents = [
-        Document(
-            page_content=chunk.page_content,
-            metadata={
-                "document_id": str(document_id),  # Ensure this is a string
-                "source": filename,
-                "gridfs_id": str(gridfs_id),  # Ensure this is a string
-                "file_path": temp_file_path  # Include the file path
-            }
-        )
-        for chunk in text_chunks
-    ]
+            Document(
+                page_content=chunk.page_content,
+                metadata={
+                    "document_id": str(document_id),
+                    "source": filename,
+                    "gridfs_id": str(gridfs_id),
+                    "file_path": temp_file_path
+                }
+            )
+            for chunk in text_chunks
+        ]
 
-        # Add documents to vector store
         vectorstore.add_documents(vector_documents)
         print(f"Added {len(vector_documents)} documents successfully.")
 
@@ -112,11 +107,11 @@ def add_document(file_entry, replace_existing=False):
 
     except Exception as e:
         print(f"Error processing document: {str(e)}")
-        traceback.print_exc()  # Print full traceback
+        traceback.print_exc()
         return {"error": str(e)}
     finally:
         # Clean up temporary file
-        if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
+        if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
         
@@ -139,87 +134,117 @@ def delete_document(file_path):
         vectorstore.delete_documents([document_id])
 
 
-def create_qa_chain(vectorstore, llm):
+def create_qa_chain(vectorstore, llm, memory):
     """
-    Creates a ConversationalRetrievalChain with improved memory and context management.
+    Creates a ConversationalRetrievalChain with strict context adherence and improved memory management.
     """
-    # Use WindowMemory to limit the conversation history
-    memory = ConversationBufferWindowMemory(
-        memory_key="chat_history",
-        return_messages=True,
-        output_key='answer',
-        k=2  # Only keep last 2 interactions
-    )
-
-    # Updated prompt template with better context management
+    
+    # Strict prompt template that enforces using only provided context
     prompt_template = """
-    Answer the question based on the following context and recent conversation history.
-    If asking for a longer answer, expand on the details from the relevant context.
-    If asking for a shorter answer, summarize the key points from the relevant context.
-    If the context is not relevant to the question, respond with: "I cannot answer this question based on the available context."
-    Only use information from the relevant context.
+    You are a specialized assistant for Sabanci University that ONLY answers questions based on the provided context.
+    Use ONLY the following context and chat history to answer the question. 
+    If the current question is related to the chat history, you may consider it for better context.
+    If the current question is completely unrelated to the chat history, ignore the chat history completely and only use the provided context.
+    DO NOT use any other knowledge or information.
+    Answer in the same format of the relevant document without skipping relevant parts.
+    If the context does not contain information, respond with "I cannot answer this question based on the available context."
+    Summarize all key points from the following retrieved context before answering the question.
 
-    Recent Context: {context}
-    Recent Chat History: {chat_history}
-    Current Question: {question}
+    Context: {context}
+    Chat History: {chat_history}
+    Question: {question}
 
-    Provide a direct, concise answer:"""
+    Answer:"""
 
     PROMPT = PromptTemplate(
         input_variables=["context", "chat_history", "question"],
         template=prompt_template
     )
 
-    # Create the chain with modified settings
+    # Configure retriever with similarity search
+    retriever = vectorstore.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 4}
+    )
+
+    # Create chain with memory configuration
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        retriever=vectorstore.as_retriever(
-            search_kwargs={"k": 2}  # Limit to 2 most relevant documents
-        ),
+        retriever=retriever,
         memory=memory,
         combine_docs_chain_kwargs={"prompt": PROMPT},
         return_source_documents=True,
+        chain_type="stuff",
         verbose=True
     )
 
     return qa_chain
 
-
-
-#BUG : doc yoksa yine de cevap veriyo mu?
 def search_query(query, user_id, session_id):
-    """Query the vector store with history context and retrieve the relevant document file path."""
-    
+    """
+    Query the vector store with strict context validation and source checking.
+    """
     llm = load_model()
-    qa_chain = create_qa_chain(vectorstore, llm)
+    qa_chain = create_qa_chain(vectorstore, llm, memory=global_memory)
     
-    # Get the response from the chain
-    result = qa_chain({"question": query})
+    try:
+        chat_history = global_memory.load_memory_variables({}).get("chat_history", [])
+
+        # Get the response from the chain using invoke()
+        result = qa_chain.invoke({
+            "question": query,
+            "chat_history": chat_history
+        })
+        
+        # Extract source documents and validate
+        source_docs = result.get('source_documents', [])
+        
+        # If no relevant documents found, return early
+        if not source_docs:
+            response = "I cannot answer this question based on the available documents."
+            add_message(user_id, session_id, query, response)
+            return {
+                "response": response,
+                "file_path": None,
+                "highlighted_pdf_path": None,
+                "gridfs": None
+            }
+        
+        response = result['answer']
+        
+        # Get the most relevant chunks for highlighting
+        relevant_chunks = source_docs
+        
+        # Highlight PDF if relevant chunks exist
+        highlighted_pdf_path = None
+        gridfs_id = None
+        if relevant_chunks:
+            gridfs_id = relevant_chunks[0].metadata.get("gridfs_id")
+            highlighted_pdf_path = highlight_pdf_in_gridfs(gridfs_id, relevant_chunks)
+        
+        # Add the interaction to message history
+        add_message(user_id, session_id, query, response)
+        
+        return {
+            "response": str(response),
+            "file_path": str(relevant_chunks[0].metadata.get("file_path")) if relevant_chunks else None,
+            "highlighted_pdf_path": str(highlighted_pdf_path) if highlighted_pdf_path else None,
+            "gridfs": str(highlighted_pdf_path)
+        }
     
-    # Extract the response and source documents
-    response = result['answer']
-    source_docs = result.get('source_documents', [])
-    print("SOURCEDOCS????  ", source_docs)
-    
-    # Get the most relevant chunks for highlighting
-    relevant_chunks = source_docs if source_docs else get_most_relevant_chunks(query)
-    
-    # Highlight PDF if relevant chunks exist
-    highlighted_pdf_path = None
-    gridfs_id = None
-    if relevant_chunks:
-        gridfs_id = relevant_chunks[0].metadata.get("gridfs_id")
-        highlighted_pdf_path = highlight_pdf_in_gridfs(gridfs_id, relevant_chunks)
-    
-    # Add the interaction to your existing message history
-    add_message(user_id, session_id, query, response)
-    
-    return {
-        "response": str(response),
-        "file_path": str(relevant_chunks[0].metadata.get("file_path")) if relevant_chunks else None,
-        "highlighted_pdf_path": str(highlighted_pdf_path) if highlighted_pdf_path else None,
-        "gridfs": str(highlighted_pdf_path)
-    }
+    except Exception as e:
+        error_msg = f"Error processing query: {str(e)}"
+        print(error_msg)
+        traceback.print_exc()
+        return {"error": error_msg}
+
+# Update the global memory configuration
+global_memory = ConversationBufferWindowMemory(
+    memory_key="chat_history",
+    return_messages=True,
+    output_key='answer',
+    k=2
+)
 
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
@@ -302,4 +327,9 @@ def get_vectorstore_dblist():
 
 
 def load_model():
-    return ChatOllama(model=LLAMA_MODEL)
+    """
+    Load the LLama model with strict system instructions.
+    """
+    return ChatOllama(
+        model=LLAMA_MODEL
+    )
