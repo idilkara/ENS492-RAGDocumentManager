@@ -12,7 +12,7 @@ import UploadIcon from "../assets/upload-file-2-svgrepo-com.svg"
 const SidePanel = ({ chatID, setChatID, sessions }) => {
   const [selectedOption, setSelectedOption] = useState(0);
   const options = ["Chats", "Upload a document", "Settings"];
-  const optionIcons = [ChatsIcon, SettingsIcon, UploadIcon];
+  const optionIcons = [ChatsIcon,  UploadIcon, SettingsIcon];
 
   const renderListingContent = () => {
     switch (selectedOption) {
