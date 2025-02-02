@@ -1,0 +1,156 @@
+/* Chatbot Container */
+.chat-interaction-container {
+  font-size: var(--font-size-ll);
+  font-family: Helvetica, sans-serif;
+  height: 100%;
+  width: 100%;
+  flex-shrink: 1;
+  background: var(--color-surface); /* Use surface color */
+  font-family: var(--font-family-primary); /* Smaller font size for buttons */
+  display: flex; /* Flexbox for internal layout */
+  flex-direction: column;
+  overflow-x: hidden;
+
+}
+
+.chat-container {
+  flex-grow: 1; /* Allow the chatbot to take all available space in its parent */
+  height: 100%; /* Ensure full height */
+  width: 99%; /* Ensure full width */
+  background-color: var(--color-background); /* Background using root variable */
+  display: flex; /* Flexbox for internal layout */
+  flex-direction: column; /* Stack elements vertically */
+
+ margin: 5px;
+  border-radius: var(--border-radius-md); /* Rounded corners from root */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.chat-header {
+  background-color: var(--color-surface); /* Use surface color */
+  color: var(--color-text); /* Near-white text */
+  text-align: center;
+  font-size: var(--font-size-lg); /* Large text size for the header */
+  border-top-left-radius: var(--border-radius-md);
+  border-top-right-radius: var(--border-radius-md);
+}
+
+.chat-history {
+  flex-grow: 1;
+  padding: var(--spacing-sm); /* Padding using root variable */
+  overflow-y: auto; /* Allow scrolling for overflow */
+  color: var(--color-text); /* Use near-white text */
+  display: flex; /* Add flexbox layout */
+  flex-direction: column; /* Stack messages vertically */
+  gap: var(--spacing-xxs); /* Spacing between messages */
+}
+
+.message {
+
+
+  display: flex;
+  flex-direction: column; /* Stack messages vertically */
+  font-size: var(--font-size-md); /* Large text size for the header */
+  padding: 0 var(--spacing-xs) 0 var(--spacing-xs); /* Compact padding  */ 
+  border-radius: var(--border-radius-ll); /* Rounded corners */
+  max-width: 100%; /* Ensure the message container stays within a specific width */
+  margin-bottom: var(--spacing-xs); /* Space between messages */
+  animation: fadeInUp 0.5s ease both; /* Smooth animation */
+  word-break: break-word; /* Force long words to wrap */
+  overflow-wrap: break-word;
+  white-space: normal; /* Ensures text wraps properly */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+
+}
+
+.message.bot {
+  background-color:  var(--color-border); /* Light glassy color */
+  color:var(--color-text); /* Contrast against background */
+  font-weight: bold;
+  align-self: flex-start;
+  margin-right: 20px;
+}
+
+.message.user {
+  background-color: var(--color-border); /* Slightly darker glassy color */
+  color: var(--color-text);
+  align-self: flex-end;
+  margin-left: 20px;
+}
+
+.input-container {
+  display: flex;
+  background-color: var(--color-background); /* Background using root variable */
+  padding: 0 var(--spacing-sm); /* Horizontal padding */
+  padding-bottom: 8px;
+}
+
+
+.text-input {
+  font-size: var(--font-size-md);
+  border: 1px solid var(--color-border); /* Flat border */
+  /*box-shadow: none;  Remove any shadow */
+   /*outline: none; Remove focus outline */
+  padding: var(--spacing-xxs); /* Compact padding */
+  background-color: var(--color-secondary); /* Glassy background */
+ 
+  color: var(--color-text); /* Use near-white text */
+  margin: var(--spacing-xxs) var(--spacing-xxs) var(--spacing-xxs) 0;
+  width: 90%;
+ 
+  font-weight: bold;
+  border-radius: var(--border-radius-ll); 
+
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+}
+
+.textarea{
+  resize: none; /* Disable resizing */
+}
+
+.send-button {
+  width: 100px;
+  padding: var(--spacing-xxs);
+  background-color: var(--color-primary); /* Accent color for button */
+  color: var(--color-background); /* Text color */
+  border: none;
+  border-radius: var(--border-radius-ll); /* Subtle rounding */
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth transition */
+  margin: var(--spacing-xxs) 0;
+  font-size: var(--font-size-md); /* Smaller font size for buttons */
+  font-weight: bold;
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+
+}
+
+.send-button:hover {
+  background-color: var(--color-accent); /* Darker shade on hover */
+  color: var(--color-background)
+}
+
+.display-button {
+  padding: var(--spacing-xxs); /* Compact padding */
+  background-color: var(--color-primary); /* Accent button color */
+  color: var(--color-text); /* Text color */
+  border: 1px solid var(--color-border); /* Border color */
+  border-radius: var(--border-radius-md); /* Subtle rounding */
+  cursor: pointer;
+  font-size: var(--font-size-md); /* Smaller font size for buttons */
+  margin-top: var(--spacing-xxs); /* Spacing between buttons */
+  display: block;
+}
+
+.display-button:hover {
+  background-color: rgba(20, 40, 60, 0.8); /* Slightly darker hover */
+}
+
+
+.feedback-link {
+  width: 100%;
+  color: var(--color-text);
+  text-align: center;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  padding-bottom: 10px;
+  
+}

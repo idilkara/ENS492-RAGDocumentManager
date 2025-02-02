@@ -1,0 +1,47 @@
+/* Search Bar Styling */
+.search-bar {
+  display: flex;
+  width: 100%;
+  max-width: 600px; /* Constrain max width */
+}
+
+.search-input {
+  
+  border: 1px solid  rgba(255, 255, 255, 0.0);; /* Flat border */
+  /*box-shadow: none;  Remove any shadow */
+   /*outline: none; Remove focus outline */
+  padding: var(--spacing-xxs); /* Compact padding */
+  background-color: var(--color-secondary); /* Glassy background */
+ 
+  color: var(--color-text); /* Use near-white text */
+  margin: var(--spacing-xxs) var(--spacing-xxs) var(--spacing-xxs) 0;
+  width: 90%;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  font-weight: bold;
+  border-radius: var(--border-radius-md ); 
+
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+}
+
+.search-button {
+  width: 100px;
+  padding: var(--spacing-xxs);
+  background-color: var(--color-primary); /* Accent color for button */
+  color: var(--color-background); /* Text color */
+  border: none;
+  border-radius: var(--border-radius-md); /* Subtle rounding */
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth transition */
+  margin: var(--spacing-xxs) 0;
+  font-size: var(--font-size-sm); /* Smaller font size for buttons */
+  font-weight: bold;
+  box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+}
+
+.search-button:hover{
+
+  background-color: var(--color-accent); /* Use accent color on hover */
+  color: var(--color-background); /* Use accent color on hover */
+
+
+}

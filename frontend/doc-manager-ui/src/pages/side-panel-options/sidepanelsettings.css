@@ -1,0 +1,29 @@
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-surface); /* Use surface color as background */
+    border-radius: var(--border-radius-md); /* Rounded corners */
+    box-shadow:var(--color-background-shadow); /* Subtle shadow */
+    height: 100%;
+  }
+
+  /* Upload Button Styling */
+  .settings-button {
+    padding: var(--spacing-xxs) ; /* Consistent padding */
+    color: var(--color-text); /* Use surface color as text color */
+    margin: var(--spacing-xxs) ; 
+    font-weight: bold;
+    background-color: var(--color-border);
+    border-radius: var(--border-radius-md); /* Rounded corners */
+    font-size: var(--font-size-md);
+    text-align: left;
+    width: 90%;
+    box-shadow: var(--color-background-shadow); /* Subtle shadow */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+  }
+  
+  .settings-button:hover {
+    background-color: var(--color-accent); /* Use accent color on hover */
+    color: var(--color-background);
+
+  }

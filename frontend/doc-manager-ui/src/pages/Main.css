@@ -1,0 +1,29 @@
+.main-container {
+  display: flex;
+  height: 100vh; /* Full height of the viewport */
+  width: 100%;   /* Full width of the viewport */
+  margin: 0;     /* Remove any default margin */
+}
+
+.left-panel {
+  flex: 1; /* Take 3 parts of the available space */
+  background-color: var(--color-surface); /* Optional background color for visual distinction */
+  overflow: auto; /* Prevent content overflow */
+
+
+  height: 100%; /* Ensure it spans the full height */
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+}
+
+.right-panel {
+  flex: 3; /* Take 1 part of the available space */
+  background-color: var(--color-surface); /* Optional background color for visual distinction */
+  overflow: auto; /* Prevent content overflow */
+  height: 100%; /* Ensure it spans the full height */
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}

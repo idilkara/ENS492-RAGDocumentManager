@@ -1,0 +1,9 @@
+Flask
+flask-cors
+pymongo
+langchain
+langchain-chroma
+langchain-community
+langchain-ollama
+PyMuPDF
+pypdf

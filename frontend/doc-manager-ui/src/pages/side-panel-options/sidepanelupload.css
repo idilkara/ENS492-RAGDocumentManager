@@ -1,0 +1,63 @@
+/* Container Styling */
+.file-upload-container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface); /* Use surface color as background */
+  border-radius: var(--border-radius-md); /* Rounded corners */
+  box-shadow:var(--color-background-shadow); /* Subtle shadow */
+  height: 100%;
+  }
+  
+  /* Upload Button Styling */
+  .upload-button {
+    font-size: var(--font-size-md);
+    padding: var(--spacing-xxs) ; /* Consistent padding */
+    color: var(--color-text); /* Use surface color as text color */
+    margin: var(--spacing-xxs) ; 
+    font-weight: bold;
+    background-color: var(--color-border);
+    border-radius: var(--border-radius-md); /* Rounded corners */
+    text-align: left;
+    width: 90%;
+    box-shadow: var(--color-background-shadow); /* Subtle shadow */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+  }
+  
+  .upload-button:hover {
+    background-color: var(--color-accent); /* Use accent color on hover */
+    color: var(--color-background); /* Use accent color on hover */
+  
+}
+  
+  /* Feedback Styling */
+  .upload-feedback {
+    font-weight: bold;
+
+    border-radius: var(--border-radius-sm); /* Rounded corners */
+    font-size: var(--font-size-md); /* Smaller font size */
+    text-align: center;
+    width: 90%; /* Constrain the width */
+    
+  }
+  
+  .upload-feedback.success {
+
+    font-size: var(--font-size-md);
+    padding: var(--spacing-xxs) ; /* Consistent padding */
+    color: var(--color-text); /* Use surface color as text color */
+    margin: var(--spacing-xxs) ; 
+
+    background-color: rgba(56, 142, 60, 0.9); /* Success green background */
+    
+  }
+  
+  .upload-feedback.error {
+    font-size: var(--font-size-md);
+    padding: var(--spacing-xxs) ; /* Consistent padding */
+    color: var(--color-background); /* Use surface color as text color */
+    margin: var(--spacing-xxs) ; 
+
+
+    background-color: rgba(211, 47, 47, 0.9); /* Error red background */
+   
+  }
