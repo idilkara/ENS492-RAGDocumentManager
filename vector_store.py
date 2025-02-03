@@ -23,7 +23,9 @@ from session_manager import add_message
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
+from highlight_pdf_handle import TempFileManager
 
+temp_file_manager = TempFileManager()
 
 
 # Initialize embeddings
@@ -39,7 +41,7 @@ vectorstore = Chroma(persist_directory=CHROMADB_DIR, embedding_function=embeddin
 
 def add_document(file_entry, replace_existing=False):
     """
-    Adds a document to the vector store and MongoDB with improved error handling.
+    Adds a document to the vector store and MongoDB.
     """
     file_data = file_entry["file_data"]
     filename = file_entry["filename"]
@@ -47,63 +49,44 @@ def add_document(file_entry, replace_existing=False):
     temp_file_path = None
 
     try:
-        # Check if file exists
-        existing_file = is_file_already_uploaded(filename)
-        if existing_file and not replace_existing:
-            return {
-                "warning": f"File '{filename}' already exists in the system.",
-                "options": "Keep the existing file or replace it with the new one."
-            }
-
-        # Replace existing file if requested
-        if existing_file and replace_existing:
-            print(f"Replacing existing file: {filename}")
-            delete_document(filename)
-
-        # Create temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
-            temp_file.write(file_data)
+        # Create temporary file to process the PDF
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
             temp_file_path = temp_file.name
+            temp_file.write(file_data)
 
-        print(f"Temporary File Path: {temp_file_path}")
+        # Store in MongoDB
+        mongo_id = add_document_to_mongo(file_data, filename)
+        if not mongo_id:
+            raise Exception("Failed to store document in MongoDB")
 
-        # Load and process document
+        # Load and process document for vector store
         loader = PyPDFLoader(temp_file_path) if filename.lower().endswith('.pdf') else TextLoader(temp_file_path)
         documents = loader.load()
-        print(f"Loaded {len(documents)} document(s) from {filename}")
+        print(f"Loaded {len(documents)} document(s)")
 
         # Split into chunks
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         text_chunks = text_splitter.split_documents(documents)
-        print(f"Split document into {len(text_chunks)} chunks")
+        print(f"Split into {len(text_chunks)} chunks")
 
-        # Generate document ID and add to MongoDB
-        document_id = ObjectId()
-        gridfs_id = add_document_to_mongo(temp_file_path, {
-            "document_id": document_id,
-            "file_name": filename
-        })
-
-        print("gridfs in ADD:  ", gridfs_id)
-
-        # Prepare and add documents to vector store
+        # Prepare documents for vector store
         vector_documents = [
             Document(
                 page_content=chunk.page_content,
                 metadata={
-                    "document_id": str(document_id),
                     "source": filename,
-                    "gridfs_id": str(gridfs_id),
-                    "file_path": temp_file_path
+                    "mongo_id": mongo_id,
+                    "temp_path": temp_file_path
                 }
             )
             for chunk in text_chunks
         ]
 
+        # Add to vector store
         vectorstore.add_documents(vector_documents)
-        print(f"Added {len(vector_documents)} documents successfully.")
+        print(f"Added {len(vector_documents)} documents to vector store")
 
-        return {"message": f"File '{filename}' uploaded successfully.", "gridfs_id": gridfs_id}
+        return {"message": f"File '{filename}' uploaded successfully", "mongo_id": mongo_id}
 
     except Exception as e:
         print(f"Error processing document: {str(e)}")
@@ -133,8 +116,8 @@ def delete_document(file_path):
     if document_id:
         vectorstore.delete_documents([document_id])
 
-
-def create_qa_chain(vectorstore, llm, memory):
+#TODO : memory yi simdilik sildim eklenecek
+def create_qa_chain(vectorstore, llm):
     """
     Creates a ConversationalRetrievalChain with strict context adherence and improved memory management.
     """
@@ -148,30 +131,29 @@ def create_qa_chain(vectorstore, llm, memory):
     DO NOT use any other knowledge or information.
     Answer in the same format of the relevant document without skipping relevant parts.
     If the context does not contain information, respond with "I cannot answer this question based on the available context."
-    Summarize all key points from the following retrieved context before answering the question.
 
     Context: {context}
-    Chat History: {chat_history}
+    
     Question: {question}
 
     Answer:"""
 
     PROMPT = PromptTemplate(
-        input_variables=["context", "chat_history", "question"],
+        input_variables=["context", "question"],
         template=prompt_template
     )
 
     # Configure retriever with similarity search
     retriever = vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 4}
+        search_type="mmr", 
+        search_kwargs={"k": 5, "fetch_k": 20},
     )
 
     # Create chain with memory configuration
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
-        memory=memory,
+        #memory=memory,
         combine_docs_chain_kwargs={"prompt": PROMPT},
         return_source_documents=True,
         chain_type="stuff",
@@ -180,56 +162,60 @@ def create_qa_chain(vectorstore, llm, memory):
 
     return qa_chain
 
+
+
 def search_query(query, user_id, session_id):
     """
-    Query the vector store with strict context validation and source checking.
+    Query the vector store and return results with highlighted PDFs.
     """
     llm = load_model()
-    qa_chain = create_qa_chain(vectorstore, llm, memory=global_memory)
+    qa_chain = create_qa_chain(vectorstore, llm)
     
     try:
-        chat_history = global_memory.load_memory_variables({}).get("chat_history", [])
+        print(f"\nQuery: {query}")
 
-        # Get the response from the chain using invoke()
+        # Get the most relevant chunks before QA
+        relevant_chunks = vectorstore.similarity_search(query, k=8)
+        print("\nRetrieved chunks:")
+        for i, chunk in enumerate(relevant_chunks):
+            print(f"\nChunk {i+1}:")
+            print(f"Source: {chunk.metadata.get('source')}")
+            print(f"Content: {chunk.page_content[:200]}...")  # First 200 chars
+
+        
         result = qa_chain.invoke({
             "question": query,
-            "chat_history": chat_history
+            "chat_history": []
         })
         
-        # Extract source documents and validate
         source_docs = result.get('source_documents', [])
         
-        # If no relevant documents found, return early
         if not source_docs:
             response = "I cannot answer this question based on the available documents."
             add_message(user_id, session_id, query, response)
             return {
                 "response": response,
-                "file_path": None,
-                "highlighted_pdf_path": None,
-                "gridfs": None
+                "highlighted_pdf_path": None
             }
         
         response = result['answer']
         
-        # Get the most relevant chunks for highlighting
-        relevant_chunks = source_docs
-        
-        # Highlight PDF if relevant chunks exist
+        # Create highlighted PDF if relevant chunks exist
         highlighted_pdf_path = None
-        gridfs_id = None
-        if relevant_chunks:
-            gridfs_id = relevant_chunks[0].metadata.get("gridfs_id")
-            highlighted_pdf_path = highlight_pdf_in_gridfs(gridfs_id, relevant_chunks)
+        if source_docs:
+            mongo_id = source_docs[0].metadata.get("mongo_id")
+            print(f"MongoDB document ID: {mongo_id}")
+            
+            if mongo_id:
+                highlighted_pdf_path = create_highlighted_pdf(mongo_id, source_docs)
+                print(f"Highlighted PDF path: {highlighted_pdf_path}")
         
         # Add the interaction to message history
         add_message(user_id, session_id, query, response)
         
         return {
             "response": str(response),
-            "file_path": str(relevant_chunks[0].metadata.get("file_path")) if relevant_chunks else None,
-            "highlighted_pdf_path": str(highlighted_pdf_path) if highlighted_pdf_path else None,
-            "gridfs": str(highlighted_pdf_path)
+            "highlighted_pdf_path": highlighted_pdf_path if highlighted_pdf_path else None
         }
     
     except Exception as e:
@@ -237,14 +223,16 @@ def search_query(query, user_id, session_id):
         print(error_msg)
         traceback.print_exc()
         return {"error": error_msg}
+    
 
-# Update the global memory configuration
-global_memory = ConversationBufferWindowMemory(
-    memory_key="chat_history",
-    return_messages=True,
-    output_key='answer',
-    k=2
-)
+
+# # Update the global memory configuration
+# global_memory = ConversationBufferWindowMemory(
+#     memory_key="chat_history",
+#     return_messages=True,
+#     output_key='answer',
+#     k=2
+# )
 
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
@@ -252,54 +240,50 @@ def get_most_relevant_chunks(query):
 
 # # highlighting the most relevant part of the pdf
 # # doc.py a alinsa iyi olur
-def highlight_pdf_in_gridfs(gridfs_id, relevant_chunks):
+def create_highlighted_pdf(mongo_id, relevant_chunks):
+    """
+    Creates a highlighted version of a PDF file from MongoDB document.
+    """
+    temp_original_path = None
     try:
-        # Convert gridfs_id from string to ObjectId
-        gridfs_id_obj = ObjectId(gridfs_id)
+        # Get document from MongoDB
+        document = get_document_by_id(mongo_id)
+        if not document:
+            print(f"Document not found in MongoDB with ID: {mongo_id}")
+            return None
 
-        # Retrieve the PDF from GridFS
-        pdf_file = get_document_by_id(gridfs_id_obj)
-        if pdf_file is None:
-            raise FileNotFoundError(f"File not found in GridFS for ID: {gridfs_id}")
+        # Create temporary file for the original PDF
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            temp_original_path = temp_file.name
+            temp_file.write(document['file_data'])
 
-        # Create a temporary file to store the PDF
-        temp_pdf_path = f"/tmp/{gridfs_id}_temp.pdf"
-        with open(temp_pdf_path, 'wb') as temp_file:
-            temp_file.write(pdf_file.read())
-
-        # Verify the temporary file exists
-        if not os.path.exists(temp_pdf_path):
-            raise FileNotFoundError(f"Temporary file not created: {temp_pdf_path}")
-
-        print(f"Temporary file created at: {temp_pdf_path}")
+        # Generate path for highlighted PDF in temp directory
+        highlighted_pdf_path = temp_file_manager.get_temp_filepath()
 
         # Highlight the relevant parts in the PDF
-        highlighted_pdf_path = temp_pdf_path.replace(".pdf", "_highlighted.pdf")
-        highlight_text_in_pdf(temp_pdf_path, relevant_chunks, highlighted_pdf_path)
+        try:
+            highlight_text_in_pdf(temp_original_path, relevant_chunks, highlighted_pdf_path)
+            print(f"Created highlighted PDF at: {highlighted_pdf_path}")
+        except Exception as e:
+            print(f"Error during highlighting: {e}")
+            if os.path.exists(highlighted_pdf_path):
+                os.remove(highlighted_pdf_path)
+            return None
 
-        # Verify the highlighted PDF exists
-        if not os.path.exists(highlighted_pdf_path):
-            raise FileNotFoundError(f"Highlighted PDF not created: {highlighted_pdf_path}")
+        # Register the highlighted PDF with the temp file manager
+        temp_file_manager.add_file(highlighted_pdf_path)
 
-        print(f"Highlighted PDF created at: {highlighted_pdf_path}")
-
-        # Store the highlighted PDF back in GridFS
-        highlighted_gridfs_id = add_document_to_mongo(highlighted_pdf_path, {
-            "document_id": str(uuid.uuid4()),
-            "file_name": f"highlighted_{gridfs_id}.pdf",
-            "original_gridfs_id": gridfs_id
-        })
-
-        # Clean up temporary files
-        os.remove(temp_pdf_path)
-        os.remove(highlighted_pdf_path)
-
-        return highlighted_gridfs_id
+        return highlighted_pdf_path
 
     except Exception as e:
         print(f"Error highlighting PDF: {e}")
         traceback.print_exc()
         return None
+    finally:
+        # Clean up temporary original file
+        if temp_original_path and os.path.exists(temp_original_path):
+            os.unlink(temp_original_path)
+
 
 
 def highlight_text_in_pdf(pdf_path, relevant_chunks, output_path):
