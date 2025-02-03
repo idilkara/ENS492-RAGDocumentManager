@@ -21,7 +21,7 @@ const Main = () => {
 const fetchUserSessions = async () => {
     try {
         console.log("🔄 Fetching user sessions...");
-        const response = await fetch('http://127.0.0.1:5000/get_user_sessions?user_id=1',  {mode:'cors'});
+        const response = await fetch('http://localhost/api/get_user_sessions?user_id=1',  {mode:'cors'});
         const data = await response.json();
         console.log("✅ User sessions fetched:", data);
 
@@ -53,7 +53,7 @@ const fetchUserSessions = async () => {
   const createNewChatSession = async () => {
     try {
         console.log("➕ Creating a new chat session...");
-        const response = await fetch('http://127.0.0.1:5000/create_chat_session', {
+        const response = await fetch('http://localhost/api/create_chat_session', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const fetchUserSessions = async () => {
   const fetchChatSession = async (sessionID) => {
     try {
         console.log(`🔄 Fetching chat session for session_id: ${sessionID}`);
-        const response = await fetch(`http://127.0.0.1:5000/get_chat_session?user_id=1&session_id=${sessionID}`);
+        const response = await fetch(`http://localhost/api/get_chat_session?user_id=1&session_id=${sessionID}`);
         const data = await response.json();
         console.log(`✅ Chat history for session_id=${sessionID}:`, data);
 

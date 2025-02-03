@@ -6,64 +6,85 @@ import axios from 'axios';
 const ChatbotUI = ({ chatID, chats }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(chats[chatID] || []);
-
-  const chatHistoryRef = useRef(null); // Create a reference for the chat container
+  const chatHistoryRef = useRef(null);
 
   const handleSendMessage = async () => {
     if (input.trim() === "") return;
-
+    
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
-    console.log(chatID);
-
+    
     try {
-      const response = await axios.post(`http://backend:5000/user_query`, {
-          query: input,
-          user_id: '1',
-          session_id:  "65d123456789abcde1234567"
+      const response = await axios.post("http://localhost/api/user_query", {
+        query: input,
+        user_id: '1',
+        session_id: chatID
       });
-
+      
       const data = response.data;
       const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
-      const gridfs_id = data.gridfs || null; // Use gridfs_id
-      console.log("GRIDFS:", gridfs_id)
-
+      const highlightedPdfPath = data.highlighted_pdf_path || null;
+      
+      console.log("Highlighted PDF Path:", highlightedPdfPath);
+      
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           text: botResponse,
           isBot: true,
-          gridfs_id: gridfs_id, // Store gridfs_id separately for the "View PDF" button
+          pdfPath: highlightedPdfPath, // Store the temporary file path
         },
       ]);
-
     } catch (error) {
       console.error("Error sending request:", error);
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, text: "Sorry, there was an issue processing your request.", isBot: true },
+        { 
+          id: Date.now() + 1, 
+          text: "Sorry, there was an issue processing your request.", 
+          isBot: true 
+        },
       ]);
     }
-
     setInput("");
   };
 
-  const handleViewPDFClick = async (gridfs_id) => {
-    if (!gridfs_id) return;
-
+  const handleViewPDFClick = async (pdfPath) => {
+    if (!pdfPath) return;
+    
     try {
-      const response = await axios.get(`http://backend:5000/user_query/get_highlighted_pdf?gridfs_id=${encodeURIComponent(gridfs_id)}`, {
-        responseType: 'blob',
-      });
-
+      const response = await axios.get(
+        `http://localhost/api/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
+        {
+          responseType: 'blob',
+        }
+      );
+      
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
-
+      
       // Open the PDF in a new tab
       window.open(url, "_blank");
+      
+      // Clean up the URL object after opening
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 100);
     } catch (error) {
-      console.error("Error fetching PDF:", error);
+      if (error.response && error.response.status === 404) {
+        alert("The highlighted PDF has expired. Please make the query again to generate a new highlight.");
+      } else {
+        console.error("Error fetching PDF:", error);
+        alert("Error loading the PDF. Please try again.");
+      }
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -72,7 +93,7 @@ const ChatbotUI = ({ chatID, chats }) => {
     if (chatHistoryRef.current) {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
-  }, [messages]); // Triggered whenever messages are updated
+  }, [messages]);
 
   useEffect(() => {
     setMessages(chats[chatID] || []);
@@ -80,50 +101,38 @@ const ChatbotUI = ({ chatID, chats }) => {
 
   return (
     <div className="chat-interaction-container">
-    
-    
-    <div className="chat-container">
-        {/*<div className="chat-header"><h2>SUDoc</h2></div> */}
-    
-        <div className="chat-history">
+      <div className="chat-container">
+        <div className="chat-history" ref={chatHistoryRef}>
           {messages.map((msg) => (
             <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
-             <ReactMarkdown>{msg.text}</ReactMarkdown> 
-    
-              {/* Show the button below the chatbot message only if filePath exists */}
-              {msg.isBot && msg.gridfs_id && (
-                <button className="display-button" onClick={() => handleViewPDFClick(msg.gridfs_id)}>
-                  <div className= "pdfLabel">View PDF</div >
+              <ReactMarkdown>{msg.text}</ReactMarkdown>
+              {msg.isBot && msg.pdfPath && (
+                <button 
+                  className="display-button" 
+                  onClick={() => handleViewPDFClick(msg.pdfPath)}
+                >
+                  <div className="pdfLabel">View Highlighted PDF</div>
                 </button>
               )}
             </div>
           ))}
         </div>
-    
         <div className="input-container">
-    
           <textarea
-            
-            type="text"
             className="text-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             placeholder="Type your message..."
           />
           <button className="send-button" onClick={handleSendMessage}>
             Send
           </button>
-    
-    
         </div>
         <div className="feedback-link">Give us feedback!</div>
-    
-    
       </div>
     </div>
-    );
-    };
-    
-    
+  );
+};
 
 export default ChatbotUI;

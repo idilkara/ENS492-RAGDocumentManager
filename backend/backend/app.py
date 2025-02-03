@@ -15,29 +15,30 @@ app = Flask(__name__)
 
 app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 
 
-@app.after_request
-def add_cors_headers(response):
-    """Ensure CORS headers are present in all responses"""
-    response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, DELETE, PUT"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response
 
 
-# ✅ Explicitly handle `OPTIONS` preflight requests
-@app.route('/<path:path>', methods=['OPTIONS'])
-def handle_options(path):
-    response = jsonify({"message": "Preflight OK"})
-    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, DELETE, PUT"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response, 200
+# @app.after_request
+# def add_cors_headers(response):
+#     """Ensure CORS headers are present in all responses"""
+#     response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
+#     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, DELETE, PUT"
+#     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+#     response.headers["Access-Control-Allow-Credentials"] = "true"
+#     return response
+
+
+# # ✅ Explicitly handle `OPTIONS` preflight requests
+# @app.route('/<path:path>', methods=['OPTIONS'])
+# def handle_options(path):
+#     response = jsonify({"message": "Preflight OK"})
+#     response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+#     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, DELETE, PUT"
+#     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+#     response.headers["Access-Control-Allow-Credentials"] = "true"
+#     return response, 200
 
 # CAS Auth icin
 # from flask_cas import CAS
@@ -174,30 +175,36 @@ def get_highlighted_pdf():
 
 # ===============================
 # create new chat
-@app.route("/create_chat_session", methods=["POST", "OPTIONS"])
-def create_chat_session():
-    """ Create a new chat session """
 
-    # ✅ Handle preflight request
-    if request.method == "OPTIONS":
-        response = jsonify({"message": "Preflight OK"})
-        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        return response, 200
+@app.route("/create_chat_session", methods=["POST"])
+def create_chat():
+    return {"message": "Chat session created"}, 200
 
-    # ✅ Handle normal POST request
-    data = request.get_json()
-    user_id = data.get("user_id")
 
-    if not user_id:
-        return jsonify({"error": "Missing user_id"}), 400
+# @app.route("/create_chat_session", methods=["POST", "OPTIONS"])
+# def create_chat_session():
+#     """ Create a new chat session """
 
-    result = create_empty_session(user_id)
-    if "error" in result:
-        return jsonify({"error": result["error"]}), 400
+#     # ✅ Handle preflight request
+#     if request.method == "OPTIONS":
+#         response = jsonify({"message": "Preflight OK"})
+#         response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+#         response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+#         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+#         return response, 200
 
-    return jsonify({"message": result["message"], "session_id": result["session_id"]}), 200
+#     # ✅ Handle normal POST request
+#     data = request.get_json()
+#     user_id = data.get("user_id")
+
+#     if not user_id:
+#         return jsonify({"error": "Missing user_id"}), 400
+
+#     result = create_empty_session(user_id)
+#     if "error" in result:
+#         return jsonify({"error": result["error"]}), 400
+
+#     return jsonify({"message": result["message"], "session_id": result["session_id"]}), 200
 
 
 # ===============================

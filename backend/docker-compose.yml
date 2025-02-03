@@ -38,7 +38,6 @@ services:
       - chromadb_data:/chroma
     networks:
       - app_network
-
   backend:
     build: ./backend  # Ensure this directory contains a valid Dockerfile
     container_name: backend
@@ -48,22 +47,24 @@ services:
       - mongodb
       - chromadb
     ports:
-      - 5000:5000
+      - "5000:5000"
     environment:
-      MONGO_URI: "mongodb://root:example@mongodb:27017/"
-      DB_NAME: "doc_db"
-      DOCUMENTS_COLLECTION: "documents"
-      USERS_COLLECTION: "users"
-      SESSIONS_COLLECTION: "sessions"
-      CHROMADB_URL: "http://chromadb:8000"  # Backend connects to ChromaDB
-      EMBEDDING_MODEL_URL: "http://ollama:11434" 
-      EMBEDDING_MODEL_NAME: "nomic-embed-text"
-      LLAMA_MODEL: "mistral"
+      - FLASK_RUN_HOST=0.0.0.0  # Ensure Flask listens on all interfaces
+      - MONGO_URI=mongodb://root:example@mongodb:27017/
+      - DB_NAME=doc_db
+      - DOCUMENTS_COLLECTION=documents
+      - USERS_COLLECTION=users
+      - SESSIONS_COLLECTION=sessions
+      - CHROMADB_URL=http://chromadb:8000  # Backend connects to ChromaDB
+      - EMBEDDING_MODEL_URL=http://ollama:11434 
+      - EMBEDDING_MODEL_NAME=nomic-embed-text
+      - LLAMA_MODEL=mistral
     networks:
       - app_network
 
+
   frontend:
-    build: ../../frontend/ENS491-SUdoc # Ensure this matches the frontend Dockerfile location
+    build: ../frontend # Ensure this matches the frontend Dockerfile location
     container_name: frontend
     restart: unless-stopped
     depends_on:
@@ -72,6 +73,20 @@ services:
       - "3000:3000"
     networks:
       - app_network
+
+  nginx:
+      image: nginx:latest
+      container_name: nginx
+      restart: unless-stopped
+      ports:
+        - "80:80"
+      volumes:
+        - ./nginx:/etc/nginx
+      depends_on:
+        - backend
+        - frontend
+      networks:
+        - app_network
 
 volumes:
   mongodb_data:
