@@ -11,7 +11,7 @@ const SearchDocument = () => {
 
     setIsSearching(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8080/earch?query=${encodeURIComponent(searchQuery)}`, {
+      const response = await fetch(`http://localhost/api/earch?query=${encodeURIComponent(searchQuery)}`, {
         method: 'GET',
       });
 

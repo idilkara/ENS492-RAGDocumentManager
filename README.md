@@ -12,5 +12,10 @@ But there are other branches as well for trying some additional features.
 
 to run, you can run the script or 
 
-pull llama image and manifest embeddings and llm model
+
 docker-compose build in the backend directory
+
+pull llama image and manifest embeddings and llm model
+docker exec -it ollama ollama pull nomic-embed-text
+docker exec -it ollama ollama pull mistral
+

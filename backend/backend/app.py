@@ -17,9 +17,6 @@ app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
 
 
-
-
-
 # @app.after_request
 # def add_cors_headers(response):
 #     """Ensure CORS headers are present in all responses"""
@@ -47,7 +44,7 @@ app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
 # app.config['CAS_SERVER'] = 'https://sso.pdx.edu'
 # app.config['CAS_AFTER_LOGIN'] = 'route_root'
 
-
+#AAAAAAAAAAAAAAA
 # ===============================
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -79,6 +76,7 @@ def upload():
 #delete document
 @app.route("/delete", methods=["POST"])
 def delete_document_endpoint():
+    """Endpoint to delete a document."""
     data = request.get_json()
     file_path = data.get("file_path")
     if not file_path:
@@ -100,111 +98,69 @@ def get_pdf():
     # Serve the file
     return send_file(file_path, as_attachment=True)
 
-from flask import Flask, request, jsonify
-from bson.objectid import ObjectId, InvalidId
-import traceback
-
-app = Flask(__name__)
-
+# ===============================
 @app.route("/user_query", methods=["POST"])
 def user_query():
-    try:
-        data = request.get_json()
-        user_id = data.get("user_id")
-        session_id = data.get("session_id")
-        query = data.get("query")
+    data = request.get_json()
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")
+    session_id = ObjectId(session_id)
+    query = data.get("query")
 
-        print(f"🔍 Received user_query: user_id={user_id}, session_id={session_id}, query='{query}'")
+    if not query or not user_id or not session_id:
+        return jsonify({"error": "Missing required fields"}), 400
 
-        if not query or not user_id or not session_id:
-            print("❌ ERROR: Missing required fields")
-            return jsonify({"error": "Missing required fields"}), 400
+    response_text = search_query(query, user_id, session_id)
+    highlighted_pdf_path = response_text.get("highlighted_pdf_path")
 
-        # ✅ Validate session_id format before converting to ObjectId
-        try:
-            session_id = ObjectId(session_id)
-        except InvalidId:
-            print(f"❌ ERROR: Invalid session_id format: {session_id}")
-            return jsonify({"error": "Invalid session_id format"}), 400
+    print("ENDPOINTTE PATH:::::::::", highlighted_pdf_path)
 
-        print("🔍 Calling search_query() with:", query, user_id, session_id)
-        response_text = search_query(query, user_id, session_id)
-
-        print(f"✅ Response from search_query: {response_text}")
-
-        return jsonify({
-            "response": response_text.get("response"),
-            "file_path": response_text.get("file_path"),
-            "highlighted_pdf_path": response_text.get("highlighted_pdf_path"),
-            "gridfs": response_text.get("gridfs")
-        })
-
-    except Exception as e:
-        print(f"❌ ERROR in /user_query: {e}")
-        traceback.print_exc()  # ✅ Prints the full error
-        return jsonify({"error": str(e)}), 500
-
-
-    except Exception as e:
-        print(f"❌ ERROR in /user_query: {e}")
-        traceback.print_exc()  # ✅ Print the full error traceback
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "response": response_text.get("response"),
+        "highlighted_pdf_path": highlighted_pdf_path
+    })
 
 # ===============================
 
 @app.route('/get_highlighted_pdf', methods=['GET'])
 def get_highlighted_pdf():
-    gridfs_id = request.args.get('gridfs_id')  # GridFS ID from the query string
-    gridfs_id = ObjectId(gridfs_id)
+    pdf_path = request.args.get('file_path')
+    print("istenilen path: ", pdf_path)
 
-    print("get_highlighted_pdf GridFS ID: ", gridfs_id)
+    if not pdf_path or not os.path.exists(pdf_path):
+        return jsonify({"error": "File not found or expired"}), 404
 
-
-    if not gridfs_id:
-        return jsonify({"error": "GridFS ID not provided"}), 400
-
-    # Retrieve the file from GridFS
-    pdf_file = get_document_by_id(gridfs_id)
-    if pdf_file is None:
-        return jsonify({"error": "File not found"}), 404
-
-    # Serve the file
-    return send_file(BytesIO(pdf_file.read()), as_attachment=True, download_name=pdf_file.filename)
+    try:
+        return send_file(
+            pdf_path,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"highlighted_{os.path.basename(pdf_path)}"
+        )
+    except Exception as e:
+        return jsonify({"error": f"Error serving file: {str(e)}"}), 500
 
 
 
 # ===============================
 # create new chat
-
 @app.route("/create_chat_session", methods=["POST"])
-def create_chat():
-    return {"message": "Chat session created"}, 200
+def create_chat_session():
+    """
+    Create a new empty chat session for a user.
+    """
+    data = request.get_json()
+    user_id = data.get("user_id")
+    print("user id:", user_id)
 
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
 
-# @app.route("/create_chat_session", methods=["POST", "OPTIONS"])
-# def create_chat_session():
-#     """ Create a new chat session """
+    result = create_empty_session(user_id)
+    if "error" in result:
+        return jsonify({"error": result["error"]}), 400
 
-#     # ✅ Handle preflight request
-#     if request.method == "OPTIONS":
-#         response = jsonify({"message": "Preflight OK"})
-#         response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
-#         response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-#         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-#         return response, 200
-
-#     # ✅ Handle normal POST request
-#     data = request.get_json()
-#     user_id = data.get("user_id")
-
-#     if not user_id:
-#         return jsonify({"error": "Missing user_id"}), 400
-
-#     result = create_empty_session(user_id)
-#     if "error" in result:
-#         return jsonify({"error": result["error"]}), 400
-
-#     return jsonify({"message": result["message"], "session_id": result["session_id"]}), 200
+    return jsonify({"message": result["message"], "session_id": result["session_id"]}), 200
 
 
 # ===============================

@@ -22,10 +22,15 @@ const ChatbotUI = ({ chatID, chats }) => {
       });
       
       const data = response.data;
+      console.log("chatid:", chatID);
+      console.log("quet:",input);
+      console.log("response:", data);
       const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
       const highlightedPdfPath = data.highlighted_pdf_path || null;
       
       console.log("Highlighted PDF Path:", highlightedPdfPath);
+      console.log("response:",  botResponse);
+
       
       setMessages((prev) => [
         ...prev,
