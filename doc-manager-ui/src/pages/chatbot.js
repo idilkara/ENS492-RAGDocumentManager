@@ -25,28 +25,35 @@ const ChatbotUI = ({ chatID, chats }) => {
       const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
       const highlightedPdfPath = data.highlighted_pdf_path || null;
       
+      const botMessageId = Date.now() + 1;
+
       console.log("Highlighted PDF Path:", highlightedPdfPath);
-      
       setMessages((prev) => [
         ...prev,
-        {
-          id: Date.now() + 1,
-          text: botResponse,
-          isBot: true,
-          pdfPath: highlightedPdfPath, // Store the temporary file path
-        },
+        { id: botMessageId, text: "", isBot: true, pdfPath: highlightedPdfPath }
       ]);
+
+      // Simulate streaming effect
+      const words = botResponse.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 50)); // Adjust speed here
+
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, text: prevMessages.find((m) => m.id === botMessageId).text + words[i] + " " }
+              : msg
+          )
+        );
+      }
     } catch (error) {
       console.error("Error sending request:", error);
       setMessages((prev) => [
         ...prev,
-        { 
-          id: Date.now() + 1, 
-          text: "Sorry, there was an issue processing your request.", 
-          isBot: true 
-        },
+        { id: Date.now() + 1, text: "Sorry, there was an issue processing your request.", isBot: true },
       ]);
     }
+
     setInput("");
   };
 
