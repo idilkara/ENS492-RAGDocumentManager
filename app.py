@@ -5,11 +5,12 @@ import os
 from flask import send_file
 from vector_store import add_document, search_query, highlight_text_in_pdf
 import uuid
-from session_manager import create_empty_session, get_chat_session, get_session_list
+from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
 import gridfs
 from documents import get_document_by_id, delete_document_from_mongo
 from io import BytesIO
 from bson.objectid import ObjectId
+
 
 app = Flask(__name__)
 CORS(app)
@@ -91,32 +92,35 @@ def user_query():
     response_text = search_query(query, user_id, session_id)
     highlighted_pdf_path = response_text.get("highlighted_pdf_path")
 
-    print("ENDPOINTTE PATH:::::::::", highlighted_pdf_path)
+    print("ENDPOİNTTE GRIDFS:::::::::", response_text.get("gridfs"))
 
     return jsonify({
         "response": response_text.get("response"),
-        "highlighted_pdf_path": highlighted_pdf_path
+        "file_path": response_text.get("file_path"),
+        "highlighted_pdf_path": highlighted_pdf_path,
+        "gridfs": response_text.get("gridfs")
     })
 
 # ===============================
 
 @app.route('/get_highlighted_pdf', methods=['GET'])
 def get_highlighted_pdf():
-    pdf_path = request.args.get('file_path')
-    print("istenilen path: ", pdf_path)
+    gridfs_id = request.args.get('gridfs_id')  # GridFS ID from the query string
+    gridfs_id = ObjectId(gridfs_id)
 
-    if not pdf_path or not os.path.exists(pdf_path):
-        return jsonify({"error": "File not found or expired"}), 404
+    print("get_highlighted_pdf GridFS ID: ", gridfs_id)
 
-    try:
-        return send_file(
-            pdf_path,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=f"highlighted_{os.path.basename(pdf_path)}"
-        )
-    except Exception as e:
-        return jsonify({"error": f"Error serving file: {str(e)}"}), 500
+
+    if not gridfs_id:
+        return jsonify({"error": "GridFS ID not provided"}), 400
+
+    # Retrieve the file from GridFS
+    pdf_file = get_document_by_id(gridfs_id)
+    if pdf_file is None:
+        return jsonify({"error": "File not found"}), 404
+
+    # Serve the file
+    return send_file(BytesIO(pdf_file.read()), as_attachment=True, download_name=pdf_file.filename)
 
 
 
@@ -207,6 +211,31 @@ def get_user_sessions():
 
 
     return jsonify(session_list)
+
+@app.route("/delete_chat_session", methods=["POST"])
+def delete_chat_session():
+    """
+    Delete a chat session by user_id and session_id.
+    """
+    data = request.get_json()
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")
+
+    if not user_id or not session_id:
+        return jsonify({"error": "Missing user_id or session_id"}), 400
+
+    try:
+        session_id = ObjectId(session_id)
+    except:
+        return jsonify({"error": "Invalid session_id"}), 400
+
+    # Delete session from MongoDB
+    result = chats_collection.delete_one({"user_id": user_id, "session_id": session_id})
+
+    if result.deleted_count == 0:
+        return jsonify({"error": "Chat session not found"}), 404
+
+    return jsonify({"message": "Chat session deleted successfully"}), 200
 
 
 if __name__ == "__main__":
