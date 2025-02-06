@@ -9,10 +9,45 @@ import ChatsIcon from "../assets/chat-conversation-circle-svgrepo-com.svg"
 import SettingsIcon from "../assets/settings-svgrepo-com.svg"
 import UploadIcon from "../assets/upload-file-2-svgrepo-com.svg"
 
-const SidePanel = ({ chatID, setChatID, sessions }) => {
+const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
   const [selectedOption, setSelectedOption] = useState(0);
+  const [showDeleteMsg, setShowDeleteMsg] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState(null);
+
   const options = ["Chats", "Upload a document", "Settings"];
   const optionIcons = [ChatsIcon,  UploadIcon, SettingsIcon];
+
+  const handleDeleteSession = async (sessionId) => {
+    if (!sessionId) return;
+  
+    try {
+      const response = await fetch("http://127.0.0.1:5000/delete_chat_session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: "1", // Replace with actual user ID
+          session_id: sessionId,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+      
+        //fetchUserSessions() REFRESH ATIYOR, main.js'den geldi
+
+        setShowDeleteMsg(false);
+        fetchUserSessions();
+      } else {
+        console.error("Error deleting session:", data.error);
+      }
+    } catch (error) {
+      console.error("Failed to delete chat session:", error);
+    }
+  };
+  
 
   const renderListingContent = () => {
     switch (selectedOption) {
@@ -26,8 +61,21 @@ const SidePanel = ({ chatID, setChatID, sessions }) => {
             {sessions.map((session) => (
               <div className="side-panel-listing-element" key={session.session_id} onClick={() => setChatID(session.session_id)}>
                 <div className="side-panel-listing-element-subtitle-container">
-                  <div>{session.name}</div> <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }} />
-                </div>
+                  <div>{session.name}</div> 
+                  
+                  <button
+              className="icon-button"
+              onClick={(e) => {
+                e.stopPropagation();  // Prevent opening the session when deleting
+                setSessionToDelete(session);
+                setShowDeleteMsg(true);
+                console.log("Delete Session:", session.session_id);
+                //handleDeleteSession(session.session_id);  // Example delete function
+              }}
+            >
+
+                  <img src={DeleteIcon} alt="deleteicon" style={{ width: '20px', height: 'auto' }} />
+                  </button></div>
                 {/* <div className="side-panel-listing-element-references">
                   <div className="side-panel-listing-element-reference">Created on: {session.created_at}</div>
                 </div> */}
@@ -84,7 +132,24 @@ return(
     ))}
   </div>
 </div>
+
+
+{showDeleteMsg && (
+        <div className="modal-overlay" onClick={() => setShowDeleteMsg(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Are you sure?</h3>
+            <p>Do you really want to delete chat "{sessionToDelete.name}"?</p>
+            <div className="modal-buttons">
+              <button className="confirm-button" onClick={() => handleDeleteSession(sessionToDelete.session_id)}>Yes, Delete</button>
+              <button className="cancel-button" onClick={() => setShowDeleteMsg(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 </div>
+
 );
 }
 

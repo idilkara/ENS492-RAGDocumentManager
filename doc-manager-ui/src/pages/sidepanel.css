@@ -176,3 +176,74 @@ gap: var(--spacing-xxs);
   background-color: var(--color-accent);
   color:var(--color-background);
 }
+
+.icon-button {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.icon-button:hover {
+  transform: scale(1.4);
+}
+
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  text-align: center;
+}
+
+.modal h3 {
+  margin-bottom: 10px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.confirm-button, .cancel-button {
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.confirm-button {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.cancel-button {
+  background-color: #bdc3c7;
+  color: white;
+}
+
+.confirm-button:hover {
+  background-color: #c0392b;
+}
+
+.cancel-button:hover {
+  background-color: #95a5a6;
+}
+

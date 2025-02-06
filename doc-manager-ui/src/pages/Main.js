@@ -102,6 +102,7 @@ const Main = () => {
                   chatID={chatID} 
                   setChatID={handleChatIDChange} 
                   sessions={sessions} 
+                  fetchUserSessions={fetchUserSessions}
               />
           </div>
           <div className="right-panel">
