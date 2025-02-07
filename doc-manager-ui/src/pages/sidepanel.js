@@ -13,6 +13,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
   const [selectedOption, setSelectedOption] = useState(0);
   const [showDeleteMsg, setShowDeleteMsg] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
+  const [deleteAll, setDeleteAll] = useState(false);
 
   const options = ["Chats", "Upload a document", "Settings"];
   const optionIcons = [ChatsIcon,  UploadIcon, SettingsIcon];
@@ -48,6 +49,29 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
     }
   };
   
+  const handleClearAllSessions = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/delete_all_chat_sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: "1" }), // Replace with actual user ID
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        setShowDeleteMsg(false);
+        fetchUserSessions(); // Refresh the session list
+      } else {
+        console.error("Error clearing all sessions:", data.error);
+      }
+    } catch (error) {
+      console.error("Failed to clear all chat sessions:", error);
+    }
+  };
+  
 
   const renderListingContent = () => {
     switch (selectedOption) {
@@ -69,6 +93,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
                 e.stopPropagation();  // Prevent opening the session when deleting
                 setSessionToDelete(session);
                 setShowDeleteMsg(true);
+                setDeleteAll(false);
                 console.log("Delete Session:", session.session_id);
                 //handleDeleteSession(session.session_id);  // Example delete function
               }}
@@ -113,7 +138,18 @@ return(
 
 
 <div className="side-panel-lower">
-  <div className="side-panel-listing-title">{options[selectedOption]}    </div>
+<div className="side-panel-listing-title">
+  {options[selectedOption]}
+  {selectedOption === 0 && (
+    <span className="clear-all-button" onClick={() => {
+      setDeleteAll(true);
+      setShowDeleteMsg(true);
+    }}>
+      Clear All
+    </span>
+  )}
+</div>
+
   {renderListingContent()}
 </div>
 <div className="side-panel-bottom">
@@ -136,13 +172,25 @@ return(
 
 {showDeleteMsg && (
         <div className="modal-overlay" onClick={() => setShowDeleteMsg(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Are you sure?</h3>
-            <p>Do you really want to delete chat "{sessionToDelete.name}"?</p>
-            <div className="modal-buttons">
-              <button className="confirm-button" onClick={() => handleDeleteSession(sessionToDelete.session_id)}>Yes, Delete</button>
-              <button className="cancel-button" onClick={() => setShowDeleteMsg(false)}>Cancel</button>
-            </div>
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <h3>Are you sure?</h3>
+          <p>
+            {deleteAll
+              ? "Do you really want to delete all your previous chats?"
+              : `Do you really want to delete chat "${sessionToDelete?.name}"?`}
+          </p>
+          <div className="modal-buttons">
+          <button
+                className="confirm-button"
+                onClick={() =>
+                  deleteAll ? handleClearAllSessions() : handleDeleteSession(sessionToDelete.session_id)
+                }
+              >
+                Yes, Delete
+              </button>
+              <button className="cancel-button" onClick={() => setShowDeleteMsg(false)}>
+                Cancel
+              </button> </div>
           </div>
         </div>
       )}

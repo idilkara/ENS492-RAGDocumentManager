@@ -189,6 +189,19 @@ gap: var(--spacing-xxs);
   transform: scale(1.4);
 }
 
+.clear-all-button {
+  font-size: var(--font-size-sm);
+  color: red;
+  cursor: pointer;
+  margin-left: 10px;
+  text-decoration: underline;
+}
+
+.clear-all-button:hover {
+  color: darkred;
+}
+
+
 
 .modal-overlay {
   position: fixed;

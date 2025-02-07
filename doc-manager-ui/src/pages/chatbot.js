@@ -7,12 +7,18 @@ const ChatbotUI = ({ chatID, chats }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(chats[chatID] || []);
   const chatHistoryRef = useRef(null);
+  const [isSending, setIsSending] = useState(false);
+
 
   const handleSendMessage = async () => {
-    if (input.trim() === "") return;
+    if (input.trim() === "" || isSending) return;
+
+    setIsSending(true);
     
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
+
+    setInput("");
     
     try {
       const response = await axios.post("http://127.0.0.1:5000/user_query", {
@@ -53,7 +59,7 @@ const ChatbotUI = ({ chatID, chats }) => {
         { id: Date.now() + 1, text: "Sorry, there was an issue processing your request.", isBot: true },
       ]);
     }
-
+    setIsSending(false);
     setInput("");
   };
 
@@ -131,9 +137,10 @@ const ChatbotUI = ({ chatID, chats }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
+            disabled={isSending}
           />
-          <button className="send-button" onClick={handleSendMessage}>
-            Send
+          <button className="send-button" onClick={handleSendMessage} disabled={isSending}>
+            {isSending ? "Waiting..." : "Send"}
           </button>
         </div>
         <div className="feedback-link">Give us feedback!</div>
