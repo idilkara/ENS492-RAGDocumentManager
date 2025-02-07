@@ -8,6 +8,7 @@ import CreateIcon from "../assets/chat-circle-add-svgrepo-com.svg"
 import ChatsIcon from "../assets/chat-conversation-circle-svgrepo-com.svg"
 import SettingsIcon from "../assets/settings-svgrepo-com.svg"
 import UploadIcon from "../assets/upload-file-2-svgrepo-com.svg"
+import config from "../config";
 
 const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
   const [selectedOption, setSelectedOption] = useState(0);
@@ -22,7 +23,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
     if (!sessionId) return;
   
     try {
-      const response = await fetch("http://127.0.0.1:5000/delete_chat_session", {
+      const response = await fetch(`${config.API_BASE_URL}/delete_chat_session`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -51,7 +52,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
   
   const handleClearAllSessions = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/delete_all_chat_sessions", {
+      const response = await fetch(`${config.API_BASE_URL}/delete_all_chat_sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

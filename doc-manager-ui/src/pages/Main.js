@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './Main.css';
 import SidePanel from './sidepanel'; // Import the SidePanel component
 import ChatbotUI from './chatbot'; // Import the ChatbotUI component
+import config from "../config";
+
 
 const Main = () => {
   const [chatID, setChatID] = useState(null);
@@ -15,7 +17,7 @@ const Main = () => {
 
   const fetchUserSessions = async () => {
       try {
-          const response = await fetch('http://127.0.0.1:5000/get_user_sessions?user_id=1');
+        const response = await fetch(`${config.API_BASE_URL}/get_user_sessions?user_id=1`);
           const data = await response.json();
           setSessions(data);
           
@@ -42,7 +44,7 @@ const Main = () => {
 
   const createNewChatSession = async () => {
       try {
-          const response = await fetch('http://127.0.0.1:5000/create_chat_session', {
+          const response = await fetch(`${config.API_BASE_URL}/create_chat_session`, {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -69,7 +71,7 @@ const Main = () => {
 
   const fetchChatSession = async (sessionID) => {
       try {
-          const response = await fetch(`http://127.0.0.1:5000/get_chat_session?user_id=1&session_id=${sessionID}`);
+          const response = await fetch(`${config.API_BASE_URL}/get_chat_session?user_id=1&session_id=${sessionID}`);
           const data = await response.json();
           
           // Convert backend conversation to frontend message format

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import './chatbot.css';
 import axios from 'axios';
+import config from "../config";
 
 const ChatbotUI = ({ chatID, chats }) => {
   const [input, setInput] = useState('');
@@ -21,7 +22,7 @@ const ChatbotUI = ({ chatID, chats }) => {
     setInput("");
     
     try {
-      const response = await axios.post("http://127.0.0.1:5000/user_query", {
+      const response = await axios.post(`${config.API_BASE_URL}/user_query`, {
         query: input,
         user_id: '1',
         session_id: chatID
@@ -68,7 +69,7 @@ const ChatbotUI = ({ chatID, chats }) => {
     
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
+        `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
         {
           responseType: 'blob',
         }
