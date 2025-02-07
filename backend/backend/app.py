@@ -1,48 +1,25 @@
 # app.py
+# app.py
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 import os
 from flask import send_file
-from vector_store import add_document, search_query, highlight_text_in_pdf
-from session_manager import create_empty_session, get_chat_session, get_session_list
+from vector_store import add_document, search_query
+import uuid
+from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
+import gridfs
 from documents import get_document_by_id, delete_document_from_mongo
 from io import BytesIO
 from bson.objectid import ObjectId
 from config import EMBEDDING_MODEL_URL
 from langchain_ollama import ChatOllama
+import traceback
+
 
 app = Flask(__name__)
 
 app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
-
-
-# @app.after_request
-# def add_cors_headers(response):
-#     """Ensure CORS headers are present in all responses"""
-#     response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
-#     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, DELETE, PUT"
-#     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-#     response.headers["Access-Control-Allow-Credentials"] = "true"
-#     return response
-
-
-# # ✅ Explicitly handle `OPTIONS` preflight requests
-# @app.route('/<path:path>', methods=['OPTIONS'])
-# def handle_options(path):
-#     response = jsonify({"message": "Preflight OK"})
-#     response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
-#     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, DELETE, PUT"
-#     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-#     response.headers["Access-Control-Allow-Credentials"] = "true"
-#     return response, 200
-
-# CAS Auth icin
-# from flask_cas import CAS
-# CAS(app)
-
-# app.config['CAS_SERVER'] = 'https://sso.pdx.edu'
-# app.config['CAS_AFTER_LOGIN'] = 'route_root'
 
 #AAAAAAAAAAAAAAA
 # ===============================
@@ -113,11 +90,13 @@ def user_query():
     response_text = search_query(query, user_id, session_id)
     highlighted_pdf_path = response_text.get("highlighted_pdf_path")
 
-    print("ENDPOINTTE PATH:::::::::", highlighted_pdf_path)
+    print("ENDPOİNTTE GRIDFS:::::::::", response_text.get("gridfs"))
 
     return jsonify({
         "response": response_text.get("response"),
-        "highlighted_pdf_path": highlighted_pdf_path
+        "file_path": response_text.get("file_path"),
+        "highlighted_pdf_path": highlighted_pdf_path,
+        "gridfs": response_text.get("gridfs")
     })
 
 # ===============================
@@ -126,10 +105,8 @@ def user_query():
 def get_highlighted_pdf():
     pdf_path = request.args.get('file_path')
     print("istenilen path: ", pdf_path)
-
     if not pdf_path or not os.path.exists(pdf_path):
         return jsonify({"error": "File not found or expired"}), 404
-
     try:
         return send_file(
             pdf_path,
@@ -139,6 +116,7 @@ def get_highlighted_pdf():
         )
     except Exception as e:
         return jsonify({"error": f"Error serving file: {str(e)}"}), 500
+
 
 
 
@@ -230,7 +208,47 @@ def get_user_sessions():
 
     return jsonify(session_list)
 
+@app.route("/delete_chat_session", methods=["POST"])
+def delete_chat_session():
+    """
+    Delete a chat session by user_id and session_id.
+    """
+    data = request.get_json()
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")
 
+    if not user_id or not session_id:
+        return jsonify({"error": "Missing user_id or session_id"}), 400
+
+    try:
+        session_id = ObjectId(session_id)
+    except:
+        return jsonify({"error": "Invalid session_id"}), 400
+
+    # Delete session from MongoDB
+    result = chats_collection.delete_one({"user_id": user_id, "session_id": session_id})
+
+    if result.deleted_count == 0:
+        return jsonify({"error": "Chat session not found"}), 404
+
+    return jsonify({"message": "Chat session deleted successfully"}), 200
+
+@app.route("/delete_all_chat_sessions", methods=["POST"])
+def delete_all_chat_sessions():
+    """Deletes all chat sessions for a given user."""
+    data = request.get_json()
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    try:
+        # Delete all chat sessions for this user
+        chats_collection.delete_many({"user_id": user_id})
+        return jsonify({"message": "All chat sessions deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
     print("🔄 Preloading LLM Model...")

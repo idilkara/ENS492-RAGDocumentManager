@@ -1,12 +1,13 @@
 from pymongo import MongoClient
 from datetime import datetime
 from config import MONGO_URI, SESSIONS_COLLECTION, DB_NAME
-
+import uuid
 from bson import ObjectId
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 chats_collection = db[SESSIONS_COLLECTION]
+
 
 def create_empty_session(user_id):
     """

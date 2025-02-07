@@ -7,3 +7,4 @@ langchain-community
 langchain-ollama
 PyMuPDF
 pypdf
+langchain_experimental

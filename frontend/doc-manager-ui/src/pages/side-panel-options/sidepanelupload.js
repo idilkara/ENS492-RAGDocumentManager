@@ -20,7 +20,11 @@ const FileUpload = () => {
         const response = await fetch('http://localhost/api/upload', {
           method: 'POST',
           body: formData,
+          credentials: "include",  // ✅ Ensures CORS headers are applied
         });
+
+        console.log("file:",file.type);
+
 
         const result = await response.json();
         console.log('Upload result:', result);

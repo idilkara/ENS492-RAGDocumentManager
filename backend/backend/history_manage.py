@@ -35,4 +35,3 @@ def get_history(user_id, session_id):
     # Return the history as a list of dictionaries
     return session_history
 
-
