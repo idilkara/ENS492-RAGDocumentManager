@@ -121,19 +121,19 @@ def create_qa_chain(vectorstore, llm):
     """
     Creates a ConversationalRetrievalChain with strict context adherence and improved memory management.
     """
-    
+   
     # Strict prompt template that enforces using only provided context
     prompt_template = """
     You are a specialized assistant for Sabanci University that ONLY answers questions based on the provided context.
-    Use ONLY the following context and chat history to answer the question. 
+    Use ONLY the following context and chat history to answer the question.
     If the current question is related to the chat history, you may consider it for better context.
     If the current question is completely unrelated to the chat history, ignore the chat history completely and only use the provided context.
     DO NOT use any other knowledge or information.
-    Answer in the same format of the relevant document without skipping relevant parts.
-    If the context does not contain information, respond with "I cannot answer this question based on the available context."
-
+    Answer in the same format of the relevant document without skipping relevant parts, only change format if asked by the user without revealing information unavailable in context.
+    If the context and history does not contain information , respond with "I cannot answer this question based on the available context." with the exception of casual conversation.
+    You can engage in casual conversation but professionally
     Context: {context}
-    
+   
     Question: {question}
 
     Answer:"""
@@ -145,7 +145,7 @@ def create_qa_chain(vectorstore, llm):
 
     # Configure retriever with similarity search
     retriever = vectorstore.as_retriever(
-        search_type="mmr", 
+        search_type="mmr",
         search_kwargs={"k": 5, "fetch_k": 20},
     )
 
@@ -153,8 +153,8 @@ def create_qa_chain(vectorstore, llm):
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
-        #memory=memory,
-        combine_docs_chain_kwargs={"prompt": PROMPT},
+        memory=global_memory,
+        combine_docs_chain_kwargs={"output_key": "answer"},
         return_source_documents=True,
         chain_type="stuff",
         verbose=True
@@ -170,7 +170,7 @@ def search_query(query, user_id, session_id):
     """
     llm = load_model()
     qa_chain = create_qa_chain(vectorstore, llm)
-    
+   
     try:
         print(f"\nQuery: {query}")
 
@@ -182,14 +182,14 @@ def search_query(query, user_id, session_id):
             print(f"Source: {chunk.metadata.get('source')}")
             print(f"Content: {chunk.page_content[:200]}...")  # First 200 chars
 
-        
+       
         result = qa_chain.invoke({
             "question": query,
-            "chat_history": []
+            "chat_history": global_memory
         })
-        
+       
         source_docs = result.get('source_documents', [])
-        
+       
         if not source_docs:
             response = "I cannot answer this question based on the available documents."
             add_message(user_id, session_id, query, response)
@@ -197,42 +197,43 @@ def search_query(query, user_id, session_id):
                 "response": response,
                 "highlighted_pdf_path": None
             }
-        
+       
         response = result['answer']
-        
+       
         # Create highlighted PDF if relevant chunks exist
         highlighted_pdf_path = None
         if source_docs:
             mongo_id = source_docs[0].metadata.get("mongo_id")
             print(f"MongoDB document ID: {mongo_id}")
-            
+           
             if mongo_id:
                 highlighted_pdf_path = create_highlighted_pdf(mongo_id, source_docs)
                 print(f"Highlighted PDF path: {highlighted_pdf_path}")
-        
+       
         # Add the interaction to message history
         add_message(user_id, session_id, query, response)
-        
+       
         return {
             "response": str(response),
             "highlighted_pdf_path": highlighted_pdf_path if highlighted_pdf_path else None
         }
-    
+   
     except Exception as e:
         error_msg = f"Error processing query: {str(e)}"
         print(error_msg)
         traceback.print_exc()
         return {"error": error_msg}
-    
+   
 
 
-# # Update the global memory configuration
-# global_memory = ConversationBufferWindowMemory(
-#     memory_key="chat_history",
-#     return_messages=True,
-#     output_key='answer',
-#     k=2
-# )
+# Update the global memory configuration
+global_memory = ConversationBufferWindowMemory(
+    memory_key="chat_history",
+    return_messages=True,
+    input_key = 'question',
+    output_key='answer',
+    k=3
+)
 
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)

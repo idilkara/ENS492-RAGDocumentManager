@@ -237,6 +237,23 @@ def delete_chat_session():
 
     return jsonify({"message": "Chat session deleted successfully"}), 200
 
+@app.route("/delete_all_chat_sessions", methods=["POST"])
+def delete_all_chat_sessions():
+    """Deletes all chat sessions for a given user."""
+    data = request.get_json()
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    try:
+        # Delete all chat sessions for this user
+        chats_collection.delete_many({"user_id": user_id})
+        return jsonify({"message": "All chat sessions deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=5000)
