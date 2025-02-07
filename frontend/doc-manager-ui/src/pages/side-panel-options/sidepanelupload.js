@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './sidepanelupload.css'; // Import the CSS file for styling
+import config from "../../config";
 
 const FileUpload = () => {
   const [uploadStatus, setUploadStatus] = useState(null); // State to track upload success or error
@@ -17,14 +18,10 @@ const FileUpload = () => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch('http://localhost/api/upload', {
+        const response = await fetch(`${config.API_BASE_URL}/upload`, {
           method: 'POST',
           body: formData,
-          credentials: "include",  // ✅ Ensures CORS headers are applied
         });
-
-        console.log("file:",file.type);
-
 
         const result = await response.json();
         console.log('Upload result:', result);
@@ -65,4 +62,5 @@ const FileUpload = () => {
   );
 };
 
+ 
 export default FileUpload;

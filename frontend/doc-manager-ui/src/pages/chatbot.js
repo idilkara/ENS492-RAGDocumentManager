@@ -2,56 +2,65 @@ import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import './chatbot.css';
 import axios from 'axios';
+import config from "../config";
 
 const ChatbotUI = ({ chatID, chats }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(chats[chatID] || []);
   const chatHistoryRef = useRef(null);
+  const [isSending, setIsSending] = useState(false);
+
 
   const handleSendMessage = async () => {
-    if (input.trim() === "") return;
+    if (input.trim() === "" || isSending) return;
+
+    setIsSending(true);
     
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
+
+    setInput("");
     
     try {
-      const response = await axios.post("http://localhost/api/user_query", {
+      const response = await axios.post(`${config.API_BASE_URL}/user_query`, {
         query: input,
         user_id: '1',
         session_id: chatID
       });
       
       const data = response.data;
-      console.log("chatid:", chatID);
-      console.log("quet:",input);
-      console.log("response:", data);
       const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
       const highlightedPdfPath = data.highlighted_pdf_path || null;
       
-      console.log("Highlighted PDF Path:", highlightedPdfPath);
-      console.log("response:",  botResponse);
+      const botMessageId = Date.now() + 1;
 
-      
+      console.log("Highlighted PDF Path:", highlightedPdfPath);
       setMessages((prev) => [
         ...prev,
-        {
-          id: Date.now() + 1,
-          text: botResponse,
-          isBot: true,
-          pdfPath: highlightedPdfPath, // Store the temporary file path
-        },
+        { id: botMessageId, text: "", isBot: true, pdfPath: highlightedPdfPath }
       ]);
+
+      // Simulate streaming effect
+      const words = botResponse.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 50)); // Adjust speed here
+
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, text: prevMessages.find((m) => m.id === botMessageId).text + words[i] + " " }
+              : msg
+          )
+        );
+      }
     } catch (error) {
       console.error("Error sending request:", error);
       setMessages((prev) => [
         ...prev,
-        { 
-          id: Date.now() + 1, 
-          text: "Sorry, there was an issue processing your request.", 
-          isBot: true 
-        },
+        { id: Date.now() + 1, text: "Sorry, there was an issue processing your request.", isBot: true },
       ]);
     }
+    setIsSending(false);
     setInput("");
   };
 
@@ -60,7 +69,7 @@ const ChatbotUI = ({ chatID, chats }) => {
     
     try {
       const response = await axios.get(
-        `http://localhost/api/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
+        `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
         {
           responseType: 'blob',
         }
@@ -129,9 +138,10 @@ const ChatbotUI = ({ chatID, chats }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
+            disabled={isSending}
           />
-          <button className="send-button" onClick={handleSendMessage}>
-            Send
+          <button className="send-button" onClick={handleSendMessage} disabled={isSending}>
+            {isSending ? "Waiting..." : "Send"}
           </button>
         </div>
         <div className="feedback-link">Give us feedback!</div>

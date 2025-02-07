@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import './sidepanelsettings.css';
+import config from "../../config";
+
+
 const Settings = () => {
     const [theme, setTheme] = useState('Light');
   
@@ -10,9 +13,7 @@ const Settings = () => {
   
     return (
       <div className="settings-container">
-    
-
-
+  
             <label className="settings-button">Give Feedback</label>
             <label className="settings-button">Logout</label>
           

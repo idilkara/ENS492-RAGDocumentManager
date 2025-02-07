@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './sidepanelsearch.css'; // Import the CSS file for styling
+import config from "../../config";
 
 const SearchDocument = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -11,7 +12,8 @@ const SearchDocument = () => {
 
     setIsSearching(true);
     try {
-      const response = await fetch(`http://localhost/api/earch?query=${encodeURIComponent(searchQuery)}`, {
+      
+      const response = await fetch(`${config.API_BASE_URL}/search?query=${encodeURIComponent(searchQuery)}`, {
         method: 'GET',
       });
 
