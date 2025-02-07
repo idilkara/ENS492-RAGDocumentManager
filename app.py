@@ -3,7 +3,7 @@ from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 import os
 from flask import send_file
-from vector_store import add_document, search_query
+from vector_store import add_document, search_query, delete_document_vectorstore
 import uuid
 from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
 import gridfs
@@ -56,26 +56,34 @@ def upload():
 @app.route("/delete", methods=["POST"])
 def delete_document_endpoint():
     """Endpoint to delete a document."""
-    data = request.get_json()
-    file_path = data.get("file_path")
-    if not file_path:
-        return jsonify({"error": "No file path provided"}), 400
+    print("delete endpoint")
+    file_id = request.args.get('file_id')
+    print(file_id)
+    if not file_id:
+        return jsonify({"error": "No file id provided"}), 400
 
     # Delete the document from the vector store and the file system
-    delete_document_from_mongo(file_path)
-    return jsonify({"message": f"File {file_path} has been deleted."}), 200
+    delete_document_from_mongo(file_id)
+    delete_document_vectorstore(file_id)
+    
+    return jsonify({"message": f"File {file_id} has been deleted."}), 200
 
 # ===============================
+# endpoint to return the desired pdf
 @app.route('/get_pdf', methods=['GET'])
 def get_pdf():
-    file_path = request.args.get('file_path')  # File path from the query string
-    print("get_pdf file path: ", file_path)
+    file_id = request.args.get('file_id')  # File path from the query string
+    print("get_pdf file id: ", file_id)
 
-    if not file_path or not os.path.exists(file_path):
+    file = get_document_by_id(file_id)
+    if not file_id or not file:
         return jsonify({"error": "File not found"}), 404
 
     # Serve the file
-    return send_file(file_path, as_attachment=True)
+    
+    pdf_data = file.get("file_data")
+
+    return send_file(BytesIO(pdf_data), as_attachment=True, download_name=file.get("filename"), mimetype="application/pdf")
 
 # ===============================
 @app.route("/user_query", methods=["POST"])
@@ -92,7 +100,7 @@ def user_query():
     response_text = search_query(query, user_id, session_id)
     highlighted_pdf_path = response_text.get("highlighted_pdf_path")
 
-    print("ENDPOİNTTE GRIDFS:::::::::", response_text.get("gridfs"))
+    print("ENDPOİNTTE GRIDFS:::::::::", highlighted_pdf_path)
 
     return jsonify({
         "response": response_text.get("response"),

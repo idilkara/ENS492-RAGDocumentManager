@@ -66,25 +66,29 @@ def get_document_by_id(document_id):
     Retrieve a document from MongoDB by its ID.
     """
     try:
+        print(f"Raw document_id: {document_id} (Type: {type(document_id)})")
+
         if isinstance(document_id, str):
             document_id = ObjectId(document_id)
-        
+        print(f"converted document_id: {document_id} (Type: {type(document_id)})")
+
         document = documents_collection.find_one({'_id': document_id})
+
         return document if document else None
     except Exception as e:
         print(f"Error retrieving document from MongoDB: {e}")
         return None
 
 # Function to delete a document
-def delete_document_from_mongo(gridfs_id):
+def delete_document_from_mongo(id):
     try:
-        # Delete file from GridFS
-        fs.delete(gridfs_id)
+        if isinstance(id, str):
+            id = ObjectId(id)
         
         # Remove reference from documents collection
-        documents_collection.delete_one({"gridfs_id": gridfs_id})
+        documents_collection.delete_one({"_id": id})
         
-        print(f"Deleted document with GridFS ID: {gridfs_id}")
+        print(f"Deleted document with ID: {id}")
     except Exception as e:
         print(f"Error deleting document: {e}")
         raise
@@ -93,7 +97,7 @@ def delete_document_from_mongo(gridfs_id):
 def is_file_already_uploaded(filename):
     """Check if the file already exists in MongoDB."""
 
-    return db['fs.files'].find_one({"filename": filename})
+    return db['documents'].find_one({"filename": filename})
 
 
 def get_file_by_highlighted_name(id):

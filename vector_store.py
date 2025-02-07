@@ -141,21 +141,29 @@ def add_document(file_entry, replace_existing=False):
         
 
 # delete docs
-def delete_document(file_path):
-    """Delete a document from the vector store and the file system."""
-    # Remove the file from the db
-    delete_document_from_mongo(file_path)
+def delete_document_vectorstore(file_id):
+    """Delete a document from the vector store using mongo_id."""
     
-    # Remove the document from the vector store
-    document_id = None
     dblist = vectorstore.get()
-    for item in dblist['metadatas']:
-        if item['source'] == file_path:
-            document_id = item['document_id']
-            break
+    
+    document_ids_to_delete = []
 
-    if document_id:
-        vectorstore.delete_documents([document_id])
+    for metadata, doc_id in zip(dblist['metadatas'], dblist['ids']):
+        print("Metadata: ", metadata)
+        print("Document ID: ", doc_id)
+        
+        if metadata.get('mongo_id') == file_id:
+            document_ids_to_delete.append(doc_id)
+
+    if document_ids_to_delete:
+        # Delete all matching chunks from the vector store
+        for doc_id in document_ids_to_delete:
+            vectorstore.delete(doc_id)
+        print(f"Deleted {len(document_ids_to_delete)} chunks from the vector store.")
+    else:
+        print(f"No chunks found for mongo_id {file_id} in the vector store.")
+    
+
 
 #TODO : memory yi simdilik sildim eklenecek
 def create_qa_chain(vectorstore, llm):
@@ -249,7 +257,7 @@ def search_query(query, user_id, session_id):
             print(f"MongoDB document ID: {mongo_id}")
            
             if mongo_id:
-                highlighted_pdf_path = create_highlighted_pdf(mongo_id, source_docs[:2])
+                highlighted_pdf_path = pdf_highlighter.create_highlighted_pdf(mongo_id, source_docs[:2])
                 print(f"Highlighted PDF path: {highlighted_pdf_path}")
        
         # Add the interaction to message history
@@ -280,10 +288,6 @@ global_memory = ConversationBufferWindowMemory(
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
     return search_results
-
-
-def create_highlighted_pdf(mongo_id, relevant_chunks):
-    return pdf_highlighter.create_highlighted_pdf(mongo_id, relevant_chunks)
 
 
 # # highlighting the most relevant part of the pdf
