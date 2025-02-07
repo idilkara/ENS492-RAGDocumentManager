@@ -3,7 +3,7 @@ from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 import os
 from flask import send_file
-from vector_store import add_document, search_query, highlight_text_in_pdf
+from vector_store import add_document, search_query
 import uuid
 from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
 import gridfs
@@ -105,22 +105,20 @@ def user_query():
 
 @app.route('/get_highlighted_pdf', methods=['GET'])
 def get_highlighted_pdf():
-    gridfs_id = request.args.get('gridfs_id')  # GridFS ID from the query string
-    gridfs_id = ObjectId(gridfs_id)
+    pdf_path = request.args.get('file_path')
+    print("istenilen path: ", pdf_path)
+    if not pdf_path or not os.path.exists(pdf_path):
+        return jsonify({"error": "File not found or expired"}), 404
+    try:
+        return send_file(
+            pdf_path,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"highlighted_{os.path.basename(pdf_path)}"
+        )
+    except Exception as e:
+        return jsonify({"error": f"Error serving file: {str(e)}"}), 500
 
-    print("get_highlighted_pdf GridFS ID: ", gridfs_id)
-
-
-    if not gridfs_id:
-        return jsonify({"error": "GridFS ID not provided"}), 400
-
-    # Retrieve the file from GridFS
-    pdf_file = get_document_by_id(gridfs_id)
-    if pdf_file is None:
-        return jsonify({"error": "File not found"}), 404
-
-    # Serve the file
-    return send_file(BytesIO(pdf_file.read()), as_attachment=True, download_name=pdf_file.filename)
 
 
 

@@ -23,9 +23,14 @@ from session_manager import add_message
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
-from highlight_pdf_handle import TempFileManager
+from highlight_pdf_handle import TempFileManager, PDFHighlighter
+from langchain_experimental.text_splitter import SemanticChunker
+import re
+
 
 temp_file_manager = TempFileManager()
+pdf_highlighter = PDFHighlighter(temp_file_manager)
+
 
 
 # Initialize embeddings
@@ -37,6 +42,39 @@ os.makedirs(CHROMADB_DIR, exist_ok=True)
 
 # Initialize vector store
 vectorstore = Chroma(persist_directory=CHROMADB_DIR, embedding_function=embeddings)
+
+def adaptive_document_splitter(documents, max_chunk_size=1000):
+    def is_header(text):
+        return bool(re.match(r"^(\#{1,6} |\d+\. |[A-Z][A-Za-z0-9\s]+$)", text.strip()))
+    
+    adaptive_chunks = []
+    current_header = None
+    grouped_text = []
+    
+    for doc in documents:
+        lines = doc.page_content.split("\n")
+        metadata = doc.metadata.copy()
+        
+        for line in lines:
+            if is_header(line):
+                if grouped_text:
+                    chunk_text = "\n".join(grouped_text)
+                    if current_header:
+                        chunk_text = f"{current_header}\n{chunk_text}"
+                    adaptive_chunks.append(Document(page_content=chunk_text, metadata=metadata))
+                
+                current_header = line.strip()
+                grouped_text = []
+            else:
+                grouped_text.append(line)
+        
+        if grouped_text:
+            chunk_text = "\n".join(grouped_text)
+            if current_header:
+                chunk_text = f"{current_header}\n{chunk_text}"
+            adaptive_chunks.append(Document(page_content=chunk_text, metadata=metadata))
+    
+    return adaptive_chunks
 
 
 def add_document(file_entry, replace_existing=False):
@@ -59,14 +97,17 @@ def add_document(file_entry, replace_existing=False):
         if not mongo_id:
             raise Exception("Failed to store document in MongoDB")
 
-        # Load and process document for vector store
+        print("mongo_id: ", mongo_id)
+
+        # chunker = SemanticChunker(embeddings)
+
+        # Load and process document
         loader = PyPDFLoader(temp_file_path) if filename.lower().endswith('.pdf') else TextLoader(temp_file_path)
         documents = loader.load()
         print(f"Loaded {len(documents)} document(s)")
 
-        # Split into chunks
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-        text_chunks = text_splitter.split_documents(documents)
+        # Split into semantic chunks
+        text_chunks = adaptive_document_splitter(documents)
         print(f"Split into {len(text_chunks)} chunks")
 
         # Prepare documents for vector store
@@ -129,8 +170,8 @@ def create_qa_chain(vectorstore, llm):
     If the current question is related to the chat history, you may consider it for better context.
     If the current question is completely unrelated to the chat history, ignore the chat history completely and only use the provided context.
     DO NOT use any other knowledge or information.
-    Answer in the same format of the relevant document without skipping relevant parts, only change format if asked by the user without revealing information unavailable in context.
-    If the context and history does not contain information , respond with "I cannot answer this question based on the available context." with the exception of casual conversation.
+    Answer in the same format of the relevant document without skipping relevant parts.
+    If the context does not contain information, respond with "I cannot answer this question based on the available context."
     You can engage in casual conversation but professionally
     Context: {context}
    
@@ -174,13 +215,13 @@ def search_query(query, user_id, session_id):
     try:
         print(f"\nQuery: {query}")
 
-        # Get the most relevant chunks before QA
-        relevant_chunks = vectorstore.similarity_search(query, k=8)
-        print("\nRetrieved chunks:")
-        for i, chunk in enumerate(relevant_chunks):
-            print(f"\nChunk {i+1}:")
-            print(f"Source: {chunk.metadata.get('source')}")
-            print(f"Content: {chunk.page_content[:200]}...")  # First 200 chars
+        # # Get the most relevant chunks before QA
+        # relevant_chunks = vectorstore.similarity_search(query, k=8)
+        # print("\nRetrieved chunks:")
+        # for i, chunk in enumerate(relevant_chunks):
+        #     print(f"\nChunk {i+1}:")
+        #     print(f"Source: {chunk.metadata.get('source')}")
+        #     print(f"Content: {chunk.page_content[:200]}...")  # First 200 chars
 
        
         result = qa_chain.invoke({
@@ -189,7 +230,8 @@ def search_query(query, user_id, session_id):
         })
        
         source_docs = result.get('source_documents', [])
-       
+        print(len(source_docs[:2]))
+        print("source docs::::  ", source_docs[:2])
         if not source_docs:
             response = "I cannot answer this question based on the available documents."
             add_message(user_id, session_id, query, response)
@@ -207,7 +249,7 @@ def search_query(query, user_id, session_id):
             print(f"MongoDB document ID: {mongo_id}")
            
             if mongo_id:
-                highlighted_pdf_path = create_highlighted_pdf(mongo_id, source_docs)
+                highlighted_pdf_path = create_highlighted_pdf(mongo_id, source_docs[:2])
                 print(f"Highlighted PDF path: {highlighted_pdf_path}")
        
         # Add the interaction to message history
@@ -239,81 +281,83 @@ def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
     return search_results
 
+
+def create_highlighted_pdf(mongo_id, relevant_chunks):
+    return pdf_highlighter.create_highlighted_pdf(mongo_id, relevant_chunks)
+
+
 # # highlighting the most relevant part of the pdf
 # # doc.py a alinsa iyi olur
-def create_highlighted_pdf(mongo_id, relevant_chunks):
-    """
-    Creates a highlighted version of a PDF file from MongoDB document.
-    """
-    temp_original_path = None
-    try:
-        # Get document from MongoDB
-        document = get_document_by_id(mongo_id)
-        if not document:
-            print(f"Document not found in MongoDB with ID: {mongo_id}")
-            return None
+# def create_highlighted_pdf(mongo_id, relevant_chunks):
+#     """
+#     Creates a highlighted version of a PDF file from MongoDB document.
+#     """
+#     temp_original_path = None
+#     try:
+#         # Get document from MongoDB
+#         document = get_document_by_id(mongo_id)
+#         if not document:
+#             print(f"Document not found in MongoDB with ID: {mongo_id}")
+#             return None
 
-        # Create temporary file for the original PDF
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-            temp_original_path = temp_file.name
-            temp_file.write(document['file_data'])
+#         # Create temporary file for the original PDF
+#         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+#             temp_original_path = temp_file.name
+#             temp_file.write(document['file_data'])
 
-        # Generate path for highlighted PDF in temp directory
-        highlighted_pdf_path = temp_file_manager.get_temp_filepath()
+#         # Generate path for highlighted PDF in temp directory
+#         highlighted_pdf_path = temp_file_manager.get_temp_filepath()
 
-        # Highlight the relevant parts in the PDF
-        try:
-            highlight_text_in_pdf(temp_original_path, relevant_chunks, highlighted_pdf_path)
-            print(f"Created highlighted PDF at: {highlighted_pdf_path}")
-        except Exception as e:
-            print(f"Error during highlighting: {e}")
-            if os.path.exists(highlighted_pdf_path):
-                os.remove(highlighted_pdf_path)
-            return None
+#         # Highlight the relevant parts in the PDF
+#         try:
+#             highlight_text_in_pdf(temp_original_path, relevant_chunks, highlighted_pdf_path)
+#             print(f"Created highlighted PDF at: {highlighted_pdf_path}")
+#         except Exception as e:
+#             print(f"Error during highlighting: {e}")
+#             if os.path.exists(highlighted_pdf_path):
+#                 os.remove(highlighted_pdf_path)
+#             return None
 
-        # Register the highlighted PDF with the temp file manager
-        temp_file_manager.add_file(highlighted_pdf_path)
+#         # Register the highlighted PDF with the temp file manager
+#         temp_file_manager.add_file(highlighted_pdf_path)
 
-        return highlighted_pdf_path
+#         return highlighted_pdf_path
 
-    except Exception as e:
-        print(f"Error highlighting PDF: {e}")
-        traceback.print_exc()
-        return None
-    finally:
-        # Clean up temporary original file
-        if temp_original_path and os.path.exists(temp_original_path):
-            os.unlink(temp_original_path)
+#     except Exception as e:
+#         print(f"Error highlighting PDF: {e}")
+#         traceback.print_exc()
+#         return None
+#     finally:
+#         # Clean up temporary original file
+#         if temp_original_path and os.path.exists(temp_original_path):
+#             os.unlink(temp_original_path)
 
 
 
-def highlight_text_in_pdf(pdf_path, relevant_chunks, output_path):
-    print("highlight func a girdiiikkkkk")
-    if not os.path.exists(pdf_path):
-        raise FileNotFoundError(f"File not found: {pdf_path}")
+# def highlight_text_in_pdf(pdf_path, relevant_chunks, output_path):
+#     print("highlight func a girdiiikkkkk")
+#     if not os.path.exists(pdf_path):
+#         raise FileNotFoundError(f"File not found: {pdf_path}")
 
-    doc = fitz.open(pdf_path)
-    print("doc openlandi")
-    for page in doc:
-        for chunk in relevant_chunks:
-            text_instances = page.search_for(chunk.page_content)
-            for inst in text_instances:
-                # Highlight the found text
-                page.add_highlight_annot(inst)
+#     doc = fitz.open(pdf_path)
+#     print("doc openlandi")
+#     for page in doc:
+#         for chunk in relevant_chunks:
+#             text_instances = page.search_for(chunk.page_content)
+#             for inst in text_instances:
+#                 print("HIGHLIGHT PART: ", inst)
+#                 # Highlight the found text
+#                 page.add_highlight_annot(inst)
 
-    # Save the highlighted PDF to a new file
-    doc.save(output_path, garbage=4, deflate=True)
-    doc.close()
+#     # Save the highlighted PDF to a new file
+#     doc.save(output_path, garbage=4, deflate=True)
+#     doc.close()
 
-    return output_path
-
-def get_vectorstore_dblist():
-    return vectorstore.get()
-
+#     return output_path
 
 def load_model():
     """
-    Load the LLama model with strict system instructions.
+    Load the LLama model.
     """
     return ChatOllama(
         model=LLAMA_MODEL
