@@ -81,8 +81,6 @@
     background-color: var(--color-accent); /* Darker shade on hover */
     color: var(--color-background)
   }
-
-  
   
   .document-list {
     flex-grow: 1;

@@ -110,8 +110,8 @@
 }
 
 
-.side-panel-listing-element:hover{
-
+.side-panel-listing-element:hover,
+.selected-session{
   background-color: var(--color-accent);
   color:var(--color-background);
 }

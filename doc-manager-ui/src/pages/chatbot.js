@@ -4,12 +4,27 @@ import './chatbot.css';
 import axios from 'axios';
 import config from "../config";
 
-const ChatbotUI = ({ chatID, chats }) => {
+const ChatbotUI = ({ chatID, chats, fetchUserSessions }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(chats[chatID] || []);
   const chatHistoryRef = useRef(null);
   const [isSending, setIsSending] = useState(false);
 
+  const chatIdRef = useRef(chatID);
+
+useEffect(() => {
+  chatIdRef.current = chatID;
+}, [chatID]);
+
+
+    // // Effect to set initial messages
+    // useEffect(() => {
+    //   if (chatID === null || chatID === "NONE") {
+    //     setMessages([{ id: Date.now(), text: "Hello, how can I help you?", isBot: true }]);
+    //   } else {
+    //     setMessages(chats[chatID] || []);
+    //   }
+    // }, [chatID, chats]);
 
   const handleSendMessage = async () => {
     if (input.trim() === "" || isSending) return;
@@ -18,6 +33,7 @@ const ChatbotUI = ({ chatID, chats }) => {
     
     const userMessage = { id: Date.now(), text: input, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
+    
 
     setInput("");
     
@@ -28,6 +44,11 @@ const ChatbotUI = ({ chatID, chats }) => {
         session_id: chatID
       });
       
+      console.log(chats[chatID].length);
+      
+    if (chats[chatID]?.length === 0) {  //REFRESH ATIYOR SOHBET ADI SOLDA GELIYOR 
+      fetchUserSessions(); 
+    } 
       const data = response.data;
       const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
       const highlightedPdfPath = data.highlighted_pdf_path || null;
@@ -42,17 +63,23 @@ const ChatbotUI = ({ chatID, chats }) => {
 
       // Simulate streaming effect
       const words = botResponse.split(" ");
-      for (let i = 0; i < words.length; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 50)); // Adjust speed here
 
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === botMessageId
-              ? { ...msg, text: prevMessages.find((m) => m.id === botMessageId).text + words[i] + " " }
-              : msg
-          )
-        );
-      }
+
+for (let i = 0; i < words.length; i++) {
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  setMessages((prevMessages) => {
+    // Stop updating if the chatID has changed
+    if (chatIdRef.current !== chatID) return prevMessages;
+
+    return prevMessages.map((msg) =>
+      msg.id === botMessageId
+        ? { ...msg, text: (msg.text || "") + words[i] + " " }
+        : msg
+    );
+  });
+}
+
     } catch (error) {
       console.error("Error sending request:", error);
       setMessages((prev) => [
@@ -113,23 +140,32 @@ const ChatbotUI = ({ chatID, chats }) => {
     setMessages(chats[chatID] || []);
   }, [chatID, chats]);
 
+
+
   return (
     <div className="chat-interaction-container">
       <div className="chat-container">
         <div className="chat-history" ref={chatHistoryRef}>
-          {messages.map((msg) => (
-            <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
-              <ReactMarkdown>{msg.text}</ReactMarkdown>
-              {msg.isBot && msg.pdfPath && (
-                <button 
-                  className="display-button" 
-                  onClick={() => handleViewPDFClick(msg.pdfPath)}
-                >
-                  <div className="pdfLabel">View Highlighted PDF</div>
-                </button>
-              )}
+          {messages.length === 0 ? (
+            <div className="no-messages">
+              HOW CAN I HELP YOU
             </div>
-          ))}
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
+                <ReactMarkdown>{msg.text}</ReactMarkdown>
+  
+                {msg.isBot && msg.pdfPath && (
+                  <button
+                    className="display-button"
+                    onClick={() => handleViewPDFClick(msg.pdfPath)}
+                  >
+                    <div className="pdfLabel">View Highlighted PDF</div>
+                  </button>
+                )}
+              </div>
+            ))
+          )}
         </div>
         <div className="input-container">
           <textarea
@@ -144,10 +180,18 @@ const ChatbotUI = ({ chatID, chats }) => {
             {isSending ? "Waiting..." : "Send"}
           </button>
         </div>
-        <div className="feedback-link">Give us feedback!</div>
+        <div className="feedback-link">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSedQob3XPLOoiyA3sLy7jsVG0L3twcE_upSVL7ezV7NSuSVYQ/viewform?usp=header" target="_blank" rel="noopener noreferrer">
+        Give us feedback!
+      </a>
+</div>
+
       </div>
     </div>
   );
+  
+
+
 };
 
 export default ChatbotUI;

@@ -19,18 +19,23 @@ const Main = () => {
       fetchUserSessions();
   }, []);
 
+    useEffect(() => {
+        fetchUserSessions();
+    }, [chatID, chats]);
+  
+
   const fetchUserSessions = async () => {
       try {
         const response = await fetch(`${config.API_BASE_URL}/get_user_sessions?user_id=1`);
           const data = await response.json();
           setSessions(data);
           
-          if (data.length > 0) {
-              const firstSessionId = data[0].session_id;
-              setChatID(firstSessionId);
+          if (chatID > 0) {
+              //const firstSessionId = data[0].session_id;
+              setChatID(chatID);
               
               // Immediately fetch the chat history for the first session
-              await fetchChatSession(firstSessionId);
+              await fetchChatSession(chatID);
           }
       } catch (error) {
           console.error('Error fetching user sessions:', error);
@@ -45,6 +50,8 @@ const Main = () => {
           await fetchChatSession(newChatID);
       }
   };
+
+
 
   const createNewChatSession = async () => {
       try {
@@ -104,15 +111,16 @@ const Main = () => {
   const renderRightPanel = () => {
     switch (selectedOption) {
       case 0:
-        return <ChatbotUI chatID={chatID} chats={chats} />;
+        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
       case 1:
         return <DocumentManagement />;
       case 2:
-        return <ChatbotUI chatID={chatID} chats={chats} />;
+        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
       default:
-        return <ChatbotUI chatID={chatID} chats={chats} />;
+        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
     }
-};
+  };
+  
 
   return (
       <div className="main-container">

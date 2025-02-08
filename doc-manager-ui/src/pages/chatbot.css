@@ -63,6 +63,25 @@
 
 }
 
+.no-messages {
+  font-size: 28px;               /* Size of the text */
+  font-weight: bold;             /* Make the text bold */
+  color: #6c757d;                /* A gray color to make it look subtle */
+  text-align: center;            /* Center-align the text */
+  display: flex;                 /* Flexbox to center vertically and horizontally */
+  justify-content: center;       /* Center the content horizontally */
+  align-items: center;           /* Center the content vertically */
+  height: 100%;                  /* Ensure it takes the full height of its container */
+  margin: 0;                     /* Remove any default margin */
+  padding: 0;                    /* Remove any default padding */
+  max-width: 80%;                /* Ensure the message doesn't span too wide */
+  margin-left: auto;             /* Center horizontally */
+  margin-right: auto;            /* Center horizontally */
+}
+
+
+
+
 .message.bot {
   background-color:  var(--color-border); /* Light glassy color */
   color:var(--color-text); /* Contrast against background */

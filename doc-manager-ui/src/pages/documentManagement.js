@@ -7,6 +7,8 @@ const DocumentManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [documents, setDocuments] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   useEffect(() => {
     fetchDocuments();
@@ -67,10 +69,8 @@ const DocumentManagement = () => {
       const data = await response.json();
   
       if (response.ok) {
-        // On success, remove the deleted document from the list
-        const updatedDocuments = documents.filter(doc => doc.id !== selectedDocument);
-        setDocuments(updatedDocuments);
-        setSelectedDocument(null); // Clear the selection
+        setDocuments(documents.filter(doc => doc.id !== selectedDocument));
+        setSelectedDocument(null);
         console.log('Document deleted:', data.message);
       } else {
         console.error('Error deleting document:', data.error);
@@ -78,6 +78,8 @@ const DocumentManagement = () => {
     } catch (error) {
       console.error('Error deleting document:', error);
     }
+  
+    setIsModalOpen(false); // Close modal after deletion
   };
   
 
@@ -110,27 +112,28 @@ const DocumentManagement = () => {
             onChange={handleSearch}  // Handle user input for search
             className="search-input"
           />
-
+  
           <button className="view-button" onClick={fetchDocuments}>
             REFRESH
           </button>
-
+  
           <button
-          className="view-button"
-          onClick={viewDocument}  // Call the viewDocument function when clicking "VIEW"
-          disabled={!selectedDocument}  // Disable button if no document is selected
-        >  
- VIEW
- </button>
- <button
-          className="view-button"
-          onClick={deleteDocument}  // Call the deleteDocument function when clicking "DELETE"
-          disabled={!selectedDocument}  // Disable button if no document is selected
-        >
+            className="view-button"
+            onClick={viewDocument}  // Call the viewDocument function when clicking "VIEW"
+            disabled={!selectedDocument}  // Disable button if no document is selected
+          >  
+            VIEW
+          </button>
+  
+          <button
+            className="view-button"
+            onClick={() => setIsModalOpen(true)} // Show modal instead of deleting immediately
+            disabled={!selectedDocument}
+          >
             DELETE
           </button>
         </div>
-
+  
         <div className="document-list">
           {filteredDocuments.length > 0 ? (
             filteredDocuments.map(doc => (
@@ -147,8 +150,27 @@ const DocumentManagement = () => {
           )}
         </div>
       </div>
+  
+      {/* MODAL COMPONENT (Placed just before closing </div> of document-management-container) */}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this document?</p>
+            <div className="modal-buttons">
+              <button className="confirm-button" onClick={deleteDocument}>
+                Yes, Delete
+              </button>
+              <button className="cancel-button" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+  
 };
 
 export default DocumentManagement;

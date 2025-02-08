@@ -41,6 +41,8 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
         //fetchUserSessions() REFRESH ATIYOR, main.js'den geldi
 
         setShowDeleteMsg(false);
+        setChatID(null);
+
         fetchUserSessions();
       } else {
         console.error("Error deleting session:", data.error);
@@ -64,6 +66,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
   
       if (response.ok) {
         setShowDeleteMsg(false);
+        setChatID(null);
         fetchUserSessions(); // Refresh the session list
       } else {
         console.error("Error clearing all sessions:", data.error);
@@ -88,7 +91,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
   .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Sort newest first
   .map((session) => (
     <div
-      className="side-panel-listing-element" 
+    className={`side-panel-listing-element ${chatID === session.session_id ? 'selected-session' : ''}`}
       key={session.session_id}
       onClick={() => setChatID(session.session_id)}
     >
