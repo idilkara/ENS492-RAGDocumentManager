@@ -39,7 +39,6 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
       if (response.ok) {
       
         //fetchUserSessions() REFRESH ATIYOR, main.js'den geldi
-
         setShowDeleteMsg(false);
         fetchUserSessions();
       } else {
@@ -83,11 +82,17 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
               <div>New Chat</div>
               <img src={CreateIcon} alt="createicon" style={{ width: '20px', height: 'auto' }} />
             </div>
-            {sessions.map((session) => (
-              <div className="side-panel-listing-element" key={session.session_id} onClick={() => setChatID(session.session_id)}>
-                <div className="side-panel-listing-element-subtitle-container">
-                  <div>{session.name}</div> 
-                  
+            {sessions
+  .slice()
+  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Sort newest first
+  .map((session) => (
+    <div
+      className="side-panel-listing-element" 
+      key={session.session_id}
+      onClick={() => setChatID(session.session_id)}
+    >
+      <div className="side-panel-listing-element-subtitle-container">
+        <div>{session.name || "Empty Chat"}</div>
                   <button
               className="icon-button"
               onClick={(e) => {
@@ -117,8 +122,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
         return <div className="side-panel-listing">No content available for this option.</div>;
     }
   };
-
-
+  
 return(
 <div className="side-panel">
 <div className="side-panel-upper">
@@ -129,11 +133,7 @@ return(
     </div> 
 
   <div className="side-panel-title-text">Document Management System</div>
-
-
   </div>
-
-
 </div>
 
 

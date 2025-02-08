@@ -4,6 +4,8 @@ import SidePanel from './sidepanel'; // Import the SidePanel component
 import ChatbotUI from './chatbot'; // Import the ChatbotUI component
 import config from "../config";
 
+import DocumentManagement from './documentManagement.js'
+
 
 const Main = () => {
   const [chatID, setChatID] = useState(null);
@@ -108,7 +110,9 @@ const Main = () => {
               />
           </div>
           <div className="right-panel">
-              <ChatbotUI chatID={chatID} chats={chats} />
+
+                <DocumentManagement> </DocumentManagement>
+              {/* <ChatbotUI chatID={chatID} chats={chats} /> */}
           </div>
       </div>
   );
