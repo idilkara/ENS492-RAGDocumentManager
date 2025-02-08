@@ -7,7 +7,7 @@ from vector_store import add_document, search_query, delete_document_vectorstore
 import uuid
 from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
 import gridfs
-from documents import get_document_by_id, delete_document_from_mongo
+from documents import get_document_by_id, delete_document_from_mongo, documents_collection
 from io import BytesIO
 from bson.objectid import ObjectId
 
@@ -53,7 +53,7 @@ def upload():
 
 # ===============================
 #delete document
-@app.route("/delete", methods=["POST"])
+@app.route("/delete_document", methods=["POST"])
 def delete_document_endpoint():
     """Endpoint to delete a document."""
     print("delete endpoint")
@@ -69,6 +69,20 @@ def delete_document_endpoint():
     return jsonify({"message": f"File {file_id} has been deleted."}), 200
 
 # ===============================
+@app.route('/get_documents', methods=['GET'])
+def get_documents():
+    try:
+        # Fetch all documents from MongoDB
+        documents = list(documents_collection.find())
+        
+        # Prepare the documents list for the frontend (you can modify it to send only necessary fields)
+        result = [{'id': str(doc['_id']), 'name': doc['filename']} for doc in documents]
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching documents: {e}")
+        return jsonify({"error": "Failed to fetch documents"}), 500
+
 # endpoint to return the desired pdf
 @app.route('/get_pdf', methods=['GET'])
 def get_pdf():
