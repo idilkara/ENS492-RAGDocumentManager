@@ -1,0 +1,115 @@
+/* documentManagement.css */
+
+.document-management-container {
+  font-size: var(--font-size-ll);
+  font-family: Helvetica, sans-serif;
+  height: 100%;
+  width: 100%;
+  flex-shrink: 1;
+  background: var(--color-surface); /* Use surface color */
+  font-family: var(--font-family-primary); /* Smaller font size for buttons */
+  display: flex; /* Flexbox for internal layout */
+  flex-direction: column;
+  overflow-x: hidden;
+
+  }
+
+  .documents-container {
+    flex-grow: 1; /* Allow the chatbot to take all available space in its parent */
+    height: 100%; /* Ensure full height */
+    width: 99%; /* Ensure full width */
+    background-color: var(--color-background); /* Background using root variable */
+    display: flex; /* Flexbox for internal layout */
+    flex-direction: column; /* Stack elements vertically */
+  
+   margin: 5px;
+    border-radius: var(--border-radius-md); /* Rounded corners from root */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    overflow-y: auto; /* Allow scrolling for overflow */
+  }
+  
+  .document-header {
+    background-color: var(--color-surface); /* Use surface color */
+    color: var(--color-text); /* Near-white text */
+    text-align: center;
+    font-size: var(--font-size-lg); /* Large text size for the header */
+    border-top-left-radius: var(--border-radius-md);
+    border-top-right-radius: var(--border-radius-md);
+  }
+  
+
+  .search-container {
+    display: flex;
+    align-items: center; /* Align items vertically */
+    background-color: var(--color-background); /* Background using root variable */
+    padding: 0 var(--spacing-sm); /* Horizontal padding */
+    padding-bottom: 8px;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 10px;
+    font-size: var(--font-size-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    margin-top: 10px;
+  }
+
+
+  .view-button {
+    width: 100px;
+    padding: var(--spacing-xxs);
+    background-color: var(--color-primary); /* Accent color for button */
+    color: var(--color-background); /* Text color */
+    border: none;
+    border-radius: var(--border-radius-sm); /* Subtle rounding */
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition */
+    margin: var(--spacing-xxs) 0;
+    font-size: var(--font-size-md); /* Smaller font size for buttons */
+    font-weight: bold;
+    box-shadow: 0 2px 4px var(--color-background-shadow); /* Subtle shadow */
+    margin-left: var(--spacing-sm); 
+ 
+  }
+  
+  .view-button:hover {
+    background-color: var(--color-accent); /* Darker shade on hover */
+    color: var(--color-background)
+  }
+
+  
+  
+  .document-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+  }
+  
+  .document-item {
+    padding: 10px;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .document-item:last-child {
+    border-bottom: none;
+  }
+  
+  .document-item:hover {
+    background-color: var(--color-accent); /* Darker shade on hover */
+    color: var(--color-background)
+  }
+  
+  .document-item.selected {
+    background-color: var(--color-accent); /* Darker shade on hover */
+    color: var(--color-background)
+  }
+  

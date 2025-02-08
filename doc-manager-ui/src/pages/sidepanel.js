@@ -10,8 +10,8 @@ import SettingsIcon from "../assets/settings-svgrepo-com.svg"
 import UploadIcon from "../assets/upload-file-2-svgrepo-com.svg"
 import config from "../config";
 
-const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
-  const [selectedOption, setSelectedOption] = useState(0);
+const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOption, setSelectedOption }) => {
+  
   const [showDeleteMsg, setShowDeleteMsg] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [deleteAll, setDeleteAll] = useState(false);

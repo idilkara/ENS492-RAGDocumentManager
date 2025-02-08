@@ -4,11 +4,15 @@ import SidePanel from './sidepanel'; // Import the SidePanel component
 import ChatbotUI from './chatbot'; // Import the ChatbotUI component
 import config from "../config";
 
+import DocumentManagement from './documentManagement.js'
+
 
 const Main = () => {
   const [chatID, setChatID] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [chats, setChats] = useState({});
+  const [selectedOption, setSelectedOption] = useState(0);
+
 
   useEffect(() => {
       // Fetch user sessions when the component mounts
@@ -97,6 +101,19 @@ const Main = () => {
       }
   };
 
+  const renderRightPanel = () => {
+    switch (selectedOption) {
+      case 0:
+        return <ChatbotUI chatID={chatID} chats={chats} />;
+      case 1:
+        return <DocumentManagement />;
+      case 2:
+        return <ChatbotUI chatID={chatID} chats={chats} />;
+      default:
+        return <ChatbotUI chatID={chatID} chats={chats} />;
+    }
+};
+
   return (
       <div className="main-container">
           <div className="left-panel">
@@ -105,10 +122,14 @@ const Main = () => {
                   setChatID={handleChatIDChange} 
                   sessions={sessions} 
                   fetchUserSessions={fetchUserSessions}
+
+                  selectedOption={selectedOption}
+                  setSelectedOption={setSelectedOption} // Pass state setter to SidePanel
+
               />
           </div>
           <div className="right-panel">
-              <ChatbotUI chatID={chatID} chats={chats} />
+              {renderRightPanel()} 
           </div>
       </div>
   );
