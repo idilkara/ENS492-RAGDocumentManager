@@ -63,6 +63,22 @@
 
 }
 
+.no-messages {
+  font-size: var(--font-size-md);              /* Size of the text */            /* Make the text bold */
+  color: var(--color-text); /* Use near-white text */
+  text-align: left;           
+  display: flex;                 /* Flexbox to align items */
+  justify-content: flex-start; /* Align content to the left */
+  align-items: flex-end;       /* Align content at the bottom */
+  height: 100%;                  /* Ensure it takes the full height of its container */
+  margin: 0;                     /* Remove any default margin */
+  padding: 0;                    /* Remove any default padding */
+
+}
+
+
+
+
 .message.bot {
   background-color:  var(--color-border); /* Light glassy color */
   color:var(--color-text); /* Contrast against background */
@@ -132,17 +148,21 @@
 .display-button {
   padding: var(--spacing-xxs); /* Compact padding */
   background-color: var(--color-primary); /* Accent button color */
-  color: var(--color-text); /* Text color */
+  color: var(--color-background);
   border: 1px solid var(--color-border); /* Border color */
   border-radius: var(--border-radius-md); /* Subtle rounding */
   cursor: pointer;
   font-size: var(--font-size-md); /* Smaller font size for buttons */
   margin-top: var(--spacing-xxs); /* Spacing between buttons */
   display: block;
+  max-width: 250px;
+  margin-bottom:var(--spacing-xxs) ;
 }
 
 .display-button:hover {
-  background-color: rgba(20, 40, 60, 0.8); /* Slightly darker hover */
+  background-color: var(--color-accent); /* Darker shade on hover */
+  color: var(--color-background)
+
 }
 
 

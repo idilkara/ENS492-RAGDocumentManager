@@ -8,7 +8,7 @@ from vector_store import add_document, search_query
 import uuid
 from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
 import gridfs
-from documents import get_document_by_id, delete_document_from_mongo
+from documents import get_document_by_id, delete_document_from_mongo, documents_collection
 from io import BytesIO
 from bson.objectid import ObjectId
 from config import EMBEDDING_MODEL_URL
@@ -20,6 +20,7 @@ app = Flask(__name__)
 
 app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
+
 
 #AAAAAAAAAAAAAAA
 # ===============================
@@ -51,29 +52,53 @@ def upload():
 
 # ===============================
 #delete document
-@app.route("/delete", methods=["POST"])
+@app.route("/delete_document", methods=["POST"])
 def delete_document_endpoint():
     """Endpoint to delete a document."""
-    data = request.get_json()
-    file_path = data.get("file_path")
-    if not file_path:
-        return jsonify({"error": "No file path provided"}), 400
+    print("delete endpoint")
+    file_id = request.args.get('file_id')
+    print(file_id)
+    if not file_id:
+        return jsonify({"error": "No file id provided"}), 400
 
     # Delete the document from the vector store and the file system
-    delete_document_from_mongo(file_path)
-    return jsonify({"message": f"File {file_path} has been deleted."}), 200
+    delete_document_from_mongo(file_id)
+    delete_document_vectorstore(file_id)
+    
+    return jsonify({"message": f"File {file_id} has been deleted."}), 200
 
 # ===============================
+@app.route('/get_documents', methods=['GET'])
+def get_documents():
+    try:
+        print("Fetching documents from MongoDB...")
+        documents = list(documents_collection.find())
+        print(f"Fetched {len(documents)} documents.")
+        
+        result = [{'id': str(doc['_id']), 'name': doc.get('filename', 'Unknown')} for doc in documents]
+        print(f"Result: {result}")
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching documents: {e}", flush=True)
+        return jsonify({"error": str(e)}), 500
+
+
+# endpoint to return the desired pdf
 @app.route('/get_pdf', methods=['GET'])
 def get_pdf():
-    file_path = request.args.get('file_path')  # File path from the query string
-    print("get_pdf file path: ", file_path)
+    file_id = request.args.get('file_id')  # File path from the query string
+    print("get_pdf file id: ", file_id)
 
-    if not file_path or not os.path.exists(file_path):
+    file = get_document_by_id(file_id)
+    if not file_id or not file:
         return jsonify({"error": "File not found"}), 404
 
     # Serve the file
-    return send_file(file_path, as_attachment=True)
+    
+    pdf_data = file.get("file_data")
+
+    return send_file(BytesIO(pdf_data), as_attachment=True, download_name=file.get("filename"), mimetype="application/pdf")
 
 # ===============================
 @app.route("/user_query", methods=["POST"])
@@ -90,7 +115,7 @@ def user_query():
     response_text = search_query(query, user_id, session_id)
     highlighted_pdf_path = response_text.get("highlighted_pdf_path")
 
-    print("ENDPOİNTTE GRIDFS:::::::::", response_text.get("gridfs"))
+    print("ENDPOİNTTE GRIDFS:::::::::", highlighted_pdf_path)
 
     return jsonify({
         "response": response_text.get("response"),
@@ -248,9 +273,11 @@ def delete_all_chat_sessions():
         return jsonify({"message": "All chat sessions deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
     
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
     print("🔄 Preloading LLM Model...")
-    llm = ChatOllama(model="mistral:latest", base_url= EMBEDDING_MODEL_URL )
+    llm = ChatOllama(model="deepseek-r1:1.5b", base_url= EMBEDDING_MODEL_URL )
     print("✅ LLM Model Preloaded!")

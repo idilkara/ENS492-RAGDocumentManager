@@ -15,4 +15,4 @@ EMBEDDING_MODEL_URL = os.getenv('EMBEDDING_MODEL_URL', 'http://ollama:11434/v1/c
 EMBEDDING_MODEL_NAME = os.getenv('EMBEDDING_MODEL_NAME', 'nomic-embed-text')
 
 # Llama Model
-LLAMA_MODEL = os.getenv('LLAMA_MODEL', 'mistral')  # Now configurable from env
+LLAMA_MODEL = os.getenv('LLAMA_MODEL', 'deepseek-r1:1.5b')  # Now configurable from env

@@ -58,7 +58,7 @@ services:
       - CHROMADB_URL=http://chromadb:8000  # Backend connects to ChromaDB
       - EMBEDDING_MODEL_URL=http://ollama:11434 
       - EMBEDDING_MODEL_NAME=nomic-embed-text
-      - LLAMA_MODEL=mistral
+      - LLAMA_MODEL=deepseek-r1:1.5b
     networks:
       - app_network
 

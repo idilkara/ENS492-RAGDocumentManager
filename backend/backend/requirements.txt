@@ -8,3 +8,4 @@ langchain-ollama
 PyMuPDF
 pypdf
 langchain_experimental
+fastapi

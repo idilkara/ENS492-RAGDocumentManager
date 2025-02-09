@@ -10,13 +10,13 @@ import SettingsIcon from "../assets/settings-svgrepo-com.svg"
 import UploadIcon from "../assets/upload-file-2-svgrepo-com.svg"
 import config from "../config";
 
-const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
-  const [selectedOption, setSelectedOption] = useState(0);
+const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOption, setSelectedOption }) => {
+  
   const [showDeleteMsg, setShowDeleteMsg] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [deleteAll, setDeleteAll] = useState(false);
 
-  const options = ["Chats", "Upload a document", "Settings"];
+  const options = ["Chats", "Manage Documents", "Settings"];
   const optionIcons = [ChatsIcon,  UploadIcon, SettingsIcon];
 
   const handleDeleteSession = async (sessionId) => {
@@ -39,7 +39,10 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
       if (response.ok) {
       
         //fetchUserSessions() REFRESH ATIYOR, main.js'den geldi
+
         setShowDeleteMsg(false);
+        setChatID(null);
+
         fetchUserSessions();
       } else {
         console.error("Error deleting session:", data.error);
@@ -63,6 +66,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
   
       if (response.ok) {
         setShowDeleteMsg(false);
+        setChatID(null);
         fetchUserSessions(); // Refresh the session list
       } else {
         console.error("Error clearing all sessions:", data.error);
@@ -87,12 +91,12 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions }) => {
   .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Sort newest first
   .map((session) => (
     <div
-      className="side-panel-listing-element" 
+    className={`side-panel-listing-element ${chatID === session.session_id ? 'selected-session' : ''}`}
       key={session.session_id}
       onClick={() => setChatID(session.session_id)}
     >
       <div className="side-panel-listing-element-subtitle-container">
-        <div>{session.name || "Empty Chat"}</div>
+        <div className="side-panel-text" > {session.name || "Empty Chat"}</div>
                   <button
               className="icon-button"
               onClick={(e) => {
@@ -133,7 +137,11 @@ return(
     </div> 
 
   <div className="side-panel-title-text">Document Management System</div>
+
+
   </div>
+
+
 </div>
 
 

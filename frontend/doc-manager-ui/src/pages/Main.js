@@ -11,11 +11,18 @@ const Main = () => {
   const [chatID, setChatID] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [chats, setChats] = useState({});
+  const [selectedOption, setSelectedOption] = useState(0);
+
 
   useEffect(() => {
       // Fetch user sessions when the component mounts
       fetchUserSessions();
   }, []);
+
+    useEffect(() => {
+        fetchUserSessions();
+    }, [chatID, chats]);
+  
 
   const fetchUserSessions = async () => {
       try {
@@ -23,12 +30,12 @@ const Main = () => {
           const data = await response.json();
           setSessions(data);
           
-          if (data.length > 0) {
-              const firstSessionId = data[0].session_id;
-              setChatID(firstSessionId);
+          if (chatID > 0) {
+              //const firstSessionId = data[0].session_id;
+              setChatID(chatID);
               
               // Immediately fetch the chat history for the first session
-              await fetchChatSession(firstSessionId);
+              await fetchChatSession(chatID);
           }
       } catch (error) {
           console.error('Error fetching user sessions:', error);
@@ -43,6 +50,8 @@ const Main = () => {
           await fetchChatSession(newChatID);
       }
   };
+
+
 
   const createNewChatSession = async () => {
       try {
@@ -99,6 +108,20 @@ const Main = () => {
       }
   };
 
+  const renderRightPanel = () => {
+    switch (selectedOption) {
+      case 0:
+        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
+      case 1:
+        return <DocumentManagement />;
+      case 2:
+        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
+      default:
+        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
+    }
+  };
+  
+
   return (
       <div className="main-container">
           <div className="left-panel">
@@ -107,12 +130,14 @@ const Main = () => {
                   setChatID={handleChatIDChange} 
                   sessions={sessions} 
                   fetchUserSessions={fetchUserSessions}
+
+                  selectedOption={selectedOption}
+                  setSelectedOption={setSelectedOption} // Pass state setter to SidePanel
+
               />
           </div>
           <div className="right-panel">
-
-                <DocumentManagement> </DocumentManagement>
-              {/* <ChatbotUI chatID={chatID} chats={chats} /> */}
+              {renderRightPanel()} 
           </div>
       </div>
   );

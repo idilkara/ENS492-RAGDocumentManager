@@ -1,15 +1,15 @@
-// App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Main from './pages/Main'; // Adjust the path if your `main.js` is located elsewhere
+import Login from './pages/LoginPage'; // Import the Login page
+import Main from './pages/Main'; // Import the Main UI
 import './root.css';
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Route to the main chatbot UI */}
-        <Route path="/" element={<Main />} />
+        <Route path="/" element={<Login />} /> {/* Default route -> Login */}
+        <Route path="/main" element={<Main />} /> {/* Chatbot UI */}
       </Routes>
     </Router>
   );

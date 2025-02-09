@@ -1,0 +1,45 @@
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: var(--color-border); /* Use surface color */
+    text-align: center;
+    background-image: url('../assets/ucentersabanci.jpg'); /* Adjust path as needed */
+    background-size: cover; /* Makes sure the image covers the whole screen */
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.login-mini-container {
+    background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+    backdrop-filter: blur(10px); /* Blurs the background */
+    padding: 40px;
+    border-radius: 15px;
+    margin-bottom: 150px;
+    text-align: center;
+    max-width: 800px; /* Adjust width as needed */
+    width: 90%; /* Responsive */
+}
+
+h1 {
+    
+  font-family: Helvetica, sans-serif;
+    margin-bottom: 20px;
+}
+
+.login-button {
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    font-family: Helvetica, sans-serif;
+    background-color: var(--color-surface); /* Near-white text */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.login-button:hover {
+    background-color: var(--color-primary);
+}
