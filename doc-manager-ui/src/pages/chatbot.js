@@ -17,15 +17,6 @@ useEffect(() => {
 }, [chatID]);
 
 
-    // // Effect to set initial messages
-    // useEffect(() => {
-    //   if (chatID === null || chatID === "NONE") {
-    //     setMessages([{ id: Date.now(), text: "Hello, how can I help you?", isBot: true }]);
-    //   } else {
-    //     setMessages(chats[chatID] || []);
-    //   }
-    // }, [chatID, chats]);
-
   const handleSendMessage = async () => {
     if (input.trim() === "" || isSending) return;
 
@@ -147,9 +138,11 @@ for (let i = 0; i < words.length; i++) {
       <div className="chat-container">
         <div className="chat-history" ref={chatHistoryRef}>
           {messages.length === 0 ? (
-            <div className="no-messages">
-              HOW CAN I HELP YOU
-            </div>
+          
+
+              <div  className="message bot">
+             <ReactMarkdown>Hello! Let me know what you're curious about, and I'll find the relevant documents for you. How can I help you?</ReactMarkdown> 
+              </div>
           ) : (
             messages.map((msg) => (
               <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>

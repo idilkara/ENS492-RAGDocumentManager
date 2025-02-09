@@ -14,26 +14,25 @@
 .side-panel-upper {
   flex: 0 0 auto; /* Keep the upper section fixed at the top */
   text-align: center;
-  margin-bottom: var(--spacing-xs); /* Space below the title */
+  margin-bottom: var(--spacing-xxs);
 }
 
 .side-panel-title {
   
   color: var(--color-text);
-  padding: var(--spacing-xs);
+  padding: var(--spacing-xxs);
   border-radius: var(--border-radius-md);
-  margin-bottom:10px;
   background-color: var(--color-border); /* Accent color for emphasis */
   box-shadow: 0 2px 0px 0 var(--color-background-shadow); /* Subtle shadow */
 }
 
 .side-panel-title-text {
-  font-size: var(--font-size-lg); /* Use defined large size */
+  font-size: var(--font-size-md); /* Use defined large size */
   font-weight: bold;
   margin: 0;
-  text-align: left;
+  text-align: center;
   color: var(--color-text);
-  padding: var(--spacing-xs);
+  padding: var(--spacing-xxs);
   border-radius: var(--border-radius-md);
 
   background-color: var(--color-border); /* Accent color for emphasis */
@@ -64,28 +63,43 @@
 
 
 .side-panel-listing-element {
+
+  
   color: var( --color-text);
   background-color: var(--color-border); /* Use a subdued background */
-  padding: var(--spacing-xs); /* Compact spacing */
+   /* padding: var(--spacing-xxs);Compact spacing */
+  padding-left: var(--spacing-xs); /* Compact spacing */
+  padding-right: var(--spacing-xxs); /* Compact spacing */
+
   border-radius: var(--border-radius-md); /* Consistent rounding */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-  font-size: var(--font-size-md); /* Use small font size for compactness */
+  font-size: var(--font-size-sm); /* Use small font size for compactness */
   margin: var(--spacing-xxs); /* Space between chat title and references */
+
+
+  align-items: center; /* Vertically align items */
+
 }
 
 .side-panel-listing-element-subtitle-container {
   display: flex;
   justify-content: space-between; /* Push items to edges */
   align-items: center; /* Vertically align items */
-  margin-bottom: var(--spacing-xxs); 
+
+
+}
+
+.side-panel-text {
+  flex: 1; /* Allow text to take available space */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .side-panel-listing-createchat{
   display: flex;
   justify-content: space-between; /* Push items to edges */
   align-items: center; /* Vertically align items */
-
-
   font-weight:bold;
   background-color: var(--color-border); /* Use a subdued background */
   padding: var(--spacing-xs); /* Compact spacing */
@@ -131,8 +145,7 @@
 .side-panel-bottom {
   text-align: left;
   flex: 0 0 auto; /* Fixed height for the bottom section */
-  margin-top: auto; /* Push this section to the bottom */
-  padding-bottom: var(--spacing-xs); /* Add padding around the bottom section */
+
 }
 
 .side-panel-options {

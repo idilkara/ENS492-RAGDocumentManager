@@ -64,19 +64,16 @@
 }
 
 .no-messages {
-  font-size: 28px;               /* Size of the text */
-  font-weight: bold;             /* Make the text bold */
-  color: #6c757d;                /* A gray color to make it look subtle */
-  text-align: center;            /* Center-align the text */
-  display: flex;                 /* Flexbox to center vertically and horizontally */
-  justify-content: center;       /* Center the content horizontally */
-  align-items: center;           /* Center the content vertically */
+  font-size: var(--font-size-md);              /* Size of the text */            /* Make the text bold */
+  color: var(--color-text); /* Use near-white text */
+  text-align: left;           
+  display: flex;                 /* Flexbox to align items */
+  justify-content: flex-start; /* Align content to the left */
+  align-items: flex-end;       /* Align content at the bottom */
   height: 100%;                  /* Ensure it takes the full height of its container */
   margin: 0;                     /* Remove any default margin */
   padding: 0;                    /* Remove any default padding */
-  max-width: 80%;                /* Ensure the message doesn't span too wide */
-  margin-left: auto;             /* Center horizontally */
-  margin-right: auto;            /* Center horizontally */
+
 }
 
 

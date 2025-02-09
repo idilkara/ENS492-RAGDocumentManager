@@ -16,7 +16,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [deleteAll, setDeleteAll] = useState(false);
 
-  const options = ["Chats", "Upload a document", "Settings"];
+  const options = ["Chats", "Manage Documents", "Settings"];
   const optionIcons = [ChatsIcon,  UploadIcon, SettingsIcon];
 
   const handleDeleteSession = async (sessionId) => {
@@ -96,7 +96,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
       onClick={() => setChatID(session.session_id)}
     >
       <div className="side-panel-listing-element-subtitle-container">
-        <div>{session.name || "Empty Chat"}</div>
+        <div className="side-panel-text" > {session.name || "Empty Chat"}</div>
                   <button
               className="icon-button"
               onClick={(e) => {
