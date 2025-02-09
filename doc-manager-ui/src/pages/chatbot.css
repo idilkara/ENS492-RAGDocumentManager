@@ -148,17 +148,21 @@
 .display-button {
   padding: var(--spacing-xxs); /* Compact padding */
   background-color: var(--color-primary); /* Accent button color */
-  color: var(--color-text); /* Text color */
+  color: var(--color-background);
   border: 1px solid var(--color-border); /* Border color */
   border-radius: var(--border-radius-md); /* Subtle rounding */
   cursor: pointer;
   font-size: var(--font-size-md); /* Smaller font size for buttons */
   margin-top: var(--spacing-xxs); /* Spacing between buttons */
   display: block;
+  max-width: 200px;
+  margin-bottom:var(--spacing-xxs) ;
 }
 
 .display-button:hover {
-  background-color: rgba(17, 210, 0, 0.8); /* Slightly darker hover */
+  background-color: var(--color-accent); /* Darker shade on hover */
+  color: var(--color-background)
+
 }
 
 

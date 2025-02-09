@@ -153,7 +153,7 @@ for (let i = 0; i < words.length; i++) {
                     className="display-button"
                     onClick={() => handleViewPDFClick(msg.pdfPath)}
                   >
-                    <div className="pdfLabel">View Highlighted PDF</div>
+                    <div className="pdfLabel">View referenced document</div>
                   </button>
                 )}
               </div>
