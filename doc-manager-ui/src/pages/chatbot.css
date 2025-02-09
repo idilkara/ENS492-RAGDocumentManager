@@ -155,7 +155,7 @@
   font-size: var(--font-size-md); /* Smaller font size for buttons */
   margin-top: var(--spacing-xxs); /* Spacing between buttons */
   display: block;
-  max-width: 200px;
+  max-width: 250px;
   margin-bottom:var(--spacing-xxs) ;
 }
 
