@@ -25,17 +25,24 @@ def add_document_to_mongo(file_data, filename, metadata=None):
     """
 
     try:
+        # Check if a document with the same filename exists
+        if documents_collection.find_one({"filename": filename}):
+            raise ValueError(f"A document with the filename '{filename}' already exists.")
+
         document = {
-            'filename': filename,
-            'file_data': file_data,  # Binary PDF data
-            'metadata': metadata or {}
+            "filename": filename,
+            "file_data": file_data,  # Binary PDF data
+            "metadata": metadata or {},
         }
         result = documents_collection.insert_one(document)
         return str(result.inserted_id)
+
+    except ValueError as ve:
+        print(f"Validation Error: {ve}")
+        raise  # Re-raise the error so it can be handled by the caller
     except Exception as e:
         print(f"Error storing document in MongoDB: {e}")
         return None
-
 
 # Function to list all documents with full details
 def list_documents():

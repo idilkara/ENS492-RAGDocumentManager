@@ -74,38 +74,8 @@ class SessionMemoryManager:
 memory_manager = SessionMemoryManager()
 
 
-def adaptive_document_splitter(documents, max_chunk_size=1000):
-    def is_header(text):
-        return bool(re.match(r"^(\#{1,6} |\d+\. |[A-Z][A-Za-z0-9\s]+$)", text.strip()))
-    
-    adaptive_chunks = []
-    current_header = None
-    grouped_text = []
-    
-    for doc in documents:
-        lines = doc.page_content.split("\n")
-        metadata = doc.metadata.copy()
-        
-        for line in lines:
-            if is_header(line):
-                if grouped_text:
-                    chunk_text = "\n".join(grouped_text)
-                    if current_header:
-                        chunk_text = f"{current_header}\n{chunk_text}"
-                    adaptive_chunks.append(Document(page_content=chunk_text, metadata=metadata))
-                
-                current_header = line.strip()
-                grouped_text = []
-            else:
-                grouped_text.append(line)
-        
-        if grouped_text:
-            chunk_text = "\n".join(grouped_text)
-            if current_header:
-                chunk_text = f"{current_header}\n{chunk_text}"
-            adaptive_chunks.append(Document(page_content=chunk_text, metadata=metadata))
-    
-    return adaptive_chunks
+
+
 
 
 def add_document(file_entry, replace_existing=False):               # app.py / upload()
@@ -128,13 +98,18 @@ def add_document(file_entry, replace_existing=False):               # app.py / u
             print(f"Temporary file created at: {temp_file_path}")
 
         # Store in MongoDB
-        try:
-            mongo_id = add_document_to_mongo(file_data, filename)
-            if not mongo_id:
-                raise Exception("Failed to store document in MongoDB")
-            print(f"Successfully stored in MongoDB with ID: {mongo_id}")
-        except Exception as mongo_error:
-            raise Exception(f"MongoDB storage failed: {str(mongo_error)}")
+        # TODO: ikisinden birinde hata varsa ikisini de yapma
+        mongo_id = add_document_to_mongo(file_data, filename)
+        if not mongo_id:
+            raise Exception("Failed to store document in MongoDB")
+
+        print("mongo_id: ", mongo_id)
+
+        chunker = RecursiveCharacterTextSplitter(
+                        chunk_size=1000,  # Adjust based on document size
+                        chunk_overlap=200,  # Small overlap to retain context
+                        separators=["\n\n", "\n", " ", ""],  # Ensures sentence-level breaks
+                    )
 
         # Load and process document
         try:
@@ -145,11 +120,9 @@ def add_document(file_entry, replace_existing=False):               # app.py / u
             raise Exception(f"Document loading failed: {str(loader_error)}")
 
         # Split into semantic chunks
-        try:
-            text_chunks = adaptive_document_splitter(documents)
-            print(f"Successfully split into {len(text_chunks)} chunks")
-        except Exception as splitter_error:
-            raise Exception(f"Document splitting failed: {str(splitter_error)}")
+        
+        text_chunks = (chunker.split_documents(documents))
+        print(f"Split into {len(text_chunks)} chunks")
 
         # Prepare documents for vector store
         try:
@@ -167,6 +140,10 @@ def add_document(file_entry, replace_existing=False):               # app.py / u
             print(f"Prepared {len(vector_documents)} documents for vector store")
         except Exception as prep_error:
             raise Exception(f"Vector document preparation failed: {str(prep_error)}")
+
+        for i in vector_documents:
+            print("CHUNK ############################ \n", i)
+
 
         # Add to vector store
         try:
@@ -219,8 +196,8 @@ def delete_document_vectorstore(file_id):
     document_ids_to_delete = []
 
     for metadata, doc_id in zip(dblist['metadatas'], dblist['ids']):
-        print("Metadata: ", metadata)
-        print("Document ID: ", doc_id)
+        # print("Metadata: ", metadata)
+        # print("Document ID: ", doc_id)
         
         if metadata.get('mongo_id') == file_id:
             document_ids_to_delete.append(doc_id)
@@ -314,14 +291,6 @@ def search_query(query, user_id, session_id):
     try:
         print(f"\nQuery: {query}")
 
-        # # Get the most relevant chunks before QA
-        # relevant_chunks = vectorstore.similarity_search(query, k=8)
-        # print("\nRetrieved chunks:")
-        # for i, chunk in enumerate(relevant_chunks):
-        #     print(f"\nChunk {i+1}:")
-        #     print(f"Source: {chunk.metadata.get('source')}")
-        #     print(f"Content: {chunk.page_content[:200]}...")  # First 200 chars
-
         result = qa_chain.invoke({
             "question": query,
             #"chat_history": memory_manager.get_memory(session_id)
@@ -329,7 +298,7 @@ def search_query(query, user_id, session_id):
         print(f"[DEBUG] Query execution complete. Raw response: {result}")
 
         source_docs = result.get('source_documents', [])
-        print(len(source_docs[:2]))
+        print(len(source_docs[:1]))
         print("source docs::::  ", source_docs[:2])
         if not source_docs:
             response = "I cannot answer this question based on the available documents."
@@ -374,7 +343,7 @@ global_memory = ConversationBufferWindowMemory(
     return_messages=True,
     input_key = 'question',
     output_key='answer',
-    k=3
+    k=0
 )
 """
 
@@ -382,6 +351,11 @@ global_memory = ConversationBufferWindowMemory(
  #   search_results = vectorstore.similarity_search(query)
  #   return search_results
 
+
+
+def get_most_relevant_chunks(query):
+    search_results = vectorstore.similarity_search(query)
+    return search_results
 
 
 def load_model():
