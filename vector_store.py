@@ -26,6 +26,8 @@ from langchain.prompts import PromptTemplate
 from highlight_pdf_handle import TempFileManager, PDFHighlighter
 from langchain_experimental.text_splitter import SemanticChunker
 import re
+from typing import Dict
+
 
 
 temp_file_manager = TempFileManager()
@@ -42,6 +44,35 @@ os.makedirs(CHROMADB_DIR, exist_ok=True)
 
 # Initialize vector store
 vectorstore = Chroma(persist_directory=CHROMADB_DIR, embedding_function=embeddings)
+
+class SessionMemoryManager:
+    def __init__(self):
+        self.sessions: Dict[str, ConversationBufferWindowMemory] = {}
+    
+    def get_memory(self, session_id: str) -> ConversationBufferWindowMemory:
+        """Get or create memory for a specific session"""
+        if session_id not in self.sessions:
+            self.sessions[session_id] = ConversationBufferWindowMemory(
+                memory_key="chat_history",
+                return_messages=True,
+                input_key='question',
+                output_key='answer',
+                k=3  # Keep last 3 messages
+            )
+        return self.sessions[session_id]
+    
+    def clear_memory(self, session_id: str) -> None:
+        """Clear memory for a specific session"""
+        if session_id in self.sessions:
+            del self.sessions[session_id]
+    
+    def clear_all_memories(self) -> None:
+        """Clear all session memories"""
+        self.sessions.clear()
+
+# Initialize the session memory manager
+memory_manager = SessionMemoryManager()
+
 
 def adaptive_document_splitter(documents, max_chunk_size=1000):
     def is_header(text):
@@ -77,66 +108,105 @@ def adaptive_document_splitter(documents, max_chunk_size=1000):
     return adaptive_chunks
 
 
-def add_document(file_entry, replace_existing=False):
+def add_document(file_entry, replace_existing=False):               # app.py / upload()
+                                                                    # replace_existing parameter will be modified after getting changes to frontend
     """
     Adds a document to the vector store and MongoDB.
     """
     file_data = file_entry["file_data"]
     filename = file_entry["filename"]
-    print("Processing document: " + filename)
+    print(f"Starting to process document: {filename}")
+    
     temp_file_path = None
+    mongo_id = None
 
     try:
         # Create temporary file to process the PDF
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
             temp_file_path = temp_file.name
             temp_file.write(file_data)
+            print(f"Temporary file created at: {temp_file_path}")
 
         # Store in MongoDB
-        mongo_id = add_document_to_mongo(file_data, filename)
-        if not mongo_id:
-            raise Exception("Failed to store document in MongoDB")
-
-        print("mongo_id: ", mongo_id)
-
-        # chunker = SemanticChunker(embeddings)
+        try:
+            mongo_id = add_document_to_mongo(file_data, filename)
+            if not mongo_id:
+                raise Exception("Failed to store document in MongoDB")
+            print(f"Successfully stored in MongoDB with ID: {mongo_id}")
+        except Exception as mongo_error:
+            raise Exception(f"MongoDB storage failed: {str(mongo_error)}")
 
         # Load and process document
-        loader = PyPDFLoader(temp_file_path) if filename.lower().endswith('.pdf') else TextLoader(temp_file_path)
-        documents = loader.load()
-        print(f"Loaded {len(documents)} document(s)")
+        try:
+            loader = PyPDFLoader(temp_file_path) if filename.lower().endswith('.pdf') else TextLoader(temp_file_path)
+            documents = loader.load()
+            print(f"Successfully loaded {len(documents)} document(s)")
+        except Exception as loader_error:
+            raise Exception(f"Document loading failed: {str(loader_error)}")
 
         # Split into semantic chunks
-        text_chunks = adaptive_document_splitter(documents)
-        print(f"Split into {len(text_chunks)} chunks")
+        try:
+            text_chunks = adaptive_document_splitter(documents)
+            print(f"Successfully split into {len(text_chunks)} chunks")
+        except Exception as splitter_error:
+            raise Exception(f"Document splitting failed: {str(splitter_error)}")
 
         # Prepare documents for vector store
-        vector_documents = [
-            Document(
-                page_content=chunk.page_content,
-                metadata={
-                    "source": filename,
-                    "mongo_id": mongo_id,
-                    "temp_path": temp_file_path
-                }
-            )
-            for chunk in text_chunks
-        ]
+        try:
+            vector_documents = [
+                Document(
+                    page_content=chunk.page_content,
+                    metadata={
+                        "source": filename,
+                        "mongo_id": str(mongo_id),  # Ensure mongo_id is string
+                        "temp_path": temp_file_path
+                    }
+                )
+                for chunk in text_chunks
+            ]
+            print(f"Prepared {len(vector_documents)} documents for vector store")
+        except Exception as prep_error:
+            raise Exception(f"Vector document preparation failed: {str(prep_error)}")
 
         # Add to vector store
-        vectorstore.add_documents(vector_documents)
-        print(f"Added {len(vector_documents)} documents to vector store")
+        try:
+            vectorstore.add_documents(vector_documents)
+            print(f"Successfully added {len(vector_documents)} documents to vector store")
+        except Exception as vector_error:
+            raise Exception(f"Vector store upload failed: {str(vector_error)}")
 
-        return {"message": f"File '{filename}' uploaded successfully", "mongo_id": mongo_id}
+        return {
+            "success": True,
+            "message": f"File '{filename}' uploaded successfully",
+            "mongo_id": str(mongo_id)
+        }
 
     except Exception as e:
-        print(f"Error processing document: {str(e)}")
+        error_message = f"Error processing document: {str(e)}"
+        print(error_message)
         traceback.print_exc()
-        return {"error": str(e)}
+        
+        # If MongoDB upload succeeded but vector store failed, you might want to clean up
+        if mongo_id:
+            try:
+                # Add cleanup code here if needed
+                print(f"Cleaning up MongoDB document {mongo_id} due to vector store failure")
+                # delete_from_mongo(mongo_id)  # Uncomment if you want to delete failed uploads
+            except Exception as cleanup_error:
+                print(f"Cleanup failed: {str(cleanup_error)}")
+        
+        return {
+            "success": False,
+            "error": error_message
+        }
     finally:
         # Clean up temporary file
         if temp_file_path and os.path.exists(temp_file_path):
-            os.unlink(temp_file_path)
+            try:
+                os.unlink(temp_file_path)
+                print(f"Temporary file cleaned up: {temp_file_path}")
+            except Exception as cleanup_error:
+                print(f"Failed to clean up temporary file: {str(cleanup_error)}")
 
         
 
@@ -166,7 +236,7 @@ def delete_document_vectorstore(file_id):
 
 
 #TODO : memory yi simdilik sildim eklenecek
-def create_qa_chain(vectorstore, llm):
+def create_qa_chain(vectorstore, llm, session_id: str):
     """
     Creates a ConversationalRetrievalChain with enhanced prompt template for more specific responses.
     """
@@ -204,6 +274,8 @@ def create_qa_chain(vectorstore, llm):
         input_variables=["chat_history", "question"]
     )
 
+    session_memory = memory_manager.get_memory(session_id)
+
     # Configure retriever for more focused search
     retriever = vectorstore.as_retriever(
         search_type="mmr",
@@ -217,7 +289,7 @@ def create_qa_chain(vectorstore, llm):
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
-        memory=global_memory,
+        memory=session_memory,
         combine_docs_chain_kwargs={
             "prompt": qa_prompt,
             "output_key": "answer"
@@ -237,7 +309,7 @@ def search_query(query, user_id, session_id):
     Query the vector store and return results with highlighted PDFs.
     """
     llm = load_model()
-    qa_chain = create_qa_chain(vectorstore, llm)
+    qa_chain = create_qa_chain(vectorstore, llm, session_id)
 
     try:
         print(f"\nQuery: {query}")
@@ -250,11 +322,11 @@ def search_query(query, user_id, session_id):
         #     print(f"Source: {chunk.metadata.get('source')}")
         #     print(f"Content: {chunk.page_content[:200]}...")  # First 200 chars
 
-
         result = qa_chain.invoke({
             "question": query,
-            "chat_history": global_memory
+            #"chat_history": memory_manager.get_memory(session_id)
         })
+        print(f"[DEBUG] Query execution complete. Raw response: {result}")
 
         source_docs = result.get('source_documents', [])
         print(len(source_docs[:2]))
@@ -268,6 +340,7 @@ def search_query(query, user_id, session_id):
             }
 
         response = result['answer']
+        print(f"[DEBUG] Final response to user: {response}")
 
         # Create highlighted PDF if relevant chunks exist
         highlighted_pdf_path = None
@@ -294,7 +367,7 @@ def search_query(query, user_id, session_id):
         return {"error": error_msg}
 
 
-
+"""
 # Update the global memory configuration
 global_memory = ConversationBufferWindowMemory(
     memory_key="chat_history",
@@ -303,80 +376,13 @@ global_memory = ConversationBufferWindowMemory(
     output_key='answer',
     k=3
 )
+"""
 
-def get_most_relevant_chunks(query):
-    search_results = vectorstore.similarity_search(query)
-    return search_results
-
-
-# # highlighting the most relevant part of the pdf
-# # doc.py a alinsa iyi olur
-# def create_highlighted_pdf(mongo_id, relevant_chunks):
-#     """
-#     Creates a highlighted version of a PDF file from MongoDB document.
-#     """
-#     temp_original_path = None
-#     try:
-#         # Get document from MongoDB
-#         document = get_document_by_id(mongo_id)
-#         if not document:
-#             print(f"Document not found in MongoDB with ID: {mongo_id}")
-#             return None
-
-#         # Create temporary file for the original PDF
-#         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-#             temp_original_path = temp_file.name
-#             temp_file.write(document['file_data'])
-
-#         # Generate path for highlighted PDF in temp directory
-#         highlighted_pdf_path = temp_file_manager.get_temp_filepath()
-
-#         # Highlight the relevant parts in the PDF
-#         try:
-#             highlight_text_in_pdf(temp_original_path, relevant_chunks, highlighted_pdf_path)
-#             print(f"Created highlighted PDF at: {highlighted_pdf_path}")
-#         except Exception as e:
-#             print(f"Error during highlighting: {e}")
-#             if os.path.exists(highlighted_pdf_path):
-#                 os.remove(highlighted_pdf_path)
-#             return None
-
-#         # Register the highlighted PDF with the temp file manager
-#         temp_file_manager.add_file(highlighted_pdf_path)
-
-#         return highlighted_pdf_path
-
-#     except Exception as e:
-#         print(f"Error highlighting PDF: {e}")
-#         traceback.print_exc()
-#         return None
-#     finally:
-#         # Clean up temporary original file
-#         if temp_original_path and os.path.exists(temp_original_path):
-#             os.unlink(temp_original_path)
+#def get_most_relevant_chunks(query):
+ #   search_results = vectorstore.similarity_search(query)
+ #   return search_results
 
 
-
-# def highlight_text_in_pdf(pdf_path, relevant_chunks, output_path):
-#     print("highlight func a girdiiikkkkk")
-#     if not os.path.exists(pdf_path):
-#         raise FileNotFoundError(f"File not found: {pdf_path}")
-
-#     doc = fitz.open(pdf_path)
-#     print("doc openlandi")
-#     for page in doc:
-#         for chunk in relevant_chunks:
-#             text_instances = page.search_for(chunk.page_content)
-#             for inst in text_instances:
-#                 print("HIGHLIGHT PART: ", inst)
-#                 # Highlight the found text
-#                 page.add_highlight_annot(inst)
-
-#     # Save the highlighted PDF to a new file
-#     doc.save(output_path, garbage=4, deflate=True)
-#     doc.close()
-
-#     return output_path
 
 def load_model():
     """

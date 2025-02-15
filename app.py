@@ -25,10 +25,10 @@ CORS(app)
 
 #AAAAAAAAAAAAAAA
 # ===============================
-@app.route('/upload', methods=['POST'])
-def upload():
+@app.route('/upload', methods=['POST'])             # Receives & reads file (sidepanelupload.js / handleFileUpload())
+def upload():                                        
     file = request.files['file']
-    replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'
+    replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'          
 
     if not file:
         return jsonify({"error": "No file uploaded"}), 400
@@ -53,8 +53,8 @@ def upload():
 
 # ===============================
 #delete document
-@app.route("/delete_document", methods=["POST"])
-def delete_document_endpoint():
+@app.route("/delete_document", methods=["POST"])                       #is it currently used??
+def delete_document_endpoint():                                     # Gets file id and deletes from mongo and vector store, 
     """Endpoint to delete a document."""
     print("delete endpoint")
     file_id = request.args.get('file_id')
@@ -70,8 +70,8 @@ def delete_document_endpoint():
 
 # ===============================
 @app.route('/get_documents', methods=['GET'])
-def get_documents():
-    try:
+def get_documents():                                                # Retrives all documents stored in mongo as a list of doc ids and file names
+    try:                                                                    # documentManagement.js / fetchDocuments
         # Fetch all documents from MongoDB
         documents = list(documents_collection.find())
         
@@ -85,8 +85,8 @@ def get_documents():
 
 # endpoint to return the desired pdf
 @app.route('/get_pdf', methods=['GET'])
-def get_pdf():
-    file_id = request.args.get('file_id')  # File path from the query string
+def get_pdf():                                                  #Retrieves a file, (documentManagement.js / viewDocuments())
+    file_id = request.args.get('file_id')  
     print("get_pdf file id: ", file_id)
 
     file = get_document_by_id(file_id)
@@ -101,7 +101,7 @@ def get_pdf():
 
 # ===============================
 @app.route("/user_query", methods=["POST"])
-def user_query():
+def user_query():                                               # chatbot.js / handleSendMessage()
     data = request.get_json()
     user_id = data.get("user_id")
     session_id = data.get("session_id")
@@ -125,7 +125,7 @@ def user_query():
 
 # ===============================
 
-@app.route('/get_highlighted_pdf', methods=['GET'])
+@app.route('/get_highlighted_pdf', methods=['GET'])                         # chatbot.js / handleViewPDFClick()
 def get_highlighted_pdf():
     pdf_path = request.args.get('file_path')
     print("istenilen path: ", pdf_path)
@@ -146,7 +146,7 @@ def get_highlighted_pdf():
 
 # ===============================
 # create new chat
-@app.route("/create_chat_session", methods=["POST"])
+@app.route("/create_chat_session", methods=["POST"])                            # main.js / createNewChatSession()
 def create_chat_session():
     """
     Create a new empty chat session for a user.
@@ -167,11 +167,12 @@ def create_chat_session():
 
 # ===============================
 # Retrieve an existing chat session
-@app.route("/get_chat_session", methods=["GET"])
+
+@app.route("/get_chat_session", methods=["GET"])                                  # main.js / getChatSession()
 def retrieve_chat_session():
-    """
-    Retrieve an existing chat session.
-    """
+    
+    #Retrieve an existing chat session.
+    
     user_id = request.args.get("user_id")
     session_id = request.args.get("session_id")
     session_id = ObjectId(session_id)
@@ -188,9 +189,11 @@ def retrieve_chat_session():
 
     return jsonify(result), 200
 
+
+
 # ===============================
 # get all sessions of the user
-@app.route('/get_user_sessions', methods=['GET'])
+@app.route('/get_user_sessions', methods=['GET'])                               # main.js / fetchUserSessions()
 def get_user_sessions():
     """
     Retrieve all sessions for a given user, excluding the conversation.
@@ -233,7 +236,7 @@ def get_user_sessions():
     return jsonify(session_list)
 
 @app.route("/delete_chat_session", methods=["POST"])
-def delete_chat_session():
+def delete_chat_session():                                                      # sidepanel.js / handleDeleteSession()
     """
     Delete a chat session by user_id and session_id.
     """
@@ -258,7 +261,7 @@ def delete_chat_session():
     return jsonify({"message": "Chat session deleted successfully"}), 200
 
 @app.route("/delete_all_chat_sessions", methods=["POST"])
-def delete_all_chat_sessions():
+def delete_all_chat_sessions():                                                     # sidepanel.js / handleClearAllSessions()
     """Deletes all chat sessions for a given user."""
     data = request.get_json()
     user_id = data.get("user_id")
@@ -276,4 +279,7 @@ def delete_all_chat_sessions():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=True, use_reloader=False, host="127.0.0.1", port=5000)        #use_reloader'ı vector store'a file yüklerken sürekli
+                                                                                # Detected change in 'C:\\Program Files\\Python38\\Lib\\encodings\\cp1252.py', reloading
+                                                                                # benzeri hatalar aldığım ve yüklemeyi kesintiye uğrattığı için kapattım.
+                                                                                #Sorun çıkarırsa parametreyi kaldırabilirsiniz
