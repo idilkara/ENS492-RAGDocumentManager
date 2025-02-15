@@ -184,6 +184,7 @@ def retrieve_chat_session():
         return jsonify({"error": "Missing user_id or session_id"}), 400
 
     result = get_chat_session(user_id, session_id)
+    print("SESSION RESULT::", result)
     if "error" in result:
         return jsonify({"error": result["error"]}), 404
 

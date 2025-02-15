@@ -322,7 +322,7 @@ def search_query(query, user_id, session_id):
                 print(f"Highlighted PDF path: {highlighted_pdf_path}")
 
         # Add the interaction to message history
-        add_message(user_id, session_id, query, response)
+        add_message(user_id, session_id, query, response, highlighted_pdf_path)
 
         return {
             "response": str(response),
