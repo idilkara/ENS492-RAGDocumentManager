@@ -6,8 +6,8 @@ import config from "../config";
 const DocumentManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [documents, setDocuments] = useState([]);
-  const [selectedDocument, setSelectedDocument] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -15,13 +15,11 @@ const DocumentManagement = () => {
 
   const fetchDocuments = async () => {
     try {
-            
-      // Make an API call to fetch the documents from the backend
       const response = await fetch(`${config.API_BASE_URL}/get_documents`);
       const data = await response.json();
 
       if (response.ok) {
-        setDocuments(data); // Set the documents from the database into the state
+        setDocuments(data);
       } else {
         console.error('Error fetching documents:', data.error);
       }
@@ -30,17 +28,10 @@ const DocumentManagement = () => {
     }
   };
 
-  const viewDocument = async (e) => {
-    e.stopPropagation(); // Prevent document selection when clicking the button
-    
-    if (!selectedDocument) {
-      console.error('No document selected!');
-      return;
-    }
-  
+  const viewDocument = async (e, docId) => {
+    e.stopPropagation();
     try {
-      // Fetch the PDF using the selected document ID
-      const response = await fetch(`${config.API_BASE_URL}/get_pdf?file_id=${selectedDocument}`);
+      const response = await fetch(`${config.API_BASE_URL}/get_pdf?file_id=${docId}`);
       if (response.ok) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
@@ -53,30 +44,24 @@ const DocumentManagement = () => {
     }
   };
 
-  const openDeleteModal = (e) => {
-    e.stopPropagation(); // Prevent document selection when clicking the button
+  const openDeleteModal = (e, docId) => {
+    e.stopPropagation();
+    setDocumentToDelete(docId);
     setIsModalOpen(true);
   };
 
   const deleteDocument = async () => {
-    if (!selectedDocument) {
-      console.error('No document selected!');
-      return;
-    }
-  
+    if (!documentToDelete) return;
+
     try {
-      const response = await fetch(`${config.API_BASE_URL}/delete_document?file_id=${selectedDocument}`, {
+      const response = await fetch(`${config.API_BASE_URL}/delete_document?file_id=${documentToDelete}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
-  
+
       const data = await response.json();
-  
       if (response.ok) {
-        setDocuments(documents.filter(doc => doc.id !== selectedDocument));
-        setSelectedDocument(null);
+        setDocuments(documents.filter(doc => doc.id !== documentToDelete));
         console.log('Document deleted:', data.message);
       } else {
         console.error('Error deleting document:', data.error);
@@ -84,16 +69,13 @@ const DocumentManagement = () => {
     } catch (error) {
       console.error('Error deleting document:', error);
     }
-  
-    setIsModalOpen(false); // Close modal after deletion
-  };
-  
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+
+    setIsModalOpen(false);
+    setDocumentToDelete(null);
   };
 
-  const handleSelectDocument = (doc) => {
-    setSelectedDocument(doc.id);
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
   };
 
   const filteredDocuments = documents.filter(doc =>
@@ -108,38 +90,22 @@ const DocumentManagement = () => {
             type="text"
             placeholder="Search documents..."
             value={searchTerm}
-            onChange={handleSearch} // Handle user input for search
+            onChange={handleSearch}
             className="search-input"
           />
-  
-          <button className="view-button" onClick={fetchDocuments}>
-            REFRESH
-          </button>
+          <button className="view-button" onClick={fetchDocuments}>REFRESH</button>
         </div>
-  
+
         <div className="document-list">
           {filteredDocuments.length > 0 ? (
             filteredDocuments.map(doc => (
-              <div
-                key={doc.id}
-                className={`document-item ${selectedDocument === doc.id ? 'selected' : ''}`}
-                onClick={() => handleSelectDocument(doc)}
-              >
+              <div key={doc.id} className="document-item">
                 <span className="document-name">{doc.name}</span>
                 <div className="document-buttons">
-                  <button
-                    className="view-button"
-                    onClick={viewDocument}
-                    disabled={selectedDocument !== doc.id}
-                  >  
+                  <button className="view-button" onClick={(e) => viewDocument(e, doc.id)}>
                     <Eye size={16} /> VIEW
                   </button>
-          
-                  <button
-                    className="delete-button"
-                    onClick={openDeleteModal}
-                    disabled={selectedDocument !== doc.id}
-                  >
+                  <button className="delete-button" onClick={(e) => openDeleteModal(e, doc.id)}>
                     <Trash2 size={16} /> DELETE
                   </button>
                 </div>
@@ -150,19 +116,15 @@ const DocumentManagement = () => {
           )}
         </div>
       </div>
-  
+
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Confirm Deletion</h3>
             <p>Are you sure you want to delete this document?</p>
             <div className="modal-buttons">
-              <button className="confirm-button" onClick={deleteDocument}>
-                Yes, Delete
-              </button>
-              <button className="cancel-button" onClick={() => setIsModalOpen(false)}>
-                Cancel
-              </button>
+              <button className="confirm-button" onClick={deleteDocument}>Yes, Delete</button>
+              <button className="cancel-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>

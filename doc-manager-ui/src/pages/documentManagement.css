@@ -100,11 +100,7 @@
   border-bottom: none;
 }
 
-/* Only apply hover styles if the item is not already selected */
-.document-item:not(.selected):hover {
-  background-color: rgba(var(--color-accent-rgb), 0.3);
-  color: var(--color-text);
-}
+
 
 .document-item.selected {
   background-color: var(--color-accent);
@@ -120,7 +116,14 @@
   z-index: 1;
 }
 
+.document-item:hover{
+  background-color: var(--color-border);
+  display: flex;
+  gap: 8px;
+}
+
 .document-item:hover .document-buttons {
+
   display: flex;
   gap: 8px;
 }
