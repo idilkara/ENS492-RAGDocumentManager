@@ -10,7 +10,8 @@ import gridfs
 from documents import get_document_by_id, delete_document_from_mongo, documents_collection
 from io import BytesIO
 from bson.objectid import ObjectId
-
+from config import LLAMA_MODEL_3_2_3B, LLAMA_MODEL_3_3_70B
+from model_state import set_current_model, get_current_model
 
 app = Flask(__name__)
 CORS(app)
@@ -276,6 +277,26 @@ def delete_all_chat_sessions():                                                 
         return jsonify({"message": "All chat sessions deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/switch_model", methods=["POST"])
+def switch_model():
+    """Switch between different LLM models"""
+    data = request.get_json()
+    model_name = data.get("model_name")
+
+    if not model_name:
+        return jsonify({"error": "Missing model_name parameter"}), 400
+
+    try:
+        selected_model = set_current_model(model_name)
+        return jsonify({
+            "message": f"Successfully switched to model: {model_name}",
+            "selected_model": selected_model
+        }), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error switching model: {str(e)}"}), 500
 
 
 

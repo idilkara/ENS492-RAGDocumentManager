@@ -15,7 +15,7 @@ from langchain.schema import Document
 import fitz  # PyMuPDF
 from documents import add_document_to_mongo, delete_document_from_mongo, is_file_already_uploaded, get_document_by_id
 import traceback
-from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR, LLAMA_MODEL
+from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR
 import tempfile
 import uuid
 from bson import ObjectId
@@ -27,8 +27,7 @@ from highlight_pdf_handle import TempFileManager, PDFHighlighter
 from langchain_experimental.text_splitter import SemanticChunker
 import re
 from typing import Dict
-
-
+from model_state import get_current_model
 
 temp_file_manager = TempFileManager()
 pdf_highlighter = PDFHighlighter(temp_file_manager)
@@ -76,10 +75,10 @@ memory_manager = SessionMemoryManager()
 
 
 
+# app.py / upload()
+# replace_existing parameter will be modified after getting changes to frontend
 
-
-def add_document(file_entry, replace_existing=False):               # app.py / upload()
-                                                                    # replace_existing parameter will be modified after getting changes to frontend
+def add_document(file_entry, replace_existing=False):               
     """
     Adds a document to the vector store and MongoDB.
     """
@@ -130,9 +129,9 @@ def add_document(file_entry, replace_existing=False):               # app.py / u
                 Document(
                     page_content=chunk.page_content,
                     metadata={
-                        "source": filename,
-                        "mongo_id": str(mongo_id),  # Ensure mongo_id is string
-                        "temp_path": temp_file_path
+                        "mongo_id": str(mongo_id),
+                        "filename": filename,
+                        "page": chunk.metadata.get("page", 0) + 1  # Add 1 since pages are 0-indexed
                     }
                 )
                 for chunk in text_chunks
@@ -362,6 +361,8 @@ def load_model():
     """
     Load the LLama model.
     """
+    model = get_current_model()
+    print("MODEL: ", model)
     return ChatOllama(
-        model=LLAMA_MODEL
+        model=model
     )
