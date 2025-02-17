@@ -297,35 +297,64 @@ def search_query(query, user_id, session_id):
         print(f"[DEBUG] Query execution complete. Raw response: {result}")
 
         source_docs = result.get('source_documents', [])
-        print(len(source_docs[:1]))
+        print(len(source_docs[:2]))
         print("source docs::::  ", source_docs[:2])
         if not source_docs:
             response = "I cannot answer this question based on the available documents."
             add_message(user_id, session_id, query, response)
             return {
                 "response": response,
-                "highlighted_pdf_path": None
+                "highlighted_pdf_path_arr": None
             }
 
         response = result['answer']
         print(f"[DEBUG] Final response to user: {response}")
 
         # Create highlighted PDF if relevant chunks exist
-        highlighted_pdf_path = None
-        if source_docs:
-            mongo_id = source_docs[0].metadata.get("mongo_id")
-            print(f"MongoDB document ID: {mongo_id}")
+        source_docs_arr = []
+        highlighted_pdfs = {}  # Store already highlighted PDFs by mongo_id
+        doc_chunks = {}  # Store all relevant chunks for each mongo_id
 
-            if mongo_id:
-                highlighted_pdf_path = pdf_highlighter.create_highlighted_pdf(mongo_id, source_docs[:2])
-                print(f"Highlighted PDF path: {highlighted_pdf_path}")
+        if source_docs:
+            for i in source_docs:
+                mongo_id = i.metadata.get("mongo_id")
+                page = i.metadata.get("page")
+                filename = i.metadata.get("filename")
+                print(f"MongoDB document ID: {mongo_id}")
+                print(f"Page: {page}")
+                print(f"Filename: {filename}")
+
+                if mongo_id:
+                    # Collect all chunks for the same PDF
+                    if mongo_id not in doc_chunks:
+                        doc_chunks[mongo_id] = {"filename": filename, "pages": [], "chunks": []}
+                    
+                    # Add unique pages and text chunks
+                    if page not in doc_chunks[mongo_id]["pages"]:
+                        doc_chunks[mongo_id]["pages"].append(page)
+                    doc_chunks[mongo_id]["chunks"].append(i)  # Accumulate text chunks for this document
+
+        # Now, process each unique mongo_id only once
+        for mongo_id, doc_info in doc_chunks.items():
+            if mongo_id not in highlighted_pdfs:
+                # Highlight all collected chunks in a single PDF
+                highlighted_pdf_path = pdf_highlighter.create_highlighted_pdf(mongo_id, doc_info["chunks"])
+                highlighted_pdfs[mongo_id] = highlighted_pdf_path  # Store it
+
+            # Store a single entry with multiple pages
+            source_docs_arr.append({
+                "highlighted_pdf_path": highlighted_pdfs[mongo_id],
+                "filename": doc_info["filename"],
+                "pages": doc_info["pages"]  # List of pages instead of separate entries
+            })
 
         # Add the interaction to message history
-        add_message(user_id, session_id, query, response, highlighted_pdf_path)
+        add_message(user_id, session_id, query, response, source_docs_arr)
+
 
         return {
             "response": str(response),
-            "highlighted_pdf_path": highlighted_pdf_path if highlighted_pdf_path else None
+            "source_docs_arr": source_docs_arr
         }
 
     except Exception as e:

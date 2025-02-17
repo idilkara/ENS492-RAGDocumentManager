@@ -113,15 +113,14 @@ def user_query():                                               # chatbot.js / h
         return jsonify({"error": "Missing required fields"}), 400
 
     response_text = search_query(query, user_id, session_id)
-    highlighted_pdf_path = response_text.get("highlighted_pdf_path")
+    source_docs_arr = response_text.get("source_docs_arr")
 
-    print("ENDPOİNTTE GRIDFS:::::::::", highlighted_pdf_path)
+    print("ENDPOINTTE SOURCE_DOCS_ARR:::::::::", source_docs_arr, "\n", len(source_docs_arr))
 
     return jsonify({
         "response": response_text.get("response"),
         "file_path": response_text.get("file_path"),
-        "highlighted_pdf_path": highlighted_pdf_path,
-        "gridfs": response_text.get("gridfs")
+        "source_docs_arr": source_docs_arr,
     })
 
 # ===============================
