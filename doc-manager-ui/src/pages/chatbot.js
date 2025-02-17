@@ -68,7 +68,8 @@ const handleSendMessage = async () => {
     const response = await axios.post(`${config.API_BASE_URL}/user_query`, {
       query: input,
       user_id: '1',
-      session_id: currentChatId
+      session_id: currentChatId,
+      model: selectedModel
     });
 
     const data = response.data;
