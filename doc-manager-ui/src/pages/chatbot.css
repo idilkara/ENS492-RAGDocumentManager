@@ -27,12 +27,16 @@
 }
 
 .chat-header {
-  background-color: var(--color-surface); /* Use surface color */
-  color: var(--color-text); /* Near-white text */
-  text-align: center;
-  font-size: var(--font-size-lg); /* Large text size for the header */
-  border-top-left-radius: var(--border-radius-md);
-  border-top-right-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center; /* Align items vertically */
+  background-color: var(--color-background);
+  
+  padding: var(--spacing-sm);
+  padding-bottom: 10px;
+  gap: var(--spacing-sm); /* Ensures spacing between items */
+  
+  width: calc(100% - 20px);
+  box-sizing: border-box;
 }
 
 .chat-history {
@@ -44,6 +48,43 @@
   flex-direction: column; /* Stack messages vertically */
   gap: var(--spacing-xxs); /* Spacing between messages */
 }
+
+
+.model-select {
+  padding: 8px 12px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Add a hover effect */
+.model-select:hover {
+  border-color: var(--color-border);
+}
+
+/* Add a focus effect */
+.model-select:focus {
+  outline: none;
+  border-color: var(--color-border);
+}
+
+/* Customize the dropdown arrow */
+.model-select {
+  appearance: none; /* Removes default browser styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23007bff'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+
+  padding-right: 30px; /* Space for the custom arrow */
+  background-color: var(--color-background);
+}
+
 
 .message {
 

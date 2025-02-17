@@ -10,6 +10,9 @@ const ChatbotUI = ({ chatID, chats, fetchUserSessions, createNewChatSession, set
   const chatHistoryRef = useRef(null);
   const [isSending, setIsSending] = useState(false);
 
+  const [selectedModel, setSelectedModel] = useState("GPT-4"); // Default model
+  const models = ["Llama3.2:3b", "LLama3.3:7b", "deepseek-r1:1.5b"]; // get it from frontend
+
   const chatIdRef = useRef(chatID);
 
 useEffect(() => {
@@ -173,6 +176,21 @@ const handleSendMessage = async () => {
   return (
     <div className="chat-interaction-container">
       <div className="chat-container">
+
+      <div className="chat-header">
+      <select
+        className="model-select"
+        value={selectedModel}
+        onChange={(e) => setSelectedModel(e.target.value)}
+      >
+        {models.map((model) => (
+          <option key={model} value={model}>
+            {model}
+          </option>
+        ))}
+      </select>
+          You are speaking with ✨ {selectedModel} ✨
+      </div>
         <div className="chat-history" ref={chatHistoryRef}>
           {messages.length === 0 ? (
           
