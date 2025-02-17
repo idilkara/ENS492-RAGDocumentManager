@@ -280,11 +280,11 @@ def create_qa_chain(vectorstore, llm, session_id: str):
 
 
 
-def search_query(query, user_id, session_id):
+def search_query(query, user_id, session_id, model):
     """
     Query the vector store and return results with highlighted PDFs.
     """
-    llm = load_model()
+    llm = load_model(model)
     qa_chain = create_qa_chain(vectorstore, llm, session_id)
 
     try:
@@ -386,11 +386,10 @@ def get_most_relevant_chunks(query):
     return search_results
 
 
-def load_model():
+def load_model(model):
     """
     Load the LLama model.
     """
-    model = get_current_model()
     print("MODEL: ", model)
     return ChatOllama(
         model=model

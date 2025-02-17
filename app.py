@@ -108,11 +108,13 @@ def user_query():                                               # chatbot.js / h
     session_id = data.get("session_id")
     session_id = ObjectId(session_id)
     query = data.get("query")
+    model = data.get("model")
+
 
     if not query or not user_id or not session_id:
         return jsonify({"error": "Missing required fields"}), 400
 
-    response_text = search_query(query, user_id, session_id)
+    response_text = search_query(query, user_id, session_id, model)
     source_docs_arr = response_text.get("source_docs_arr")
 
     print("ENDPOINTTE SOURCE_DOCS_ARR:::::::::", source_docs_arr, "\n", len(source_docs_arr))
@@ -276,27 +278,6 @@ def delete_all_chat_sessions():                                                 
         return jsonify({"message": "All chat sessions deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route("/switch_model", methods=["POST"])
-def switch_model():
-    """Switch between different LLM models"""
-    data = request.get_json()
-    model_name = data.get("model_name")
-
-    if not model_name:
-        return jsonify({"error": "Missing model_name parameter"}), 400
-
-    try:
-        selected_model = set_current_model(model_name)
-        return jsonify({
-            "message": f"Successfully switched to model: {model_name}",
-            "selected_model": selected_model
-        }), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": f"Error switching model: {str(e)}"}), 500
-
 
 
 if __name__ == "__main__":
