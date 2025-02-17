@@ -54,32 +54,31 @@ const Main = () => {
 
 
   const createNewChatSession = async () => {
-      try {
-          const response = await fetch(`${config.API_BASE_URL}/create_chat_session`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ user_id: '1' }),
-          });
-          const data = await response.json();
-          
-          // Update sessions list
-          const newSession = { 
-              user_id: '1', 
-              session_id: data.session_id, 
-              created_at: new Date().toISOString() 
-          };
-          setSessions([...sessions, newSession]);
-          
-          // Set the new chat ID and initialize its chat history
-          setChatID(data.session_id);
-          setChats(prev => ({ ...prev, [data.session_id]: [] }));
-      } catch (error) {
-          console.error('Error creating new chat session:', error);
-      }
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/create_chat_session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: '1' }),
+      });
+      const data = await response.json();
+  
+      const newSession = {
+        user_id: '1',
+        session_id: data.session_id,
+        created_at: new Date().toISOString(),
+      };
+  
+      setSessions((prevSessions) => [...prevSessions, newSession]);
+      setChatID(data.session_id); // Update state with new chat session
+      setChats((prev) => ({ ...prev, [data.session_id]: [] }));
+  
+      return data.session_id; // Return new session ID
+    } catch (error) {
+      console.error('Error creating new chat session:', error);
+      return null;
+    }
   };
-
+  
   const fetchChatSession = async (sessionID) => {
       try {
           const response = await fetch(`${config.API_BASE_URL}/get_chat_session?user_id=1&session_id=${sessionID}`);
@@ -111,13 +110,13 @@ const Main = () => {
   const renderRightPanel = () => {
     switch (selectedOption) {
       case 0:
-        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
+        return <ChatbotUI chatID={chatID} chats={chats} setChats={setChats} setChatID={setChatID} createNewChatSession={createNewChatSession} />;
       case 1:
         return <DocumentManagement />;
       case 2:
-        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
+        return  <ChatbotUI chatID={chatID} chats={chats} setChats={setChats} setChatID={setChatID} createNewChatSession={createNewChatSession} />;
       default:
-        return <ChatbotUI chatID={chatID} chats={chats} fetchUserSessions={fetchUserSessions} />;
+        return  <ChatbotUI chatID={chatID} chats={chats} setChats={setChats} setChatID={setChatID} createNewChatSession={createNewChatSession} />;
     }
   };
   
