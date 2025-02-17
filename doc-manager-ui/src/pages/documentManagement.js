@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './documentManagement.css';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, RefreshCcw, RefreshCwIcon, Trash2 } from 'lucide-react';
 import config from "../config";
 
 const DocumentManagement = () => {
@@ -9,6 +9,8 @@ const DocumentManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState(null);
 
+/* The `useEffect` hook in React is used to perform side effects in function components. In this case,
+the `useEffect` hook is being used to fetch documents when the component mounts for the first time. */
   useEffect(() => {
     fetchDocuments();
   }, []);
@@ -93,7 +95,9 @@ const DocumentManagement = () => {
             onChange={handleSearch}
             className="search-input"
           />
-          <button className="view-button" onClick={fetchDocuments}>REFRESH</button>
+          <button className="view-button" onClick={fetchDocuments}>
+            <RefreshCcw size={16} /> REFRESH
+          </button>
         </div>
 
         <div className="document-list">
