@@ -83,20 +83,29 @@ const Main = () => {
       try {
           const response = await fetch(`${config.API_BASE_URL}/get_chat_session?user_id=1&session_id=${sessionID}`);
           const data = await response.json();
+
+          console.log(data);
           
-          // Convert backend conversation to frontend message format
-          const formattedMessages = data.map((msg, index) => [
-              { 
-                  id: index * 2, 
-                  text: msg.user_query, 
-                  isBot: false 
-              },
-              { 
-                  id: index * 2 + 1, 
-                  text: msg.agent_response, 
-                  isBot: true 
-              }
-          ]).flat();
+    // Convert backend conversation to frontend message format
+    const formattedMessages = data.map((msg, index) => {
+      const messageArray = [
+          { 
+              id: index * 2, 
+              text: msg.user_query, 
+              isBot: false 
+          },
+          { 
+              id: index * 2 + 1, 
+              text: msg.agent_response, 
+              isBot: true ,
+
+              sources: msg.highlighted_pdf,
+          }
+      ];
+
+
+      return messageArray;
+  }).flat();
 
           // Update chats state with formatted messages
           setChats(prev => ({ ...prev, [sessionID]: formattedMessages }));

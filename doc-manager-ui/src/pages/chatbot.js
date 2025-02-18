@@ -4,14 +4,14 @@ import './chatbot.css';
 import axios from 'axios';
 import config from "../config";
 
-const ChatbotUI = ({ chatID, chats, fetchUserSessions, createNewChatSession, setChats, setChatID }) => {
+const ChatbotUI = ({ chatID, chats, createNewChatSession, setChats, setChatID }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(chats[chatID] || []);
   const chatHistoryRef = useRef(null);
   const [isSending, setIsSending] = useState(false);
 
-  const [selectedModel, setSelectedModel] = useState("GPT-4"); // Default model
-  const models = ["Llama3.2:3b", "LLama3.3:7b", "deepseek-r1:1.5b"]; // get it from frontend
+  const [selectedModel, setSelectedModel] = useState("llama3.2:3b"); // Default model
+  const models = ["llama3.2:3b", "llama3.3:7b", "deepseek-r1:1.5b", "mistral:7b"]; // get it from frontend
 
   const chatIdRef = useRef(chatID);
 
@@ -74,10 +74,12 @@ const handleSendMessage = async () => {
 
     const data = response.data;
     const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
-    const highlightedPdfPath = data.highlighted_pdf_path || null;
+    const highlightedPdfsource= data.source_docs_arr|| null;
+    console.log(data);
+    console.log(highlightedPdfsource);
 
     const botMessageId = Date.now() + 1;
-    const botMessage = { id: botMessageId, text: "", isBot: true, pdfPath: highlightedPdfPath };
+    const botMessage = { id: botMessageId, text: "", isBot: true, sources:  highlightedPdfsource };
 
     // Append bot message
     setMessages((prev) => [...prev, botMessage]);
@@ -123,36 +125,36 @@ const handleSendMessage = async () => {
 
 
 
-  const handleViewPDFClick = async (pdfPath) => {
-    if (!pdfPath) return;
-    
-    try {
-      const response = await axios.get(
-        `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
-        {
-          responseType: 'blob',
-        }
-      );
-      
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Open the PDF in a new tab
-      window.open(url, "_blank");
-      
-      // Clean up the URL object after opening
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 100);
-    } catch (error) {
-      if (error.response && error.response.status === 404) {
-        alert("The highlighted PDF has expired. Please make the query again to generate a new highlight.");
-      } else {
-        console.error("Error fetching PDF:", error);
-        alert("Error loading the PDF. Please try again.");
+const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
+  if (!pdfPath) return;
+  
+  try {
+    const response = await axios.get(
+      `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
+      {
+        responseType: 'blob',
       }
+    );
+    
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Open the PDF in a new tab with the specific page number
+    window.open(`${url}#page=${pageNumber}`, "_blank");
+    
+    // Clean up the URL object after opening
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 100);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      alert("The highlighted PDF has expired. Please make the query again to generate a new highlight.");
+    } else {
+      console.error("Error fetching PDF:", error);
+      alert("Error loading the PDF. Please try again.");
     }
-  };
+  }
+};
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -203,15 +205,23 @@ const handleSendMessage = async () => {
             messages.map((msg) => (
               <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
                 <ReactMarkdown>{msg.text}</ReactMarkdown>
-  
-                {msg.isBot && msg.pdfPath && (
-                  <button
-                    className="display-button"
-                    onClick={() => handleViewPDFClick(msg.pdfPath)}
-                  >
-                    <div className="pdfLabel">View referenced document</div>
-                  </button>
+          
+                {msg.isBot && msg.sources && msg.sources.length > 0 && (
+                  msg.sources
+                  .filter(source => source?.filename && source.filename !== "No filename") // Ensure filename is valid
+                  .map((source, index) => (
+                      <button
+                        key={index}
+                        className="display-button"
+                        onClick={() => handleViewPDFClick(source.highlighted_pdf_path, source.pages[0])}
+                      >
+                        <div className="pdfLabel">{source.filename}</div>
+                      </button>
+                    ))
                 )}
+
+
+
               </div>
             ))
           )}

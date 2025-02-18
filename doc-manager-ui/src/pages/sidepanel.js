@@ -136,7 +136,7 @@ return(
         <img src={SUlogo} alt="SUlogo" style={{ width: '150px', height: 'auto' }}  />
     </div> 
 
-  <div className="side-panel-title-text">Document Management System</div>
+  <div className="side-panel-title-text">RAGATOR3000</div>
 
 
   </div>
