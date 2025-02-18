@@ -8,7 +8,6 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 chats_collection = db[SESSIONS_COLLECTION]
 
-
 def create_empty_session(user_id):
     """
     Create a new empty chat session for a user.
@@ -36,7 +35,7 @@ def create_empty_session(user_id):
     print("New empty session created.")
     return {"message": "New empty session created.", "session_id": str(session_id)}
 
-def add_message(user_id, session_id, user_query, agent_response):
+def add_message(user_id, session_id, user_query, agent_response, highlighted_pdf_path):
     """
     Add a new message to an existing chat session.
     If the session doesn't exist, create a new one with the message.
@@ -44,7 +43,8 @@ def add_message(user_id, session_id, user_query, agent_response):
     # Prepare the message structure
     new_message = {
         "user_query": user_query,
-        "agent_response": agent_response
+        "agent_response": agent_response,
+        "highlighted_pdf": highlighted_pdf_path
     }
     
     # Check if a chat session already exists

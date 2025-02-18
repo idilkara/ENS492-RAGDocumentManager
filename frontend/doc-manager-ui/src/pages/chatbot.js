@@ -4,11 +4,14 @@ import './chatbot.css';
 import axios from 'axios';
 import config from "../config";
 
-const ChatbotUI = ({ chatID, chats, fetchUserSessions }) => {
+const ChatbotUI = ({ chatID, chats, createNewChatSession, setChats, setChatID }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(chats[chatID] || []);
   const chatHistoryRef = useRef(null);
   const [isSending, setIsSending] = useState(false);
+
+  const [selectedModel, setSelectedModel] = useState("llama3.2:3b"); // Default model
+  const models = ["llama3.2:3b", "llama3.3:7b", "deepseek-r1:1.5b", "mistral:7b"]; // get it from frontend
 
   const chatIdRef = useRef(chatID);
 
@@ -17,101 +20,141 @@ useEffect(() => {
 }, [chatID]);
 
 
-  const handleSendMessage = async () => {
-    if (input.trim() === "" || isSending) return;
+const handleSendMessage = async () => {
+  if (input.trim() === "" || isSending) return;
 
-    setIsSending(true);
-    
-    const userMessage = { id: Date.now(), text: input, isBot: false };
-    setMessages((prev) => [...prev, userMessage]);
-    
+  setIsSending(true);
 
-    setInput("");
-    
+  let currentChatId = chatID;
+  const userMessage = { id: Date.now(), text: input, isBot: false };
+
+  // If chatID is null, create a new chat session
+  if (!currentChatId) {
     try {
-      const response = await axios.post(`${config.API_BASE_URL}/user_query`, {
-        query: input,
-        user_id: '1',
-        session_id: chatID
-      });
-      
-      console.log(chats[chatID].length);
-      
-    if (chats[chatID]?.length === 0) {  //REFRESH ATIYOR SOHBET ADI SOLDA GELIYOR 
-      fetchUserSessions(); 
-    } 
-      const data = response.data;
-      const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
-      const highlightedPdfPath = data.highlighted_pdf_path || null;
-      
-      const botMessageId = Date.now() + 1;
-
-      console.log("Highlighted PDF Path:", highlightedPdfPath);
-      setMessages((prev) => [
-        ...prev,
-        { id: botMessageId, text: "", isBot: true, pdfPath: highlightedPdfPath }
-      ]);
-
-      // Simulate streaming effect
-      const words = botResponse.split(" ");
-
-
-for (let i = 0; i < words.length; i++) {
-  await new Promise((resolve) => setTimeout(resolve, 50));
-
-  setMessages((prevMessages) => {
-    // Stop updating if the chatID has changed
-    if (chatIdRef.current !== chatID) return prevMessages;
-
-    return prevMessages.map((msg) =>
-      msg.id === botMessageId
-        ? { ...msg, text: (msg.text || "") + words[i] + " " }
-        : msg
-    );
-  });
-}
-
-    } catch (error) {
-      console.error("Error sending request:", error);
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now() + 1, text: "Sorry, there was an issue processing your request.", isBot: true },
-      ]);
-    }
-    setIsSending(false);
-    setInput("");
-  };
-
-  const handleViewPDFClick = async (pdfPath) => {
-    if (!pdfPath) return;
-    
-    try {
-      const response = await axios.get(
-        `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
-        {
-          responseType: 'blob',
-        }
-      );
-      
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Open the PDF in a new tab
-      window.open(url, "_blank");
-      
-      // Clean up the URL object after opening
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 100);
-    } catch (error) {
-      if (error.response && error.response.status === 404) {
-        alert("The highlighted PDF has expired. Please make the query again to generate a new highlight.");
-      } else {
-        console.error("Error fetching PDF:", error);
-        alert("Error loading the PDF. Please try again.");
+      currentChatId = await createNewChatSession();
+      if (!currentChatId) {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, text: "Error creating new chat session. Please try again.", isBot: true },
+        ]);
+        setIsSending(false);
+        return;
       }
+      
+      // Ensure we don't overwrite messages with a new array if it already exists
+      setChats(prev => ({
+        ...prev,
+        [currentChatId]: prev[currentChatId] || []  // Only set if it doesn't exist
+      }));
+
+      setChatID(currentChatId); // Update chat ID state immediately
+    } catch (error) {
+      console.error("Error creating new chat session:", error);
+      setIsSending(false);
+      return;
     }
-  };
+  }
+
+  // Add the user message **only once** (outside session creation logic)
+  setMessages((prev) => [...prev, userMessage]);
+  setChats(prev => ({
+    ...prev,
+    [currentChatId]: [...(prev[currentChatId] || []), userMessage]  // Ensure it appends correctly
+  }));
+
+  setInput("");
+
+  try {
+    const response = await axios.post(`${config.API_BASE_URL}/user_query`, {
+      query: input,
+      user_id: '1',
+      session_id: currentChatId,
+      model: selectedModel
+    });
+
+    const data = response.data;
+    const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
+    const highlightedPdfsource= data.source_docs_arr|| null;
+    console.log(data);
+    console.log(highlightedPdfsource);
+
+    const botMessageId = Date.now() + 1;
+    const botMessage = { id: botMessageId, text: "", isBot: true, sources:  highlightedPdfsource };
+
+    // Append bot message
+    setMessages((prev) => [...prev, botMessage]);
+    setChats(prev => ({
+      ...prev,
+      [currentChatId]: [...prev[currentChatId], botMessage]
+    }));
+
+    // Simulate streaming effect
+    const words = botResponse.split(" ");
+    for (let i = 0; i < words.length; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === botMessageId ? { ...msg, text: (msg.text || "") + words[i] + " " } : msg
+        )
+      );
+
+      setChats(prev => ({
+        ...prev,
+        [currentChatId]: prev[currentChatId].map((msg) =>
+          msg.id === botMessageId ? { ...msg, text: (msg.text || "") + words[i] + " " } : msg
+        )
+      }));
+    }
+
+  } catch (error) {
+    console.error("Error sending request:", error);
+    const errorMessage = { 
+      id: Date.now() + 1, 
+      text: "Sorry, there was an issue processing your request.", 
+      isBot: true 
+    };
+    setMessages((prev) => [...prev, errorMessage]);
+    setChats(prev => ({
+      ...prev,
+      [currentChatId]: [...prev[currentChatId], errorMessage]
+    }));
+  }
+  setIsSending(false);
+};
+
+
+
+const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
+  if (!pdfPath) return;
+  
+  try {
+    const response = await axios.get(
+      `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
+      {
+        responseType: 'blob',
+      }
+    );
+    
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Open the PDF in a new tab with the specific page number
+    window.open(`${url}#page=${pageNumber}`, "_blank");
+    
+    // Clean up the URL object after opening
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 100);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      alert("The highlighted PDF has expired. Please make the query again to generate a new highlight.");
+    } else {
+      console.error("Error fetching PDF:", error);
+      alert("Error loading the PDF. Please try again.");
+    }
+  }
+};
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -136,8 +179,23 @@ for (let i = 0; i < words.length; i++) {
   return (
     <div className="chat-interaction-container">
       <div className="chat-container">
+
+      <div className="chat-header">
+      <select
+        className="model-select"
+        value={selectedModel}
+        onChange={(e) => setSelectedModel(e.target.value)}
+      >
+        {models.map((model) => (
+          <option key={model} value={model}>
+            {model}
+          </option>
+        ))}
+      </select>
+          You are speaking with ✨ {selectedModel} ✨
+      </div>
         <div className="chat-history" ref={chatHistoryRef}>
-          {messages === 0 ? (
+          {messages.length === 0 ? (
           
 
               <div  className="message bot">
@@ -147,15 +205,23 @@ for (let i = 0; i < words.length; i++) {
             messages.map((msg) => (
               <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
                 <ReactMarkdown>{msg.text}</ReactMarkdown>
-  
-                {msg.isBot && msg.pdfPath && (
-                  <button
-                    className="display-button"
-                    onClick={() => handleViewPDFClick(msg.pdfPath)}
-                  >
-                    <div className="pdfLabel">View referenced document</div>
-                  </button>
+          
+                {msg.isBot && msg.sources && msg.sources.length > 0 && (
+                  msg.sources
+                  .filter(source => source?.filename && source.filename !== "No filename") // Ensure filename is valid
+                  .map((source, index) => (
+                      <button
+                        key={index}
+                        className="display-button"
+                        onClick={() => handleViewPDFClick(source.highlighted_pdf_path, source.pages[0])}
+                      >
+                        <div className="pdfLabel">{source.filename}</div>
+                      </button>
+                    ))
                 )}
+
+
+
               </div>
             ))
           )}

@@ -4,7 +4,7 @@ from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 import os
 from flask import send_file
-from vector_store import add_document, search_query
+from vector_store import add_document, search_query, delete_document_vectorstore
 import uuid
 from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
 import gridfs
@@ -15,6 +15,9 @@ from config import EMBEDDING_MODEL_URL
 from langchain_ollama import ChatOllama
 import traceback
 
+from config import LLAMA_MODEL_3_2_3B, LLAMA_MODEL_3_3_70B
+from model_state import set_current_model, get_current_model
+
 
 app = Flask(__name__)
 
@@ -22,12 +25,14 @@ app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
 
 
-#AAAAAAAAAAAAAAA
+
+
+#start of backend
 # ===============================
-@app.route('/upload', methods=['POST'])
-def upload():
+@app.route('/upload', methods=['POST'])             # Receives & reads file (sidepanelupload.js / handleFileUpload())
+def upload():                                        
     file = request.files['file']
-    replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'
+    replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'          
 
     if not file:
         return jsonify({"error": "No file uploaded"}), 400
@@ -52,8 +57,8 @@ def upload():
 
 # ===============================
 #delete document
-@app.route("/delete_document", methods=["POST"])
-def delete_document_endpoint():
+@app.route("/delete_document", methods=["POST"])                       #is it currently used??
+def delete_document_endpoint():                                     # Gets file id and deletes from mongo and vector store, 
     """Endpoint to delete a document."""
     print("delete endpoint")
     file_id = request.args.get('file_id')
@@ -69,25 +74,23 @@ def delete_document_endpoint():
 
 # ===============================
 @app.route('/get_documents', methods=['GET'])
-def get_documents():
-    try:
-        print("Fetching documents from MongoDB...")
+def get_documents():                                                # Retrives all documents stored in mongo as a list of doc ids and file names
+    try:                                                                    # documentManagement.js / fetchDocuments
+        # Fetch all documents from MongoDB
         documents = list(documents_collection.find())
-        print(f"Fetched {len(documents)} documents.")
         
-        result = [{'id': str(doc['_id']), 'name': doc.get('filename', 'Unknown')} for doc in documents]
-        print(f"Result: {result}")
+        # Prepare the documents list for the frontend (you can modify it to send only necessary fields)
+        result = [{'id': str(doc['_id']), 'name': doc['filename']} for doc in documents]
         
         return jsonify(result)
     except Exception as e:
-        print(f"Error fetching documents: {e}", flush=True)
-        return jsonify({"error": str(e)}), 500
-
+        print(f"Error fetching documents: {e}")
+        return jsonify({"error": "Failed to fetch documents"}), 500
 
 # endpoint to return the desired pdf
 @app.route('/get_pdf', methods=['GET'])
-def get_pdf():
-    file_id = request.args.get('file_id')  # File path from the query string
+def get_pdf():                                                  #Retrieves a file, (documentManagement.js / viewDocuments())
+    file_id = request.args.get('file_id')  
     print("get_pdf file id: ", file_id)
 
     file = get_document_by_id(file_id)
@@ -102,31 +105,32 @@ def get_pdf():
 
 # ===============================
 @app.route("/user_query", methods=["POST"])
-def user_query():
+def user_query():                                               # chatbot.js / handleSendMessage()
     data = request.get_json()
     user_id = data.get("user_id")
     session_id = data.get("session_id")
     session_id = ObjectId(session_id)
     query = data.get("query")
+    model = data.get("model")
+
 
     if not query or not user_id or not session_id:
         return jsonify({"error": "Missing required fields"}), 400
 
-    response_text = search_query(query, user_id, session_id)
-    highlighted_pdf_path = response_text.get("highlighted_pdf_path")
+    response_text = search_query(query, user_id, session_id, model)
+    source_docs_arr = response_text.get("source_docs_arr")
 
-    print("ENDPOİNTTE GRIDFS:::::::::", highlighted_pdf_path)
+    print("ENDPOINTTE SOURCE_DOCS_ARR:::::::::", source_docs_arr, "\n", len(source_docs_arr))
 
     return jsonify({
         "response": response_text.get("response"),
         "file_path": response_text.get("file_path"),
-        "highlighted_pdf_path": highlighted_pdf_path,
-        "gridfs": response_text.get("gridfs")
+        "source_docs_arr": source_docs_arr,
     })
 
 # ===============================
 
-@app.route('/get_highlighted_pdf', methods=['GET'])
+@app.route('/get_highlighted_pdf', methods=['GET'])                         # chatbot.js / handleViewPDFClick()
 def get_highlighted_pdf():
     pdf_path = request.args.get('file_path')
     print("istenilen path: ", pdf_path)
@@ -147,7 +151,7 @@ def get_highlighted_pdf():
 
 # ===============================
 # create new chat
-@app.route("/create_chat_session", methods=["POST"])
+@app.route("/create_chat_session", methods=["POST"])                            # main.js / createNewChatSession()
 def create_chat_session():
     """
     Create a new empty chat session for a user.
@@ -168,11 +172,12 @@ def create_chat_session():
 
 # ===============================
 # Retrieve an existing chat session
-@app.route("/get_chat_session", methods=["GET"])
+
+@app.route("/get_chat_session", methods=["GET"])                                  # main.js / getChatSession()
 def retrieve_chat_session():
-    """
-    Retrieve an existing chat session.
-    """
+    
+    #Retrieve an existing chat session.
+    
     user_id = request.args.get("user_id")
     session_id = request.args.get("session_id")
     session_id = ObjectId(session_id)
@@ -184,14 +189,17 @@ def retrieve_chat_session():
         return jsonify({"error": "Missing user_id or session_id"}), 400
 
     result = get_chat_session(user_id, session_id)
+    print("SESSION RESULT::", result)
     if "error" in result:
         return jsonify({"error": result["error"]}), 404
 
     return jsonify(result), 200
 
+
+
 # ===============================
 # get all sessions of the user
-@app.route('/get_user_sessions', methods=['GET'])
+@app.route('/get_user_sessions', methods=['GET'])                               # main.js / fetchUserSessions()
 def get_user_sessions():
     """
     Retrieve all sessions for a given user, excluding the conversation.
@@ -234,7 +242,7 @@ def get_user_sessions():
     return jsonify(session_list)
 
 @app.route("/delete_chat_session", methods=["POST"])
-def delete_chat_session():
+def delete_chat_session():                                                      # sidepanel.js / handleDeleteSession()
     """
     Delete a chat session by user_id and session_id.
     """
@@ -259,7 +267,7 @@ def delete_chat_session():
     return jsonify({"message": "Chat session deleted successfully"}), 200
 
 @app.route("/delete_all_chat_sessions", methods=["POST"])
-def delete_all_chat_sessions():
+def delete_all_chat_sessions():                                                     # sidepanel.js / handleClearAllSessions()
     """Deletes all chat sessions for a given user."""
     data = request.get_json()
     user_id = data.get("user_id")
@@ -273,11 +281,12 @@ def delete_all_chat_sessions():
         return jsonify({"message": "All chat sessions deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+##endof backend
 
 
     
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
     print("🔄 Preloading LLM Model...")
-    llm = ChatOllama(model="deepseek-r1:1.5b", base_url= EMBEDDING_MODEL_URL )
+    llm = ChatOllama(model="llama3.2:3b", base_url= EMBEDDING_MODEL_URL )
     print("✅ LLM Model Preloaded!")

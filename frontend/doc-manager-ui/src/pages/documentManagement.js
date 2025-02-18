@@ -1,31 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import './documentManagement.css';
+import { Eye, RefreshCcw, RefreshCwIcon, Trash2 } from 'lucide-react';
 import config from "../config";
-
 
 const DocumentManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [documents, setDocuments] = useState([]);
-  const [selectedDocument, setSelectedDocument] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
 
-
+/* The `useEffect` hook in React is used to perform side effects in function components. In this case,
+the `useEffect` hook is being used to fetch documents when the component mounts for the first time. */
   useEffect(() => {
     fetchDocuments();
   }, []);
 
   const fetchDocuments = async () => {
     try {
-      // Make an API call to fetch the documents from the backend
-      const response = await fetch(`${config.API_BASE_URL}/get_documents`);  // Replace with your backend URL
-      let data;
-      try {
-        data = await response.json();  // Attempt to parse the response as JSON
-      } catch (err) {
-        console.error("Failed to parse JSON:", err);
-        return;
-      }
-  
+      const response = await fetch(`${config.API_BASE_URL}/get_documents`);
+      const data = await response.json();
+
       if (response.ok) {
         setDocuments(data);
       } else {
@@ -36,19 +30,14 @@ const DocumentManagement = () => {
     }
   };
 
-  const viewDocument = async () => {
-    if (!selectedDocument) {
-      console.error('No document selected!');
-      return;
-    }
-  
+  const viewDocument = async (e, docId) => {
+    e.stopPropagation();
     try {
-      // Fetch the PDF using the selected document ID
-      const response = await fetch(`${config.API_BASE_URL}/get_pdf?file_id=${selectedDocument}`);
+      const response = await fetch(`${config.API_BASE_URL}/get_pdf?file_id=${docId}`);
       if (response.ok) {
-        const blob = await response.blob();  // Convert the response to a Blob (binary data)
-        const url = URL.createObjectURL(blob);  // Create a URL for the Blob object
-        window.open(url, '_blank');  // Open the PDF in a new tab
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
       } else {
         console.error('Error fetching PDF:', await response.json());
       }
@@ -57,26 +46,24 @@ const DocumentManagement = () => {
     }
   };
 
+  const openDeleteModal = (e, docId) => {
+    e.stopPropagation();
+    setDocumentToDelete(docId);
+    setIsModalOpen(true);
+  };
+
   const deleteDocument = async () => {
-    if (!selectedDocument) {
-      console.error('No document selected!');
-      return;
-    }
-  
+    if (!documentToDelete) return;
+
     try {
-      // Send request to delete the document
-      const response = await fetch(`${config.API_BASE_URL}/delete_document?file_id=${selectedDocument}`, {
+      const response = await fetch(`${config.API_BASE_URL}/delete_document?file_id=${documentToDelete}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
-  
+
       const data = await response.json();
-  
       if (response.ok) {
-        setDocuments(documents.filter(doc => doc.id !== selectedDocument));
-        setSelectedDocument(null);
+        setDocuments(documents.filter(doc => doc.id !== documentToDelete));
         console.log('Document deleted:', data.message);
       } else {
         console.error('Error deleting document:', data.error);
@@ -84,28 +71,18 @@ const DocumentManagement = () => {
     } catch (error) {
       console.error('Error deleting document:', error);
     }
-  
-    setIsModalOpen(false); // Close modal after deletion
-  };
-  
 
- 
+    setIsModalOpen(false);
+    setDocumentToDelete(null);
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleSelectDocument = (doc) => {
-    setSelectedDocument(doc.id);
-  };
-
-  
-
   const filteredDocuments = documents.filter(doc =>
     doc.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  
 
   return (
     <div className="document-management-container">
@@ -115,40 +92,27 @@ const DocumentManagement = () => {
             type="text"
             placeholder="Search documents..."
             value={searchTerm}
-            onChange={handleSearch}  // Handle user input for search
+            onChange={handleSearch}
             className="search-input"
           />
-  
           <button className="view-button" onClick={fetchDocuments}>
-            REFRESH
-          </button>
-  
-          <button
-            className="view-button"
-            onClick={viewDocument}  // Call the viewDocument function when clicking "VIEW"
-            disabled={!selectedDocument}  // Disable button if no document is selected
-          >  
-            VIEW
-          </button>
-  
-          <button
-            className="view-button"
-            onClick={() => setIsModalOpen(true)} // Show modal instead of deleting immediately
-            disabled={!selectedDocument}
-          >
-            DELETE
+            <RefreshCcw size={16} /> REFRESH
           </button>
         </div>
-  
+
         <div className="document-list">
           {filteredDocuments.length > 0 ? (
             filteredDocuments.map(doc => (
-              <div
-                key={doc.id}
-                className={`document-item ${selectedDocument === doc.id ? 'selected' : ''}`}
-                onClick={() => handleSelectDocument(doc)}
-              >
-                {doc.name}
+              <div key={doc.id} className="document-item">
+                <span className="document-name">{doc.name}</span>
+                <div className="document-buttons">
+                  <button className="view-button" onClick={(e) => viewDocument(e, doc.id)}>
+                    <Eye size={16} /> VIEW
+                  </button>
+                  <button className="delete-button" onClick={(e) => openDeleteModal(e, doc.id)}>
+                    <Trash2 size={16} /> DELETE
+                  </button>
+                </div>
               </div>
             ))
           ) : (
@@ -156,27 +120,21 @@ const DocumentManagement = () => {
           )}
         </div>
       </div>
-  
-      {/* MODAL COMPONENT (Placed just before closing </div> of document-management-container) */}
+
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Confirm Deletion</h3>
             <p>Are you sure you want to delete this document?</p>
             <div className="modal-buttons">
-              <button className="confirm-button" onClick={deleteDocument}>
-                Yes, Delete
-              </button>
-              <button className="cancel-button" onClick={() => setIsModalOpen(false)}>
-                Cancel
-              </button>
+              <button className="confirm-button" onClick={deleteDocument}>Yes, Delete</button>
+              <button className="cancel-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-  
 };
 
 export default DocumentManagement;
