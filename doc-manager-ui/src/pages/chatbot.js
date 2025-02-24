@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import './chatbot.css';
 import axios from 'axios';
 import config from "../config";
+import apiFetch from "../api";
 
 const ChatbotUI = ({ chatID, chats, createNewChatSession, setChats, setChatID }) => {
   const [input, setInput] = useState('');
@@ -65,14 +66,16 @@ const handleSendMessage = async () => {
   setInput("");
 
   try {
-    const response = await axios.post(`${config.API_BASE_URL}/user_query`, {
-      query: input,
-      user_id: '1',
-      session_id: currentChatId,
-      model: selectedModel
+    const data = await apiFetch(`${config.API_BASE_URL}/user_query`, {
+      method: 'POST',
+      body: JSON.stringify({
+        query: input,
+        user_id: '1',
+        session_id: currentChatId,
+        model: selectedModel
+      })
     });
 
-    const data = response.data;
     const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
     const highlightedPdfsource= data.source_docs_arr|| null;
     console.log(data);
@@ -127,12 +130,15 @@ const handleSendMessage = async () => {
 
 const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
   if (!pdfPath) return;
+
+  const token = localStorage.getItem('authToken');
   
   try {
     const response = await axios.get(
       `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
       {
         responseType: 'blob',
+        headers: {'Authorization': `Bearer ${token}`}
       }
     );
     

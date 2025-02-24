@@ -18,9 +18,11 @@ const FileUpload = () => {
         const formData = new FormData();
         formData.append('file', file);
 
+        const token = localStorage.getItem("authToken");
         const response = await fetch(`${config.API_BASE_URL}/upload`, {
           method: 'POST',
           body: formData,
+          headers: {'Authorization': `Bearer ${token}`}
         });
 
         const result = await response.json();
@@ -28,6 +30,8 @@ const FileUpload = () => {
 
         if (response.ok) {
           setUploadStatus({ success: true, message: result.message });
+        } else if(response.status === 403) {
+          setUploadStatus({ success: false, message: 'You need to be an admin to upload files'});
         } else {
           setUploadStatus({ success: false, message: result.error || 'Error uploading the file' });
         }

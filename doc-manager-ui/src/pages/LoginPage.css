@@ -43,3 +43,16 @@ h1 {
 .login-button:hover {
     background-color: var(--color-primary);
 }
+
+.login-input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.login-error {
+    color: red;
+    margin-top: 10px;
+}

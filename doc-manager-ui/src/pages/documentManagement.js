@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './documentManagement.css';
 import { Eye, RefreshCcw, RefreshCwIcon, Trash2 } from 'lucide-react';
 import config from "../config";
+import apiFetch from '../api';
 
 const DocumentManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,23 +18,19 @@ the `useEffect` hook is being used to fetch documents when the component mounts 
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/get_documents`);
-      const data = await response.json();
+      const data = await apiFetch(`${config.API_BASE_URL}/get_documents`);
+      setDocuments(data);
 
-      if (response.ok) {
-        setDocuments(data);
-      } else {
-        console.error('Error fetching documents:', data.error);
-      }
     } catch (error) {
       console.error('Error fetching documents:', error);
     }
   };
 
   const viewDocument = async (e, docId) => {
+    const token = localStorage.getItem("authToken");
     e.stopPropagation();
     try {
-      const response = await fetch(`${config.API_BASE_URL}/get_pdf?file_id=${docId}`);
+      const response = await fetch(`${config.API_BASE_URL}/get_pdf?file_id=${docId}`, {headers: {'Authorization': `Bearer ${token}`}});
       if (response.ok) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
@@ -54,17 +51,19 @@ the `useEffect` hook is being used to fetch documents when the component mounts 
 
   const deleteDocument = async () => {
     if (!documentToDelete) return;
-
+    const token = localStorage.getItem("authToken");
     try {
       const response = await fetch(`${config.API_BASE_URL}/delete_document?file_id=${documentToDelete}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       });
 
       const data = await response.json();
       if (response.ok) {
         setDocuments(documents.filter(doc => doc.id !== documentToDelete));
         console.log('Document deleted:', data.message);
+      } else if(response.status === 403) {
+        alert("You need to be an admin to delete a document!"); // placeholder admin degilsin alarmi
       } else {
         console.error('Error deleting document:', data.error);
       }
