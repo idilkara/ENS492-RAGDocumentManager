@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, session
 from flask_cors import CORS
 import os
 from flask import send_file
@@ -12,9 +12,15 @@ from io import BytesIO
 from bson.objectid import ObjectId
 from config import LLAMA_MODEL_3_2_3B, LLAMA_MODEL_3_3_70B
 from model_state import set_current_model, get_current_model
+import re
+import jwt
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
+from functools import wraps
+
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["http://localhost:3000"])
 
 # CAS Auth icin
 # from flask_cas import CAS
@@ -23,10 +29,76 @@ CORS(app)
 # app.config['CAS_SERVER'] = 'https://sso.pdx.edu'
 # app.config['CAS_AFTER_LOGIN'] = 'route_root'
 
+# login implementation requirements
+EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@sabanciuniv\.edu$'
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALLOWED_ROUTES = ['/login', '/logout']
+
+# simulating a user database for different roles
+USER_DB = {
+    "admin@sabanciuniv.edu" : {"role": "admin"},
+    "user@sabanciuniv.edu": {"role": "user"},
+}
+
+# login api
+@app.route('/login', methods=['POST'])
+def login():
+    
+    data = request.get_json()
+    email = data.get("email", "").strip()
+    password = data.get("password", "").strip() #ignored for proof-of-concept purposes
+
+    if not re.match(EMAIL_REGEX, email):
+        return jsonify({"success": False, "message": "Invalid university email!"}), 400
+    
+    role = USER_DB.get(email, {}).get("role", "user")
+
+    expiration = datetime.now() + timedelta(minutes=60)
+    token = jwt.encode({"email": email, "role": role, "exp": expiration}, SECRET_KEY, algorithm="HS256")
+
+    return jsonify({"success": True, "message": "Login successful", "token": token, "role": role})
+
+    
+# middleware for authentication and role verification
+@app.before_request
+def check_token():
+
+    print(SECRET_KEY)
+    # skip verification if route is allowed
+    if request.path in ALLOWED_ROUTES or request.method == "OPTIONS":
+        return
+    
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return jsonify({"success": False, "message": "Missing token"}), 401
+    
+    try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        request.user_email = payload.get("email")
+        request.user_role = payload.get("role")
+    except jwt.ExpiredSignatureError:
+        return jsonify({"success": False, "message": "Token expired"}), 401
+    except jwt.InvalidSignatureError:
+        return jsonify({"success": False, "message": "Invalid token"}), 401
+    
+# decorator to dedicate endpoints to admins only
+def role_required(required_role):
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if getattr(request, "user_role", None) != required_role:
+                return jsonify({"success": False, "message": "Access denied"}), 403
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
 
 #AAAAAAAAAAAAAAA
 # ===============================
 @app.route('/upload', methods=['POST'])             # Receives & reads file (sidepanelupload.js / handleFileUpload())
+@role_required("admin") # only admins are allowed to upload
 def upload():                                        
     file = request.files['file']
     replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'          
@@ -55,6 +127,7 @@ def upload():
 # ===============================
 #delete document
 @app.route("/delete_document", methods=["POST"])                       #is it currently used??
+@role_required("admin")
 def delete_document_endpoint():                                     # Gets file id and deletes from mongo and vector store, 
     """Endpoint to delete a document."""
     print("delete endpoint")
