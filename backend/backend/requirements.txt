@@ -9,3 +9,4 @@ PyMuPDF
 pypdf
 langchain_experimental
 fastapi
+pyjwt
