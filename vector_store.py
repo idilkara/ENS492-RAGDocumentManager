@@ -26,6 +26,8 @@ from langchain.prompts import PromptTemplate
 from highlight_pdf_handle import TempFileManager, PDFHighlighter
 from langchain_experimental.text_splitter import SemanticChunker
 import re
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import FlashrankRerank
 from typing import Dict
 from model_state import get_current_model
 
@@ -383,7 +385,19 @@ global_memory = ConversationBufferWindowMemory(
 
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
-    return search_results
+        # Initialize FlashRank reranker
+    compressor = FlashrankRerank()
+    
+    # Create a compression retriever
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=compressor,
+        base_retriever=vectorstore.as_retriever()
+    )
+    
+    # Retrieve reranked results
+    reranked_results = compression_retriever.get_relevant_documents(query)
+    
+    return reranked_results
 
 
 def load_model(model):
