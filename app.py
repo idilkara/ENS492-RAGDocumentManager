@@ -6,17 +6,16 @@ from flask import send_file
 from vector_store import add_document, search_query, delete_document_vectorstore
 import uuid
 from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
-import gridfs
 from documents import get_document_by_id, delete_document_from_mongo, documents_collection
 from io import BytesIO
 from bson.objectid import ObjectId
-from config import LLAMA_MODEL_3_2_3B, LLAMA_MODEL_3_3_70B
-from model_state import set_current_model, get_current_model
+from config import MONGO_URI, DB_NAME, USERS_COLLECTION
 import re
 import jwt
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from functools import wraps
+from pymongo import MongoClient
 
 
 app = Flask(__name__)
@@ -35,30 +34,43 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALLOWED_ROUTES = ['/login', '/logout']
 
-# simulating a user database for different roles
-USER_DB = {
-    "admin@sabanciuniv.edu" : {"role": "admin"},
-    "user@sabanciuniv.edu": {"role": "user"},
-}
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]  # Replace with your actual database name
+users_collection = db[USERS_COLLECTION]
+
+def get_user_by_email(email):
+    return users_collection.find_one({"email": email})
 
 # login api
 @app.route('/login', methods=['POST'])
 def login():
-    
     data = request.get_json()
     email = data.get("email", "").strip()
-    password = data.get("password", "").strip() #ignored for proof-of-concept purposes
+    password = data.get("password", "").strip()  # ignored for now
 
     if not re.match(EMAIL_REGEX, email):
         return jsonify({"success": False, "message": "Invalid university email!"}), 400
+
+    # Find user by email
+    user = get_user_by_email(email)
+
+    if not user:
+        return jsonify({"success": False, "message": "User not found. Please contact administrator."}), 401
     
-    role = USER_DB.get(email, {}).get("role", "user")
+    # Check password (assuming passwords are stored as plain text for now)
+    # In production, you should use password hashing
+    if user["password"] != password:
+        return jsonify({"success": False, "message": "Invalid password"}), 401
+
+
+    role = user["role"]
+    user_id = user["_id"]
+    user_id = str(user_id)
 
     expiration = datetime.now() + timedelta(minutes=60)
     token = jwt.encode({"email": email, "role": role, "exp": expiration}, SECRET_KEY, algorithm="HS256")
 
-    return jsonify({"success": True, "message": "Login successful", "token": token, "role": role})
-
+    return jsonify({"success": True, "message": "Login successful", "token": token, "role": role, "user_id": user_id})
     
 # middleware for authentication and role verification
 @app.before_request
@@ -178,6 +190,7 @@ def get_pdf():                                                  #Retrieves a fil
 def user_query():                                               # chatbot.js / handleSendMessage()
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
     session_id = data.get("session_id")
     session_id = ObjectId(session_id)
     query = data.get("query")
@@ -228,6 +241,7 @@ def create_chat_session():
     """
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
     print("user id:", user_id)
 
     if not user_id:
@@ -249,6 +263,7 @@ def retrieve_chat_session():
     #Retrieve an existing chat session.
     
     user_id = request.args.get("user_id")
+    user_id = ObjectId(user_id)
     session_id = request.args.get("session_id")
     session_id = ObjectId(session_id)
     print("user id:", user_id)
@@ -276,6 +291,7 @@ def get_user_sessions():
     This returns session metadata for all sessions of a user.
     """
     user_id = request.args.get('user_id')
+    user_id = ObjectId(user_id)
     print("user id:", user_id)
 
     if not user_id:
@@ -318,6 +334,7 @@ def delete_chat_session():                                                      
     """
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
     session_id = data.get("session_id")
 
     if not user_id or not session_id:
@@ -341,6 +358,7 @@ def delete_all_chat_sessions():                                                 
     """Deletes all chat sessions for a given user."""
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
 
     if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
@@ -353,7 +371,43 @@ def delete_all_chat_sessions():                                                 
         return jsonify({"error": str(e)}), 500
 
 
+#mock users (will be deleted later)
+def insert_mock_users():
+    """
+    Insert mock users into the database if they don't already exist.
+    This is for development/testing purposes only.
+    """
+    mock_users = [
+        {
+            "email": "admin@sabanciuniv.edu",
+            "password": "admin",  # In production, use hashed passwords
+            "role": "admin",
+            "created_at": datetime.now()
+        },
+        {
+            "email": "user@sabanciuniv.edu",
+            "password": "user1",  # In production, use hashed passwords
+            "role": "user",
+            "created_at": datetime.now()
+        },
+        {
+            "email": "user_iki@sabanciuniv.edu",
+            "password": "user2",  # In production, use hashed passwords
+            "role": "user",
+            "created_at": datetime.now()
+        }
+    ]
+    
+    for user in mock_users:
+        # Check if user already exists
+        existing_user = users_collection.find_one({"email": user["email"]})
+        if not existing_user:
+            users_collection.insert_one(user)
+            print(f"Mock user created: {user['email']} with role {user['role']}")
+
+
 if __name__ == "__main__":
+    insert_mock_users()
     app.run(debug=True, use_reloader=False, host="127.0.0.1", port=5000)        #use_reloader'ı vector store'a file yüklerken sürekli
                                                                                 # Detected change in 'C:\\Program Files\\Python38\\Lib\\encodings\\cp1252.py', reloading
                                                                                 # benzeri hatalar aldığım ve yüklemeyi kesintiye uğrattığı için kapattım.
