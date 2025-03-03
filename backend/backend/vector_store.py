@@ -30,6 +30,10 @@ from highlight_pdf_handle import TempFileManager, PDFHighlighter
 from langchain_experimental.text_splitter import SemanticChunker
 import re
 
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import FlashrankRerank
+
+
 from typing import Dict
 from model_state import get_current_model
 
@@ -110,14 +114,6 @@ def add_document(file_entry, replace_existing=False):
             temp_file.write(file_data)
             print(f"Temporary file created at: {temp_file_path}")
 
-        # Store in MongoDB
-        # TODO: ikisinden birinde hata varsa ikisini de yapma
-        mongo_id = add_document_to_mongo(file_data, filename)
-        if not mongo_id:
-            raise Exception("Failed to store document in MongoDB")
-
-        print("mongo_id: ", mongo_id)
-
         chunker = RecursiveCharacterTextSplitter(
                         chunk_size=1000,  # Adjust based on document size
                         chunk_overlap=200,  # Small overlap to retain context
@@ -162,6 +158,15 @@ def add_document(file_entry, replace_existing=False):
         try:
             vectorstore.add_documents(vector_documents)
             print(f"Successfully added {len(vector_documents)} documents to vector store")
+            # Store in MongoDB
+            # TODO: ikisinden birinde hata varsa ikisini de yapma
+            mongo_id = add_document_to_mongo(file_data, filename)
+            if not mongo_id:
+                raise Exception("Failed to store document in MongoDB")
+
+            print("mongo_id: ", mongo_id)
+
+
         except Exception as vector_error:
             raise Exception(f"Vector store upload failed: {str(vector_error)}")
 
@@ -189,6 +194,7 @@ def add_document(file_entry, replace_existing=False):
             "success": False,
             "error": error_message
         }
+    
     finally:
         # Clean up temporary file
         if temp_file_path and os.path.exists(temp_file_path):
@@ -389,15 +395,22 @@ global_memory = ConversationBufferWindowMemory(
 )
 """
 
-#def get_most_relevant_chunks(query):
- #   search_results = vectorstore.similarity_search(query)
- #   return search_results
-
-
-
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
-    return search_results
+    # Initialize FlashRank reranker
+    compressor = FlashrankRerank()
+    
+    # Create a compression retriever
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=compressor,
+        base_retriever=vectorstore.as_retriever()
+    )
+    
+    # Retrieve reranked results
+    reranked_results = compression_retriever.get_relevant_documents(query)
+    
+    return reranked_results
+
 
 def load_model(model):
     return ChatOllama(model=model, base_url= EMBEDDING_MODEL_URL)

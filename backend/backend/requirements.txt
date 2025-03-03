@@ -10,3 +10,4 @@ pypdf
 langchain_experimental
 fastapi
 pyjwt
+flashrank
