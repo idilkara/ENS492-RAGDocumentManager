@@ -33,7 +33,6 @@ import re
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import FlashrankRerank
 
-
 from typing import Dict
 from model_state import get_current_model
 
@@ -114,6 +113,16 @@ def add_document(file_entry, replace_existing=False):
             temp_file.write(file_data)
             print(f"Temporary file created at: {temp_file_path}")
 
+
+    # Store in MongoDB
+        # TODO: ikisinden birinde hata varsa ikisini de yapma
+        mongo_id = add_document_to_mongo(file_data, filename)
+        if not mongo_id:
+            raise Exception("Failed to store document in MongoDB")
+
+        print("mongo_id: ", mongo_id)
+
+
         chunker = RecursiveCharacterTextSplitter(
                         chunk_size=1000,  # Adjust based on document size
                         chunk_overlap=200,  # Small overlap to retain context
@@ -158,15 +167,7 @@ def add_document(file_entry, replace_existing=False):
         try:
             vectorstore.add_documents(vector_documents)
             print(f"Successfully added {len(vector_documents)} documents to vector store")
-            # Store in MongoDB
-            # TODO: ikisinden birinde hata varsa ikisini de yapma
-            mongo_id = add_document_to_mongo(file_data, filename)
-            if not mongo_id:
-                raise Exception("Failed to store document in MongoDB")
-
-            print("mongo_id: ", mongo_id)
-
-
+       
         except Exception as vector_error:
             raise Exception(f"Vector store upload failed: {str(vector_error)}")
 
