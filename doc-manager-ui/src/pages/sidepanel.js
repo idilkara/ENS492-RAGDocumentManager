@@ -30,7 +30,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
         method: "POST",
         headers: {'Content-Type': "application/json", Authorization: `Bearer ${token}`},
         body: JSON.stringify({
-          user_id: "1", // Replace with actual user ID
+          user_id: localStorage.getItem("userId"), // Replace with actual user ID
           session_id: sessionId,
         }),
       });
@@ -54,7 +54,7 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
     try {
       const data = await apiFetch(`${config.API_BASE_URL}/delete_all_chat_sessions`, {
         method: "POST",
-        body: JSON.stringify({ user_id: "1" }), // Replace with actual user ID
+        body: JSON.stringify({ user_id: localStorage.getItem("userId") }), // Replace with actual user ID
       });
   
         setShowDeleteMsg(false);

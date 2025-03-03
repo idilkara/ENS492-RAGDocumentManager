@@ -28,6 +28,7 @@ const Login = () => {
             {
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('userRole', data.role);
+                localStorage.setItem("userId", data.user_id)
                 navigate('/main');
             } else {
                 setError(data.message || 'Login failed, please try again.');

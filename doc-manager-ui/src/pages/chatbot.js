@@ -70,7 +70,7 @@ const handleSendMessage = async () => {
       method: 'POST',
       body: JSON.stringify({
         query: input,
-        user_id: '1',
+        user_id: localStorage.getItem("userId"),
         session_id: currentChatId,
         model: selectedModel
       })
