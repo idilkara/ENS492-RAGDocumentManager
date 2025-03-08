@@ -15,7 +15,7 @@ from langchain.schema import Document
 import fitz  # PyMuPDF
 from documents import add_document_to_mongo, delete_document_from_mongo, is_file_already_uploaded, get_document_by_id
 import traceback
-from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR
+from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR, EMBEDDING_MODEL_NAME_V2
 import tempfile
 import uuid
 from bson import ObjectId
@@ -28,23 +28,27 @@ from langchain_experimental.text_splitter import SemanticChunker
 import re
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import FlashrankRerank
-from typing import Dict
+from typing import Dict, List, Optional, Union
 from model_state import get_current_model
+import mimetypes
+from langchain_huggingface import HuggingFaceEmbeddings
 
 temp_file_manager = TempFileManager()
 pdf_highlighter = PDFHighlighter(temp_file_manager)
 
-
-
 # Initialize embeddings
-embeddings = OllamaEmbeddings(base_url=EMBEDDING_MODEL_URL, model=EMBEDDING_MODEL_NAME)
+embeddings_netv1 = OllamaEmbeddings(base_url=EMBEDDING_MODEL_URL, model=EMBEDDING_MODEL_NAME)
 
+embeddings_netv2 = HuggingFaceEmbeddings(
+    model_name=EMBEDDING_MODEL_NAME_V2,
+    model_kwargs={'device': 'cpu', 'trust_remote_code': True},  # Use 'cuda' if you have GPU
+    encode_kwargs={'normalize_embeddings': True}
+)
 
-#BUG: ilk seferde db yoksa hata veriyo
 os.makedirs(CHROMADB_DIR, exist_ok=True)
 
 # Initialize vector store
-vectorstore = Chroma(persist_directory=CHROMADB_DIR, embedding_function=embeddings)
+vectorstore = Chroma(persist_directory=CHROMADB_DIR, embedding_function=embeddings_netv2)
 
 class SessionMemoryManager:
     def __init__(self):
@@ -74,12 +78,100 @@ class SessionMemoryManager:
 # Initialize the session memory manager
 memory_manager = SessionMemoryManager()
 
+def process_document(file_path: str, file_extension: str) -> List[Document]:
+    """
+    Process document and convert to LangChain Document objects.
+    Replaces the Docling-based processing with native LangChain methods.
+    """
+    try:
+        # Use appropriate loader based on file extension
+        if file_extension.lower() == '.pdf':
+            loader = PyPDFLoader(file_path)
+            documents = loader.load()
+            
+            # Create chunks that maintain page structure
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000,
+                chunk_overlap=200,
+                separators=["\n\n", "\n", " ", ""]
+            )
+            
+            chunks = text_splitter.split_documents(documents)
+            return chunks
+        else:
+            # For text and other document types
+            loader = TextLoader(file_path)
+            documents = loader.load()
+            
+            # Split the text
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000,
+                chunk_overlap=200,
+                separators=["\n\n", "\n", " ", ""]
+            )
+            
+            chunks = text_splitter.split_documents(documents)
+            return chunks
+            
+    except Exception as e:
+        print(f"Document processing error: {str(e)}")
+        return fallback_document_processing(file_path, file_extension)
 
-
+def fallback_document_processing(file_path: str, file_extension: str) -> List[Document]:
+    """
+    Fallback method for document processing when primary method fails.
+    """
+    try:
+        # Basic text extraction approach
+        if file_extension.lower() == '.pdf':
+            # Use PyMuPDF (fitz) for more robust PDF handling
+            chunks = []
+            doc = fitz.open(file_path)
+            
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                text = page.get_text()
+                chunks.append(Document(
+                    page_content=text,
+                    metadata={"page": page_num, "source": file_path}
+                ))
+            
+            return chunks
+        else:
+            # Simple text file handling
+            with open(file_path, 'r', errors='ignore') as f:
+                content = f.read()
+            
+            # Split into basic chunks
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000,
+                chunk_overlap=200,
+                separators=["\n\n", "\n", " ", ""]
+            )
+            
+            chunks = text_splitter.create_documents([content])
+            for chunk in chunks:
+                chunk.metadata["source"] = file_path
+                
+            return chunks
+            
+    except Exception as e:
+        print(f"Fallback processing error: {str(e)}")
+        # Create a basic document with whatever content we can extract
+        try:
+            with open(file_path, 'rb') as f:
+                content = f.read()
+                if isinstance(content, bytes):
+                    try:
+                        content = content.decode('utf-8')
+                    except:
+                        content = "Binary content could not be decoded"
+            return [Document(page_content=content, metadata={"source": file_path})]
+        except:
+            return [Document(page_content="Failed to extract content", metadata={"source": file_path})]
 
 # app.py / upload()
 # replace_existing parameter will be modified after getting changes to frontend
-
 def add_document(file_entry, replace_existing=False):               
     """
     Adds a document to the vector store and MongoDB.
@@ -92,38 +184,54 @@ def add_document(file_entry, replace_existing=False):
     mongo_id = None
 
     try:
-        # Create temporary file to process the PDF
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+        # Determine file extension
+        file_extension = os.path.splitext(filename)[1]
+        if not file_extension:
+            # Try to detect from content
+            mime_type = mimetypes.guess_type(filename)[0]
+            if mime_type:
+                extension = mimetypes.guess_extension(mime_type)
+                if extension:
+                    file_extension = extension
+                else:
+                    file_extension = '.txt'  # Default to txt if can't determine
+            else:
+                file_extension = '.txt'  # Default to txt if can't determine
+        
+        # Create temporary file to process the document
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
             temp_file_path = temp_file.name
             temp_file.write(file_data)
             print(f"Temporary file created at: {temp_file_path}")
 
         # Store in MongoDB
-        # TODO: ikisinden birinde hata varsa ikisini de yapma
         mongo_id = add_document_to_mongo(file_data, filename)
         if not mongo_id:
             raise Exception("Failed to store document in MongoDB")
 
         print("mongo_id: ", mongo_id)
 
-        chunker = RecursiveCharacterTextSplitter(
-                        chunk_size=1000,  # Adjust based on document size
-                        chunk_overlap=200,  # Small overlap to retain context
-                        separators=["\n\n", "\n", " ", ""],  # Ensures sentence-level breaks
-                    )
-
-        # Load and process document
+        # Process document using the new method that doesn't rely on Docling
         try:
-            loader = PyPDFLoader(temp_file_path) if filename.lower().endswith('.pdf') else TextLoader(temp_file_path)
-            documents = loader.load()
-            print(f"Successfully loaded {len(documents)} document(s)")
-        except Exception as loader_error:
-            raise Exception(f"Document loading failed: {str(loader_error)}")
-
-        # Split into semantic chunks
-        
-        text_chunks = (chunker.split_documents(documents))
-        print(f"Split into {len(text_chunks)} chunks")
+            text_chunks = process_document(temp_file_path, file_extension)
+            print(f"Successfully processed and split into {len(text_chunks)} chunks")
+        except Exception as processing_error:
+            print(f"Document processing failed: {str(processing_error)}")
+            
+            # Fallback to traditional processing
+            chunker = RecursiveCharacterTextSplitter(
+                chunk_size=1000,
+                chunk_overlap=200,
+                separators=["\n\n", "\n", " ", ""],
+            )
+            
+            try:
+                loader = PyPDFLoader(temp_file_path) if filename.lower().endswith('.pdf') else TextLoader(temp_file_path)
+                documents = loader.load()
+                text_chunks = chunker.split_documents(documents)
+                print(f"Fallback processing: Split into {len(text_chunks)} chunks")
+            except Exception as loader_error:
+                raise Exception(f"Document loading failed: {str(loader_error)}")
 
         # Prepare documents for vector store
         try:
@@ -133,7 +241,8 @@ def add_document(file_entry, replace_existing=False):
                     metadata={
                         "mongo_id": str(mongo_id),
                         "filename": filename,
-                        "page": chunk.metadata.get("page", 0) + 1  # Add 1 since pages are 0-indexed
+                        "page": chunk.metadata.get("page", 0) + 1 if "page" in chunk.metadata else 1,
+                        #"section": chunk.metadata.get("section", 0) + 1 if "section" in chunk.metadata else None
                     }
                 )
                 for chunk in text_chunks
@@ -144,7 +253,6 @@ def add_document(file_entry, replace_existing=False):
 
         for i in vector_documents:
             print("CHUNK ############################ \n", i)
-
 
         # Add to vector store
         try:
@@ -186,8 +294,6 @@ def add_document(file_entry, replace_existing=False):
             except Exception as cleanup_error:
                 print(f"Failed to clean up temporary file: {str(cleanup_error)}")
 
-        
-
 # delete docs
 def delete_document_vectorstore(file_id):
     """Delete a document from the vector store using mongo_id."""
@@ -211,8 +317,6 @@ def delete_document_vectorstore(file_id):
     else:
         print(f"No chunks found for mongo_id {file_id} in the vector store.")
     
-
-
 #TODO : memory yi simdilik sildim eklenecek
 def create_qa_chain(vectorstore, llm, session_id: str):
     """
@@ -279,8 +383,6 @@ def create_qa_chain(vectorstore, llm, session_id: str):
     )
 
     return qa_chain
-
-
 
 def search_query(query, user_id, session_id, model):
     """
@@ -353,7 +455,6 @@ def search_query(query, user_id, session_id, model):
         # Add the interaction to message history
         add_message(user_id, session_id, query, response, source_docs_arr)
 
-
         return {
             "response": str(response),
             "source_docs_arr": source_docs_arr
@@ -365,27 +466,9 @@ def search_query(query, user_id, session_id, model):
         traceback.print_exc()
         return {"error": error_msg}
 
-
-"""
-# Update the global memory configuration
-global_memory = ConversationBufferWindowMemory(
-    memory_key="chat_history",
-    return_messages=True,
-    input_key = 'question',
-    output_key='answer',
-    k=0
-)
-"""
-
-#def get_most_relevant_chunks(query):
- #   search_results = vectorstore.similarity_search(query)
- #   return search_results
-
-
-
 def get_most_relevant_chunks(query):
     search_results = vectorstore.similarity_search(query)
-        # Initialize FlashRank reranker
+    # Initialize FlashRank reranker
     compressor = FlashrankRerank()
     
     # Create a compression retriever
@@ -398,7 +481,6 @@ def get_most_relevant_chunks(query):
     reranked_results = compression_retriever.get_relevant_documents(query)
     
     return reranked_results
-
 
 def load_model(model):
     """
