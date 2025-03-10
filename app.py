@@ -195,12 +195,13 @@ def user_query():                                               # chatbot.js / h
     session_id = ObjectId(session_id)
     query = data.get("query")
     model = data.get("model")
+    language = data.get("language", "eng")
 
 
     if not query or not user_id or not session_id:
         return jsonify({"error": "Missing required fields"}), 400
 
-    response_text = search_query(query, user_id, session_id, model)
+    response_text = search_query(query, user_id, session_id, model, language)
     source_docs_arr = response_text.get("source_docs_arr")
 
     print("ENDPOINTTE SOURCE_DOCS_ARR:::::::::", source_docs_arr, "\n", len(source_docs_arr))
