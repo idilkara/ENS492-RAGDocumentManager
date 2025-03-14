@@ -71,14 +71,76 @@ def login():
     token = jwt.encode({"email": email, "role": role, "exp": expiration}, SECRET_KEY, algorithm="HS256")
 
     return jsonify({"success": True, "message": "Login successful", "token": token, "role": role, "user_id": user_id})
+
+
+
+@app.route('/register', methods=['POST'])
+def register():
+    # Get JSON data from request
+    data = request.get_json()
+    email = data.get("email", "").strip()
+    password = data.get("password", "").strip()
     
+    # Validate email format (must be a Sabancı University email)
+    if not re.match(EMAIL_REGEX, email):
+        return jsonify({
+            "success": False, 
+            "message": "Invalid university email! Please use your @sabanciuniv.edu email."
+        }), 400
+    
+    # Check if user already exists
+    existing_user = get_user_by_email(email)
+    if existing_user:
+        return jsonify({
+            "success": False, 
+            "message": "An account with this email already exists."
+        }), 409
+    
+    # Validate password (you can add more complex validation as needed)
+    if len(password) < 8:
+        return jsonify({
+            "success": False, 
+            "message": "Password must be at least 8 characters long."
+        }), 400
+    
+    # Create new user
+    # In production, you should hash the password
+    new_user = {
+        "email": email,
+        "password": password,  # In production, use password hashing
+        "role": "student",  # Default role for new users
+        "created_at": datetime.now()
+    }
+    
+    try:
+        # Insert the new user into the database
+        result = users_collection.insert_one(new_user)
+        
+        if result.inserted_id:
+            return jsonify({
+                "success": True,
+                "message": "Registration successful. You can now log in."
+            }), 201
+        else:
+            return jsonify({
+                "success": False, 
+                "message": "Failed to create user. Please try again."
+            }), 500
+            
+    except Exception as e:
+        print(f"Registration error: {str(e)}")
+        return jsonify({
+            "success": False, 
+            "message": "An error occurred during registration."
+        }), 500
+
 # middleware for authentication and role verification
 @app.before_request
 def check_token():
-
     print(SECRET_KEY)
-    # skip verification if route is allowed
-    if request.path in ALLOWED_ROUTES or request.method == "OPTIONS":
+    
+    # Skip verification if the route is allowed or if the request is for registration
+    if request.path in ALLOWED_ROUTES or request.method == "OPTIONS" or request.path == "/register":
         return
     
     auth_header = request.headers.get("Authorization")
@@ -94,6 +156,7 @@ def check_token():
         return jsonify({"success": False, "message": "Token expired"}), 401
     except jwt.InvalidSignatureError:
         return jsonify({"success": False, "message": "Invalid token"}), 401
+
     
 # decorator to dedicate endpoints to admins only
 def role_required(required_role):
