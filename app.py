@@ -172,28 +172,35 @@ def role_required(required_role):
 @app.route('/upload', methods=['POST'])             # Receives & reads file (sidepanelupload.js / handleFileUpload())
 @role_required("admin") # only admins are allowed to upload
 def upload():                                        
-    file = request.files['file']
+    files = request.files.getlist('file')
     replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'          
 
-    if not file:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    file_entry = {
-        "file_data": file.read(),
-        "filename": file.filename
-    }
-
-    result = add_document(file_entry, replace_existing=replace_existing)
+    if not files or len(files) == 0:
+        return jsonify({"error": "No files uploaded"}), 400
     
-    if "error" in result:
-        return jsonify({"error": result["error"]}), 500
-    elif "warning" in result:
-        return jsonify({
-            "warning": result["warning"],
-            "options": "Set 'replace_existing' to True to replace the file."
-        }), 200
+    results = []
+    failed_files = []
+    successful_files = []
+
+    for file in files:
+        file_entry = {
+            "file_data": file.read(),
+            "filename": file.filename
+        }
+        result = add_document(file_entry, replace_existing=replace_existing)
+        if "error" in result:
+            failed_files.append(file.filename)
+        else:
+            successful_files.append(file.filename)
+        results.append(result)
+    
+    if(len(successful_files) == len(files)):
+        return jsonify({"message": "All files uploaded successfully"}), 200
+    elif(len(failed_files) > 0 and len(successful_files) > 0):
+        return jsonify({"warning": f"Failed to upload {len(failed_files)} files: {', '.join(failed_files)}"}), 200
     else:
-        return jsonify({"message": result["message"]}), 200
+        return jsonify({"error": "Failed to upload all files"}), 500
+
 
 
 # ===============================
