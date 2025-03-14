@@ -195,6 +195,7 @@ const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
       <div className="chat-container">
         <div className="chat-header">
           <div className="select-container">
+{/*             
             <select
               className="model-select"
               value={selectedModel}
@@ -205,9 +206,9 @@ const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
                   {model}
                 </option>
               ))}
-            </select>
+            </select> */}
 
-            <select
+            {/* <select
               className="language-select"
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
@@ -217,7 +218,7 @@ const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
                   {lang === "eng" ? "English" : "Türkçe"}
                 </option>
               ))}
-            </select>
+            </select> */}
           </div>
           <div>
             You are speaking with ✨ {selectedModel} ✨
