@@ -42,11 +42,14 @@ def get_user_by_email(email):
     return users_collection.find_one({"email": email})
 
 # login api
+import bcrypt
+
+# login api
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get("email", "").strip()
-    password = data.get("password", "").strip()  # ignored for now
+    password = data.get("password", "").strip()
 
     if not re.match(EMAIL_REGEX, email):
         return jsonify({"success": False, "message": "Invalid university email!"}), 400
@@ -56,16 +59,13 @@ def login():
 
     if not user:
         return jsonify({"success": False, "message": "User not found. Please contact administrator."}), 401
-    
-    # Check password (assuming passwords are stored as plain text for now)
-    # In production, you should use password hashing
-    if user["password"] != password:
+
+    # Check password (hashed)
+    if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
         return jsonify({"success": False, "message": "Invalid password"}), 401
 
-
     role = user["role"]
-    user_id = user["_id"]
-    user_id = str(user_id)
+    user_id = str(user["_id"])
 
     expiration = datetime.now() + timedelta(minutes=60)
     token = jwt.encode({"email": email, "role": role, "exp": expiration}, SECRET_KEY, algorithm="HS256")
@@ -73,49 +73,45 @@ def login():
     return jsonify({"success": True, "message": "Login successful", "token": token, "role": role, "user_id": user_id})
 
 
-
+# register api
 @app.route('/register', methods=['POST'])
 def register():
-    # Get JSON data from request
     data = request.get_json()
     email = data.get("email", "").strip()
     password = data.get("password", "").strip()
-    
-    # Validate email format (must be a Sabancı University email)
+
     if not re.match(EMAIL_REGEX, email):
         return jsonify({
             "success": False, 
             "message": "Invalid university email! Please use your @sabanciuniv.edu email."
         }), 400
-    
-    # Check if user already exists
+
     existing_user = get_user_by_email(email)
     if existing_user:
         return jsonify({
             "success": False, 
             "message": "An account with this email already exists."
         }), 409
-    
-    # Validate password (you can add more complex validation as needed)
+
     if len(password) < 8:
         return jsonify({
             "success": False, 
             "message": "Password must be at least 8 characters long."
         }), 400
-    
-    # Create new user
-    # In production, you should hash the password
+
+    # Hash the password before storing it
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
     new_user = {
         "email": email,
-        "password": password,  # In production, use password hashing
-        "role": "student",  # Default role for new users
+        "password": hashed_password,  # Store hashed password
+        "role": "admin",
         "created_at": datetime.now()
     }
-    
+
     try:
-        # Insert the new user into the database
         result = users_collection.insert_one(new_user)
-        
+
         if result.inserted_id:
             return jsonify({
                 "success": True,
@@ -133,6 +129,7 @@ def register():
             "success": False, 
             "message": "An error occurred during registration."
         }), 500
+
 
 # middleware for authentication and role verification
 @app.before_request
