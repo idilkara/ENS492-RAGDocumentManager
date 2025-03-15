@@ -3,6 +3,8 @@ import './Main.css';
 import SidePanel from './sidepanel'; // Import the SidePanel component
 import ChatbotUI from './chatbot'; // Import the ChatbotUI component
 import config from "../config";
+import apiFetch from '../api';  
+
 
 import DocumentManagement from './documentManagement.js'
 
@@ -19,18 +21,18 @@ const Main = () => {
       fetchUserSessions();
   }, []);
 
-    useEffect(() => {
+    /*useEffect(() => {
         fetchUserSessions();
     }, [chatID, chats]);
-  
+  */
 
   const fetchUserSessions = async () => {
       try {
-        const response = await fetch(`${config.API_BASE_URL}/get_user_sessions?user_id=1`);
-          const data = await response.json();
+          const userId = localStorage.getItem("userId")
+          const data = await apiFetch(`${config.API_BASE_URL}/get_user_sessions?user_id=${userId}`);
           setSessions(data);
           
-          if (chatID > 0) {
+          if (chatID && sessions.some(session => session.session_id === chatID)) {
               //const firstSessionId = data[0].session_id;
               setChatID(chatID);
               
@@ -55,15 +57,15 @@ const Main = () => {
 
   const createNewChatSession = async () => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/create_chat_session`, {
+      const userId = localStorage.getItem("userId")
+      const data = await apiFetch(`${config.API_BASE_URL}/create_chat_session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: '1' }),
+        body: JSON.stringify({ user_id: userId }),
       });
-      const data = await response.json();
   
       const newSession = {
-        user_id: '1',
+        user_id: userId,
         session_id: data.session_id,
         created_at: new Date().toISOString(),
       };
@@ -81,10 +83,14 @@ const Main = () => {
   
   const fetchChatSession = async (sessionID) => {
       try {
-          const response = await fetch(`${config.API_BASE_URL}/get_chat_session?user_id=1&session_id=${sessionID}`);
-          const data = await response.json();
+        const userId = localStorage.getItem("userId")
 
-          console.log(data);
+        if(sessionID === null) return; // null check yoktu ve sorun cikariyordu, ekledim umarim sorun cikarmaz :D
+        
+          const token = localStorage.getItem('authToken');
+          const response = await fetch(`${config.API_BASE_URL}/get_chat_session?user_id=${userId}&session_id=${sessionID}`, {headers: { 'Authorization': `Bearer ${token}` }} );
+          const data = await response.json();
+          console.log("fetchChatSession datası!!!!!: ", data);
           
     // Convert backend conversation to frontend message format
     const formattedMessages = data.map((msg, index) => {

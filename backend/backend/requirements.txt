@@ -5,9 +5,12 @@ langchain
 langchain-chroma
 langchain-community
 langchain-ollama
-PyMuPDF
 pypdf
+pymupdf
 langchain_experimental
 fastapi
 pyjwt
 flashrank
+bcrypt
+langchain-huggingface
+einops

@@ -47,7 +47,7 @@ services:
       - mongodb
       - chromadb
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - FLASK_RUN_HOST=0.0.0.0  # Ensure Flask listens on all interfaces
       - MONGO_URI=mongodb://root:example@mongodb:27017/

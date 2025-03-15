@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import './chatbot.css';
 import axios from 'axios';
 import config from "../config";
+import apiFetch from "../api";
 
 const ChatbotUI = ({ chatID, chats, createNewChatSession, setChats, setChatID }) => {
   const [input, setInput] = useState('');
@@ -12,6 +13,9 @@ const ChatbotUI = ({ chatID, chats, createNewChatSession, setChats, setChatID })
 
   const [selectedModel, setSelectedModel] = useState("llama3.2:3b"); // Default model
   const models = ["llama3.2:3b", "llama3.3:7b", "deepseek-r1:1.5b", "mistral:7b"]; // get it from frontend
+
+  const [selectedLanguage, setSelectedLanguage] = useState("eng"); // Default language
+  const languages = ["eng", "tur"]; // English and Turkish
 
   const chatIdRef = useRef(chatID);
 
@@ -65,14 +69,17 @@ const handleSendMessage = async () => {
   setInput("");
 
   try {
-    const response = await axios.post(`${config.API_BASE_URL}/user_query`, {
-      query: input,
-      user_id: '1',
-      session_id: currentChatId,
-      model: selectedModel
+    const data = await apiFetch(`${config.API_BASE_URL}/user_query`, {
+      method: 'POST',
+      body: JSON.stringify({
+        query: input,
+        user_id: localStorage.getItem("userId"),
+        session_id: currentChatId,
+        model: selectedModel,
+        language: selectedLanguage
+      })
     });
 
-    const data = response.data;
     const botResponse = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
     const highlightedPdfsource= data.source_docs_arr|| null;
     console.log(data);
@@ -127,12 +134,15 @@ const handleSendMessage = async () => {
 
 const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
   if (!pdfPath) return;
+
+  const token = localStorage.getItem('authToken');
   
   try {
     const response = await axios.get(
       `${config.API_BASE_URL}/get_highlighted_pdf?file_path=${encodeURIComponent(pdfPath)}`,
       {
         responseType: 'blob',
+        headers: {'Authorization': `Bearer ${token}`}
       }
     );
     
@@ -174,54 +184,68 @@ const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
     setMessages(chats[chatID] || []);
   }, [chatID, chats]);
 
-
+  const getWelcomeMessage = () => {
+    return selectedLanguage === "eng" 
+      ? "Hello! Let me know what you're curious about, and I'll find the relevant documents for you. How can I help you?"
+      : "Merhaba! Merak ettiğiniz konuları bana söyleyin, sizin için ilgili dokümanları bulayım. Size nasıl yardımcı olabilirim?";
+  };
 
   return (
     <div className="chat-interaction-container">
       <div className="chat-container">
+        <div className="chat-header">
+          <div className="select-container">
+{/*             
+            <select
+              className="model-select"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+            >
+              {models.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select> */}
 
-      <div className="chat-header">
-      <select
-        className="model-select"
-        value={selectedModel}
-        onChange={(e) => setSelectedModel(e.target.value)}
-      >
-        {models.map((model) => (
-          <option key={model} value={model}>
-            {model}
-          </option>
-        ))}
-      </select>
-          You are speaking with ✨ {selectedModel} ✨
-      </div>
+            {/* <select
+              className="language-select"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+            >
+              {languages.map((lang) => (
+                <option key={lang} value={lang}>
+                  {lang === "eng" ? "English" : "Türkçe"}
+                </option>
+              ))}
+            </select> */}
+          </div>
+          <div>
+            You are speaking with ✨ {selectedModel} ✨
+          </div>
+        </div>
         <div className="chat-history" ref={chatHistoryRef}>
           {messages.length === 0 ? (
-          
-
-              <div  className="message bot">
-             <ReactMarkdown>Hello! Let me know what you're curious about, and I'll find the relevant documents for you. How can I help you?</ReactMarkdown> 
-              </div>
+            <div className="message bot">
+              <ReactMarkdown>{getWelcomeMessage()}</ReactMarkdown> 
+            </div>
           ) : (
             messages.map((msg) => (
               <div key={msg.id} className={`message ${msg.isBot ? 'bot' : 'user'}`}>
                 <ReactMarkdown>{msg.text}</ReactMarkdown>
-          
                 {msg.isBot && msg.sources && msg.sources.length > 0 && (
                   msg.sources
                   .filter(source => source?.filename && source.filename !== "No filename") // Ensure filename is valid
                   .map((source, index) => (
-                      <button
-                        key={index}
-                        className="display-button"
-                        onClick={() => handleViewPDFClick(source.highlighted_pdf_path, source.pages[0])}
-                      >
-                        <div className="pdfLabel">{source.filename}</div>
-                      </button>
-                    ))
+                    <button
+                      key={index}
+                      className="display-button"
+                      onClick={() => handleViewPDFClick(source.highlighted_pdf_path, source.pages[0])}
+                    >
+                      <div className="pdfLabel">{source.filename}</div>
+                    </button>
+                  ))
                 )}
-
-
-
               </div>
             ))
           )}
@@ -232,25 +256,23 @@ const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
+            placeholder={selectedLanguage === "eng" ? "Type your message..." : "Mesajınızı yazın..."}
             disabled={isSending}
           />
           <button className="send-button" onClick={handleSendMessage} disabled={isSending}>
-            {isSending ? "Waiting..." : "Send"}
+            {isSending 
+              ? (selectedLanguage === "eng" ? "Waiting..." : "Bekleyin...") 
+              : (selectedLanguage === "eng" ? "Send" : "Gönder")}
           </button>
         </div>
         <div className="feedback-link">
-      <a href="https://docs.google.com/forms/d/e/1FAIpQLSedQob3XPLOoiyA3sLy7jsVG0L3twcE_upSVL7ezV7NSuSVYQ/viewform?usp=header" target="_blank" rel="noopener noreferrer">
-        Give us feedback!
-      </a>
-</div>
-
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSedQob3XPLOoiyA3sLy7jsVG0L3twcE_upSVL7ezV7NSuSVYQ/viewform?usp=header" target="_blank" rel="noopener noreferrer">
+            {selectedLanguage === "eng" ? "Give us feedback!" : "Geribildirim verin!"}
+          </a>
+        </div>
       </div>
     </div>
   );
-  
-
-
 };
 
 export default ChatbotUI;

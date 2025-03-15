@@ -9,6 +9,7 @@ import ChatsIcon from "../assets/chat-conversation-circle-svgrepo-com.svg"
 import SettingsIcon from "../assets/settings-svgrepo-com.svg"
 import UploadIcon from "../assets/upload-file-2-svgrepo-com.svg"
 import config from "../config";
+import apiFetch from '../api';
 
 const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOption, setSelectedOption }) => {
   
@@ -21,29 +22,26 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
 
   const handleDeleteSession = async (sessionId) => {
     if (!sessionId) return;
+
+    const token = localStorage.getItem("authToken");
   
     try {
       const response = await fetch(`${config.API_BASE_URL}/delete_chat_session`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {'Content-Type': "application/json", Authorization: `Bearer ${token}`},
         body: JSON.stringify({
-          user_id: "1", // Replace with actual user ID
+          user_id: localStorage.getItem("userId"), // Replace with actual user ID
           session_id: sessionId,
         }),
       });
-  
+
       const data = await response.json();
-  
       if (response.ok) {
-      
         //fetchUserSessions() REFRESH ATIYOR, main.js'den geldi
 
         setShowDeleteMsg(false);
-        setChatID(null);
-
         fetchUserSessions();
+        setChatID(null);
       } else {
         console.error("Error deleting session:", data.error);
       }
@@ -54,23 +52,16 @@ const SidePanel = ({ chatID, setChatID, sessions, fetchUserSessions, selectedOpt
   
   const handleClearAllSessions = async () => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/delete_all_chat_sessions`, {
+      const data = await apiFetch(`${config.API_BASE_URL}/delete_all_chat_sessions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_id: "1" }), // Replace with actual user ID
+        body: JSON.stringify({ user_id: localStorage.getItem("userId") }), // Replace with actual user ID
       });
   
-      const data = await response.json();
-  
-      if (response.ok) {
         setShowDeleteMsg(false);
-        setChatID(null);
         fetchUserSessions(); // Refresh the session list
-      } else {
-        console.error("Error clearing all sessions:", data.error);
-      }
+        setChatID(null);
+
+
     } catch (error) {
       console.error("Failed to clear all chat sessions:", error);
     }

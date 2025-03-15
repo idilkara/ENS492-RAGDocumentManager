@@ -12,9 +12,10 @@ const SearchDocument = () => {
 
     setIsSearching(true);
     try {
-      
+      const token = localStorage.getItem("authToken");
       const response = await fetch(`${config.API_BASE_URL}/search?query=${encodeURIComponent(searchQuery)}`, {
         method: 'GET',
+        headers: {'Authorization': `Bearer ${token}`},
       });
 
       const result = await response.json();

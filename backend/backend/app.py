@@ -4,31 +4,29 @@ from flask_cors import CORS
 import os
 from flask import send_file
 from vector_store import add_document, search_query, delete_document_vectorstore
-import uuid
+# import uuid
 from session_manager import create_empty_session, get_chat_session, get_session_list, chats_collection
-import gridfs
+# import gridfs
 from documents import get_document_by_id, delete_document_from_mongo, documents_collection
 from io import BytesIO
 from bson.objectid import ObjectId
-from config import EMBEDDING_MODEL_URL
-from langchain_ollama import ChatOllama
-import traceback
+from config import MONGO_URI, DB_NAME, USERS_COLLECTION
+# from langchain_ollama import ChatOllama
+# import traceback
 import re
 import jwt
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from functools import wraps
-
-from config import LLAMA_MODEL_3_2_3B, LLAMA_MODEL_3_3_70B
-from model_state import set_current_model, get_current_model
-
+from pymongo import MongoClient
+# from config import LLAMA_MODEL_3_2_3B, LLAMA_MODEL_3_3_70B
+# from model_state import set_current_model, get_current_model
+import bcrypt
 
 app = Flask(__name__)
 
 app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
-
-
 
 
 #start of backend
@@ -45,40 +43,111 @@ app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
 EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@sabanciuniv\.edu$'
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALLOWED_ROUTES = ['/login', '/logout']
+ALLOWED_ROUTES = ['/login', '/logout','/register']
 
-# simulating a user database for different roles
-USER_DB = {
-    "admin@sabanciuniv.edu" : {"role": "admin"},
-    "user@sabanciuniv.edu": {"role": "user"},
-}
+
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]  # Replace with your actual database name
+users_collection = db[USERS_COLLECTION]
+
+def get_user_by_email(email):
+    return users_collection.find_one({"email": email})
+
 
 # login api
 @app.route('/login', methods=['POST'])
 def login():
-    
     data = request.get_json()
     email = data.get("email", "").strip()
-    password = data.get("password", "").strip() #ignored for proof-of-concept purposes
+    password = data.get("password", "").strip()
 
     if not re.match(EMAIL_REGEX, email):
         return jsonify({"success": False, "message": "Invalid university email!"}), 400
-    
-    role = USER_DB.get(email, {}).get("role", "user")
+
+    # Find user by email
+    user = get_user_by_email(email)
+
+    if not user:
+        return jsonify({"success": False, "message": "User not found. Please contact administrator."}), 401
+
+    # Check password (hashed)
+    if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
+        return jsonify({"success": False, "message": "Invalid password"}), 401
+
+    role = user["role"]
+    user_id = str(user["_id"])
 
     expiration = datetime.now() + timedelta(minutes=60)
     token = jwt.encode({"email": email, "role": role, "exp": expiration}, SECRET_KEY, algorithm="HS256")
 
-    return jsonify({"success": True, "message": "Login successful", "token": token, "role": role})
+    return jsonify({"success": True, "message": "Login successful", "token": token, "role": role, "user_id": user_id})
 
-    
+
+# register api
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    email = data.get("email", "").strip()
+    password = data.get("password", "").strip()
+
+    if not re.match(EMAIL_REGEX, email):
+        return jsonify({
+            "success": False, 
+            "message": "Invalid university email! Please use your @sabanciuniv.edu email."
+        }), 400
+
+    existing_user = get_user_by_email(email)
+    if existing_user:
+        return jsonify({
+            "success": False, 
+            "message": "An account with this email already exists."
+        }), 409
+
+    if len(password) < 8:
+        return jsonify({
+            "success": False, 
+            "message": "Password must be at least 8 characters long."
+        }), 400
+
+    # Hash the password before storing it
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    new_user = {
+        "email": email,
+        "password": hashed_password,  # Store hashed password
+        "role": "admin",
+        "created_at": datetime.now()
+    }
+
+    try:
+        result = users_collection.insert_one(new_user)
+
+        if result.inserted_id:
+            return jsonify({
+                "success": True,
+                "message": "Registration successful. You can now log in."
+            }), 201
+        else:
+            return jsonify({
+                "success": False, 
+                "message": "Failed to create user. Please try again."
+            }), 500
+            
+    except Exception as e:
+        print(f"Registration error: {str(e)}")
+        return jsonify({
+            "success": False, 
+            "message": "An error occurred during registration."
+        }), 500
+
+
 # middleware for authentication and role verification
 @app.before_request
 def check_token():
-
     print(SECRET_KEY)
-    # skip verification if route is allowed
-    if request.path in ALLOWED_ROUTES or request.method == "OPTIONS":
+    
+    # Skip verification if the route is allowed or if the request is for registration
+    if request.path in ALLOWED_ROUTES or request.method == "OPTIONS" or request.path == "/register":
         return
     
     auth_header = request.headers.get("Authorization")
@@ -94,6 +163,7 @@ def check_token():
         return jsonify({"success": False, "message": "Token expired"}), 401
     except jwt.InvalidSignatureError:
         return jsonify({"success": False, "message": "Invalid token"}), 401
+
     
 # decorator to dedicate endpoints to admins only
 def role_required(required_role):
@@ -112,28 +182,35 @@ def role_required(required_role):
 @app.route('/upload', methods=['POST'])             # Receives & reads file (sidepanelupload.js / handleFileUpload())
 @role_required("admin") # only admins are allowed to upload
 def upload():                                        
-    file = request.files['file']
+    files = request.files.getlist('file')
     replace_existing = request.form.get('replace_existing', 'false').lower() == 'true'          
 
-    if not file:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    file_entry = {
-        "file_data": file.read(),
-        "filename": file.filename
-    }
-
-    result = add_document(file_entry, replace_existing=replace_existing)
+    if not files or len(files) == 0:
+        return jsonify({"error": "No files uploaded"}), 400
     
-    if "error" in result:
-        return jsonify({"error": result["error"]}), 500
-    elif "warning" in result:
-        return jsonify({
-            "warning": result["warning"],
-            "options": "Set 'replace_existing' to True to replace the file."
-        }), 200
+    results = []
+    failed_files = []
+    successful_files = []
+
+    for file in files:
+        file_entry = {
+            "file_data": file.read(),
+            "filename": file.filename
+        }
+        result = add_document(file_entry, replace_existing=replace_existing)
+        if "error" in result:
+            failed_files.append(file.filename)
+        else:
+            successful_files.append(file.filename)
+        results.append(result)
+    
+    if(len(successful_files) == len(files)):
+        return jsonify({"message": "All files uploaded successfully"}), 200
+    elif(len(failed_files) > 0 and len(successful_files) > 0):
+        return jsonify({"warning": f"Failed to upload {len(failed_files)} files: {', '.join(failed_files)}"}), 200
     else:
-        return jsonify({"message": result["message"]}), 200
+        return jsonify({"error": "Failed to upload all files"}), 500
+
 
 
 # ===============================
@@ -190,16 +267,18 @@ def get_pdf():                                                  #Retrieves a fil
 def user_query():                                               # chatbot.js / handleSendMessage()
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
     session_id = data.get("session_id")
     session_id = ObjectId(session_id)
     query = data.get("query")
     model = data.get("model")
+    language = data.get("language", "eng")
 
 
     if not query or not user_id or not session_id:
         return jsonify({"error": "Missing required fields"}), 400
 
-    response_text = search_query(query, user_id, session_id, model)
+    response_text = search_query(query, user_id, session_id, model, language)
     source_docs_arr = response_text.get("source_docs_arr")
 
     print("ENDPOINTTE SOURCE_DOCS_ARR:::::::::", source_docs_arr, "\n", len(source_docs_arr))
@@ -240,6 +319,7 @@ def create_chat_session():
     """
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
     print("user id:", user_id)
 
     if not user_id:
@@ -261,6 +341,7 @@ def retrieve_chat_session():
     #Retrieve an existing chat session.
     
     user_id = request.args.get("user_id")
+    user_id = ObjectId(user_id)
     session_id = request.args.get("session_id")
     session_id = ObjectId(session_id)
     print("user id:", user_id)
@@ -288,6 +369,7 @@ def get_user_sessions():
     This returns session metadata for all sessions of a user.
     """
     user_id = request.args.get('user_id')
+    user_id = ObjectId(user_id)
     print("user id:", user_id)
 
     if not user_id:
@@ -330,6 +412,7 @@ def delete_chat_session():                                                      
     """
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
     session_id = data.get("session_id")
 
     if not user_id or not session_id:
@@ -353,6 +436,7 @@ def delete_all_chat_sessions():                                                 
     """Deletes all chat sessions for a given user."""
     data = request.get_json()
     user_id = data.get("user_id")
+    user_id = ObjectId(user_id)
 
     if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
@@ -365,11 +449,8 @@ def delete_all_chat_sessions():                                                 
         return jsonify({"error": str(e)}), 500
 
 
-
-
-    
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
-    print("🔄 Preloading LLM Model...")
-    llm = ChatOllama(model="llama3.2:3b", base_url= EMBEDDING_MODEL_URL )
-    print("✅ LLM Model Preloaded!")
+    app.run(debug=True, use_reloader=False, host="0.0.0.0", port=5000)
+    # print("🔄 Preloading LLM Model...")
+    # #llm = ChatOllama(model="llama3.2:3b", base_url= EMBEDDING_MODEL_URL )
+    # print("✅ LLM Model Preloaded!")

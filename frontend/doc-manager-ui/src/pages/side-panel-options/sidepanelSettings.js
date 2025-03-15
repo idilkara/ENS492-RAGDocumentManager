@@ -11,6 +11,9 @@ const Settings = () => {
     };
 
     const handleLogout = () => {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userRole");
+
         navigate('/'); // Redirects to the login page
     };
 
