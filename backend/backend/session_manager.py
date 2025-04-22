@@ -35,7 +35,7 @@ def create_empty_session(user_id):
     print("New empty session created.")
     return {"message": "New empty session created.", "session_id": str(session_id)}
 
-def add_message(user_id, session_id, user_query, agent_response, highlighted_pdf_path):
+def add_message(user_id, session_id, user_query, agent_response, highlighted_pdf_path=None):
     """
     Add a new message to an existing chat session.
     If the session doesn't exist, create a new one with the message.

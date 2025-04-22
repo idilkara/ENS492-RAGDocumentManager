@@ -1,53 +1,43 @@
 version: '3.8'
 
 services:
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    restart:  always
-    ports:
-      - "11434:11434"
-    networks:
-      - app_network
-    volumes:
-      - ollama_models:/root/.ollama  # Persist models inside a volume
-  
-
-
   mongodb:
     image: mongo:latest
-    container_name: mongodb
+    container_name: llm1-mongodb
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "5004:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
       - mongodb_data:/data/db
     networks:
-      - app_network
+      - llm1-app-network
 
   chromadb:
     image: chromadb/chroma:latest
-    container_name: chromadb
+    container_name: llm1-chromadb
     restart: unless-stopped
     ports:
-      - "8001:8000"  # ChromaDB default port
+      - "5001:8000"  # ChromaDB default port
+    environment:
+      - CHROMA_DB_DIR=/chroma
+      - CHROMA_PERSISTENCE_DIR=/chroma
     volumes:
-      - chromadb_data:/chroma
+      - chromadb_data:/data #/chroma
     networks:
-      - app_network
+      - llm1-app-network
+
   backend:
     build: ./backend  # Ensure this directory contains a valid Dockerfile
-    container_name: backend
+    container_name: llm1-backend
     restart: unless-stopped
     depends_on:
-      - ollama
       - mongodb
       - chromadb
     ports:
-      - "5001:5000"
+      - "5000:5000"
     environment:
       - FLASK_RUN_HOST=0.0.0.0  # Ensure Flask listens on all interfaces
       - MONGO_URI=mongodb://root:example@mongodb:27017/
@@ -56,37 +46,38 @@ services:
       - USERS_COLLECTION=users
       - SESSIONS_COLLECTION=sessions
       - CHROMADB_URL=http://chromadb:8000  # Backend connects to ChromaDB
-      - EMBEDDING_MODEL_URL=http://ollama:11434 
-      - EMBEDDING_MODEL_NAME=nomic-embed-text
-      - LLAMA_MODEL=llama3.2:3b
+      - EMBEDDING_MODEL_URL=http://vllm:11434/v1/chat/completions
+      - EMBEDDING_MODEL_NAME=nomic-embed-text ##yok bu
+      - LLAMA_MODEL=llama3.2:3b ## degiscek 
     networks:
-      - app_network
+      - llm1-app-network
 
 
-  frontend:
-    build: ../frontend # Ensure this matches the frontend Dockerfile location
-    container_name: frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
-    ports:
-      - "3000:3000"
-    networks:
-      - app_network
+  # frontend:
+  #   build: ../frontend # Ensure this matches the frontend Dockerfile location
+  #   container_name: llm1-frontend
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - backend
+  #   ports:
+  #     - "5005:3000"
+  #   networks:
+  #     - llm1-app-network
 
   nginx:
       image: nginx:latest
-      container_name: nginx
-      restart: unless-stopped
+      container_name: llm1-nginx
+      restart: unless-stopped   
       ports:
-        - "80:80"
+        - "5002:80" 
       volumes:
-        - ./nginx:/etc/nginx
+        - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Mount custom Nginx config
+        - ./build:/usr/share/nginx/html:ro  # Mount the React build folder 
       depends_on:
+
         - backend
-        - frontend
       networks:
-        - app_network
+        - llm1-app-network
 
 volumes:
   mongodb_data:
@@ -94,5 +85,5 @@ volumes:
   chromadb_data:
 
 networks:
-  app_network:
+  llm1-app-network:
     driver: bridge

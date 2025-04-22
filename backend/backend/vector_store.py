@@ -22,13 +22,21 @@ from session_manager import add_message
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
-from chromadb import HttpClient
+
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
 from highlight_pdf_handle import TempFileManager, PDFHighlighter
 from langchain_experimental.text_splitter import SemanticChunker
 import re
+
+from langchain.chains.summarize import load_summarize_chain
+
+from transformers import AutoTokenizer
+
+
+from langchain_community.chat_models import ChatOpenAI
+
 
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import FlashrankRerank
@@ -39,9 +47,10 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 
 from chromadb import PersistentClient
+from chromadb import HttpClient
 from config import CHROMADB_URL
 
-
+from transformers import AutoTokenizer
 
 try:
     print(f"🔍 Connecting to ChromaDB at {CHROMADB_URL}...")
@@ -57,7 +66,7 @@ pdf_highlighter = PDFHighlighter(temp_file_manager)
 
 # Initialize embeddings
 # Initialize embeddings
-embeddings_netv1 = OllamaEmbeddings(base_url=EMBEDDING_MODEL_URL, model=EMBEDDING_MODEL_NAME)
+# embeddings_netv1 = OllamaEmbeddings(base_url=EMBEDDING_MODEL_URL, model=EMBEDDING_MODEL_NAME)
 
 embeddings_netv2 = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL_NAME_V2,
@@ -68,9 +77,18 @@ embeddings_netv2 = HuggingFaceEmbeddings(
 # Initialize vector store
 vectorstore = Chroma(client=db, embedding_function=embeddings_netv2)
 
+tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
+
+
+
 class SessionMemoryManager:
+    
     def __init__(self):
         self.sessions: Dict[str, ConversationBufferWindowMemory] = {}
+        self.tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
+
+    def count_tokens(self, text: str) -> int:
+        return len(self.tokenizer.encode(text, truncation=False))
     
     def get_memory(self, session_id: str) -> ConversationBufferWindowMemory:
         """Get or create memory for a specific session"""
@@ -80,9 +98,29 @@ class SessionMemoryManager:
                 return_messages=True,
                 input_key='question',
                 output_key='answer',
-                k=3  # Keep last 3 messages
+                k=3 # Keep last 1 message
             )
-        return self.sessions[session_id]
+        memory = self.sessions[session_id]
+
+        # Trim memory to last 200 tokens max
+        MAX_TOKENS = 200
+        trimmed_messages = []
+        total_tokens = 0
+
+        # Reverse loop through messages to keep the *most recent* ones within the token limit
+        for msg in reversed(memory.chat_memory.messages):
+            msg_tokens = self.count_tokens(msg.content)
+            if total_tokens + msg_tokens <= MAX_TOKENS:
+                trimmed_messages.insert(0, msg)  # Insert at beginning to keep order
+                total_tokens += msg_tokens
+            else:
+                break  # Stop when adding another message would exceed the limit
+
+        # Replace messages with the trimmed list
+        memory.chat_memory.messages = trimmed_messages
+
+        return memory
+
     
     def clear_memory(self, session_id: str) -> None:
         """Clear memory for a specific session"""
@@ -95,6 +133,7 @@ class SessionMemoryManager:
 
 # Initialize the session memory manager
 memory_manager = SessionMemoryManager()
+
 
 
 
@@ -125,8 +164,8 @@ def fallback_document_processing(file_path: str, file_extension: str) -> List[Do
             
             # Split into basic chunks
             text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000,
-                chunk_overlap=200,
+                chunk_size=500,
+                chunk_overlap=100,
                 separators=["\n\n", "\n", " ", ""]
             )
             
@@ -201,7 +240,7 @@ def add_document(file_entry, replace_existing=False):
             
             # Fallback to traditional processing
             chunker = RecursiveCharacterTextSplitter(
-                chunk_size=1000,
+                chunk_size=500,
                 chunk_overlap=200,
                 separators=["\n\n", "\n", " ", ""],
             )
@@ -415,6 +454,10 @@ def search_query(query, user_id, session_id, model, language="eng"):
     Query the vector store and return results with highlighted PDFs.
     """
     llm = load_model(model)
+
+    reranked_docs = get_most_relevant_chunks(query)  # 🔥 Use reranked docs
+    print("reranked_docs: ", reranked_docs)
+
     qa_chain = create_qa_chain(vectorstore, llm, session_id, language)
 
     try:
@@ -423,6 +466,7 @@ def search_query(query, user_id, session_id, model, language="eng"):
 
         result = qa_chain.invoke({
             "question": query,
+            "context": reranked_docs,
             #"chat_history": memory_manager.get_memory(session_id)
         })
         print(f"[DEBUG] Query execution complete. Raw response: {result}")
@@ -430,6 +474,7 @@ def search_query(query, user_id, session_id, model, language="eng"):
         source_docs = result.get('source_documents', [])
         print(len(source_docs[:2]))
         print("source docs::::  ", source_docs[:2])
+        source_docs = reranked_docs
         if not source_docs:
             if language == "eng":
                 response = "I cannot answer this question based on the available documents."
@@ -499,7 +544,9 @@ def search_query(query, user_id, session_id, model, language="eng"):
 
 
 def get_most_relevant_chunks(query):
-    search_results = vectorstore.similarity_search(query)
+    search_results = vectorstore.similarity_search(query, k=10)
+    print("search_results: ", search_results)
+    
     # Initialize FlashRank reranker
     compressor = FlashrankRerank()
     
@@ -517,4 +564,12 @@ def get_most_relevant_chunks(query):
 
 
 def load_model(model):
-    return ChatOllama(model=model, base_url= EMBEDDING_MODEL_URL)
+    MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    
+    return ChatOpenAI(
+        model_name=MODEL_NAME,
+        openai_api_base="http://10.3.0.96:8888/v1",
+        openai_api_key="not-needed-for-vllm",  # <--- this is the fix
+        temperature=0.5,
+        max_tokens=1024
+    )

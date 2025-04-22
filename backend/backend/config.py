@@ -11,7 +11,7 @@ SESSIONS_COLLECTION = os.getenv('SESSIONS_COLLECTION', 'sessions')
 CHROMADB_URL = os.getenv('CHROMADB_URL', 'http://chromadb:8000')  # Use the ChromaDB container name
 CHROMADB_DIR = "db"
 # Embedding Model Configuration
-EMBEDDING_MODEL_URL = os.getenv('EMBEDDING_MODEL_URL', 'http://ollama:11434/v1/completions')
+EMBEDDING_MODEL_URL = os.getenv('EMBEDDING_MODEL_URL', 'http://10.3.0.96:8888/v1/')
 
 
 EMBEDDING_MODEL_NAME = os.getenv('EMBEDDING_MODEL_NAME', 'nomic-embed-text')

@@ -28,7 +28,11 @@ app = Flask(__name__)
 app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
 
-
+# # # Enable CORS for all routes
+CORS(app,  resources={r"/api/*": {"origins": "http://localhost:5002", "supports_credentials": True}})
+ 
+# # # Or allow CORS from a specific origin
+# CORS(app, origins="http://localhost:3000", supports_credentials=True)
 #start of backend
 # ===============================
 
@@ -43,7 +47,7 @@ app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
 EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@sabanciuniv\.edu$'
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALLOWED_ROUTES = ['/login', '/logout','/register']
+ALLOWED_ROUTES = ['/login', '/logout','/register', '/api/login', '/api/logout', '/api/register']
 
 
 client = MongoClient(MONGO_URI)
@@ -281,7 +285,7 @@ def user_query():                                               # chatbot.js / h
     response_text = search_query(query, user_id, session_id, model, language)
     source_docs_arr = response_text.get("source_docs_arr")
 
-    print("ENDPOINTTE SOURCE_DOCS_ARR:::::::::", source_docs_arr, "\n", len(source_docs_arr))
+    # print("ENDPOINTTE SOURCE_DOCS_ARR:::::::::", source_docs_arr, "\n", len(source_docs_arr))
 
     return jsonify({
         "response": response_text.get("response"),
