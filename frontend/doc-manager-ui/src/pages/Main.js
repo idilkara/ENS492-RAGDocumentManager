@@ -91,7 +91,6 @@ const Main = () => {
           const response = await fetch(`${config.API_BASE_URL}/get_chat_session?user_id=${userId}&session_id=${sessionID}`, {headers: { 'Authorization': `Bearer ${token}` }} );
           const data = await response.json();
           console.log("fetchChatSession datası!!!!!: ", data);
-          
     // Convert backend conversation to frontend message format
     const formattedMessages = data.map((msg, index) => {
       const messageArray = [

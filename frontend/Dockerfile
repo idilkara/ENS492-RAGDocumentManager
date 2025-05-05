@@ -1,10 +1,10 @@
-# Use the official Node.js image to build the React app
-FROM node:latest AS build
+# Use the official Node.js image
+FROM node:latest
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json for better caching
+# Copy package.json and package-lock.json first for better caching
 COPY doc-manager-ui/package.json doc-manager-ui/package-lock.json ./
 
 # Install dependencies
@@ -16,17 +16,14 @@ COPY doc-manager-ui/ ./
 # Fix permissions issue
 RUN chmod -R 777 node_modules
 
-# Build the React app
-RUN npm run build  # This will generate the build files in the build/ directory
+# Build the static files
+RUN npx react-scripts build  # Using npx ensures the local version is used
 
-# Use the official Nginx image to serve the static files
-FROM nginx:latest
+# Install `serve` globally
+RUN npm install -g serve
 
-# Copy the build files from the build stage into Nginx's default directory
-COPY --from=build /usr/src/app/build /usr/share/nginx/html
+# Expose port 3000
+EXPOSE 3000
 
-# Expose port 80 for Nginx to serve the app
-EXPOSE 80
-
-# Run Nginx in the foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Start the static file server
+CMD ["serve", "-s", "build", "-l", "3000"]
