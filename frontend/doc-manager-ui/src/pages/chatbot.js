@@ -220,9 +220,10 @@ const handleViewPDFClick = async (pdfPath, pageNumber = 1) => {
               ))}
             </select> */}
           </div>
+          {/*
           <div>
             You are speaking with ✨ {selectedModel} ✨
-          </div>
+          </div> */}
         </div>
         <div className="chat-history" ref={chatHistoryRef}>
           {messages.length === 0 ? (

@@ -52,6 +52,8 @@ from config import CHROMADB_URL
 
 from transformers import AutoTokenizer
 
+from langdetect import detect
+
 try:
     print(f"🔍 Connecting to ChromaDB at {CHROMADB_URL}...")
     db = HttpClient(CHROMADB_URL)
@@ -78,7 +80,8 @@ embeddings_netv2 = HuggingFaceEmbeddings(
 vectorstore = Chroma(client=db, embedding_function=embeddings_netv2)
 
 tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
-
+MAX_TOKENS_TOTAL = 4096
+MAX_COMPLETION_TOKENS = 2048
 
 
 class SessionMemoryManager:
@@ -448,6 +451,22 @@ def create_qa_chain(vectorstore, llm, session_id: str, language):
 
     return qa_chain
 
+def trim_chunks_to_fit(query, docs, tokenizer, max_total=2048, completion_buffer=1024):
+    query_tokens = len(tokenizer.encode(query))
+    budget = max_total - completion_buffer
+    included = []
+    total = query_tokens
+
+    for doc in docs:
+        chunk = doc.page_content if hasattr(doc, 'page_content') else str(doc)
+        chunk_tokens = len(tokenizer.encode(chunk))
+        if total + chunk_tokens > budget:
+            break
+        included.append(doc)
+        total += chunk_tokens
+
+    return included
+
 
 def search_query(query, user_id, session_id, model, language="eng"):
     """
@@ -458,15 +477,21 @@ def search_query(query, user_id, session_id, model, language="eng"):
     reranked_docs = get_most_relevant_chunks(query)  # 🔥 Use reranked docs
     print("reranked_docs: ", reranked_docs)
 
+    #language = detect(query)
+    language = "eng"
+    print("The query is: ", query)
+    print("Detected language: ", language)
+
     qa_chain = create_qa_chain(vectorstore, llm, session_id, language)
 
     try:
         print(f"\nQuery: {query}")
         print(f"Language: {language}")
 
+        trimmed_docs = trim_chunks_to_fit(query, reranked_docs, tokenizer, MAX_TOKENS_TOTAL, MAX_COMPLETION_TOKENS)
         result = qa_chain.invoke({
             "question": query,
-            "context": reranked_docs,
+            "context": trimmed_docs,
             #"chat_history": memory_manager.get_memory(session_id)
         })
         print(f"[DEBUG] Query execution complete. Raw response: {result}")
@@ -544,7 +569,7 @@ def search_query(query, user_id, session_id, model, language="eng"):
 
 
 def get_most_relevant_chunks(query):
-    search_results = vectorstore.similarity_search(query, k=10)
+    search_results = vectorstore.similarity_search(query, k=3)
     print("search_results: ", search_results)
     
     # Initialize FlashRank reranker
@@ -564,7 +589,7 @@ def get_most_relevant_chunks(query):
 
 
 def load_model(model):
-    MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    MODEL_NAME = "DeepSeek-R1-Distill-Qwen-32B-Q6_K.gguf"
     
     return ChatOpenAI(
         model_name=MODEL_NAME,

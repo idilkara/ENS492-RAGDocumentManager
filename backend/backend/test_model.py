@@ -12,7 +12,7 @@ def load_model(model):
     )
 
 def test_model():
-    llm = load_model("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
+    llm = load_model("deepseek-ai/DeepSeek-R1-Distill-Qwen-32B-Q6_K.gguf")
     
     # Using .invoke() with a message dictionary
     response = llm.invoke([
