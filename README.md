@@ -1,21 +1,162 @@
-﻿# this is the repository for sabanci university ens491 course project
+﻿# RAG Document Manager - Sabanci University ENS491 Project
 
-This repository is organized into seperate branches, 
+## Overview
+A Retrieval-Augmented Generation (RAG) based document management system that enables intelligent document processing, semantic search, and AI-powered chat interactions. This project was developed as part of the ENS491 course at Sabanci University.
 
-Mainly as, 
+## System Architecture
 
-  backend
-  user-interface
+### Components
+- **Frontend**: React-based web interface
+- **Backend**: Flask-based REST API
+- **Database**: MongoDB for document storage
+- **Vector Store**: ChromaDB for semantic search
+- **LLM Integration**: Ollama for language models
+- **Web Server**: Nginx for reverse proxy
 
-But there are other branches as well for trying some additional features.
+## Project Structure
+
+ENS492-RAGDocumentManager/
+├── backend/
+│ ├── backend/ # Backend source code
+│ ├── nginx/ # Nginx configuration
+│ ├── build/ # Frontend build files
+│ └── docker-compose.yml # Docker services configuration
+├── frontend/
+│ └── doc-manager-ui/ # Frontend source code
+└── README.md
 
 
-to run, you can run the script or 
+## Prerequisites
+- Docker and Docker Compose
+- Node.js (for frontend development)
+- Python 3.8+ (for backend development)
+- Git
 
+## Quick Start
 
-docker-compose build in the backend directory
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd ENS492-RAGDocumentManager
+```
 
-pull llama image and manifest embeddings and llm model
-docker exec -it ollama ollama pull nomic-embed-text
-docker exec -it ollama ollama pull mistral
+2. Start the services:
+```bash
+cd backend
+docker-compose up -d
+```
 
+3. Access the application:
+- Web Interface: http://localhost
+- API: http://localhost/api
+- MongoDB: localhost:27017
+- ChromaDB: localhost:8001
+- Ollama: localhost:11434
+
+## Services
+
+### Frontend (Port 3000)
+- React-based user interface
+- Document management interface
+- Chat interface
+- PDF viewer
+
+### Backend (Port 5001)
+- Flask REST API
+- Document processing
+- Vector store operations
+- Authentication system
+
+### Nginx (Port 80)
+- Reverse proxy
+- Static file serving
+- SSL termination (if configured)
+
+### MongoDB (Port 27017)
+- Document storage
+- User data
+- Session management
+
+### ChromaDB (Port 8001)
+- Vector embeddings
+- Semantic search
+- Document indexing
+
+### Ollama (Port 11434)
+- Language model integration
+- Text generation
+- Embedding generation
+
+## Development
+
+### Frontend Development
+```bash
+cd frontend/doc-manager-ui
+npm install
+npm start
+```
+
+### Backend Development
+```bash
+cd backend/backend
+pip install -r requirements.txt
+flask run
+```
+
+### Building Frontend
+```bash
+cd frontend/doc-manager-ui
+npm run build
+```
+
+## Docker Services
+
+### Starting Services
+```bash
+docker-compose up -d
+```
+
+### Stopping Services
+```bash
+docker-compose down
+```
+
+### Viewing Logs
+```bash
+docker-compose logs -f
+```
+
+## Features
+- 📄 Document Management
+  - Upload and store documents
+  - View and delete documents
+  - PDF preview
+
+- 💬 AI Chat
+  - Document-aware conversations
+  - Multi-language support
+  - Context preservation
+
+- 🔍 Semantic Search
+  - Intelligent document retrieval
+  - PDF highlighting
+  - Context-aware responses
+
+- 👤 User Management
+  - Authentication
+  - Role-based access
+  - Session management
+
+## Configuration
+
+### Environment Variables
+Create a `.env` file in the backend directory:
+```env
+MONGO_URI=mongodb://root:example@mongodb:27017/
+DB_NAME=doc_db
+CHROMADB_URL=http://chromadb:8000
+EMBEDDING_MODEL_URL=http://ollama:11434
+```
+
+### Nginx Configuration
+The Nginx configuration is located in `backend/nginx/nginx.conf`
