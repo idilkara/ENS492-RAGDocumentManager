@@ -13,6 +13,32 @@ A Retrieval-Augmented Generation (RAG) based document management system that ena
 - **LLM Integration**: Ollama for language models
 - **Web Server**: Nginx for reverse proxy
 
+
+### Quick Start 
+
+## Everything can be run using docker containers. 
+To run the application:
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Build and start all containers:
+   ```bash
+   docker-compose up --build
+   ```
+
+This command will:
+- Pull required database images (MongoDB, ChromaDB)
+- Build the Flask backend image
+- Build the Nginx frontend image
+- Start all services in containers
+- Create a volume for databases and network for communication between containers.
+
+The access point for end users is port 5002, which maps to port 80 of the Nginx container.
+
+
 ## Project Structure
 
 ENS492-RAGDocumentManager/
@@ -159,13 +185,35 @@ docker-compose logs -f
 ## Configuration
 
 ### Environment Variables
-Create a `.env` file in the backend directory:
-```env
-MONGO_URI=mongodb://root:example@mongodb:27017/
-DB_NAME=doc_db
-CHROMADB_URL=http://chromadb:8000
-EMBEDDING_MODEL_URL=http://ollama:11434
-```
+The system can be configured either through environment variables or by creating a `.env` file in the backend directory. The available configuration options are defined in `config.py`.
+
+Key configuration variables include:
+- `MONGO_URI`: MongoDB connection string
+- `DB_NAME`: Database name 
+- `CHROMADB_URL`: ChromaDB connection URL
+- `EMBEDDING_MODEL_NAME`: Name of the embedding model
+- `EMBEDDING_MODEL_URL`: URL for the embedding model
+- `LLM_MODEL_NAME`: LLM model name
+- `TOKENIZER_NAME`: Tokenizer name
+- `LLM_URI`: LLM service endpoint URL
+
+The default configuration in `config.py` is set up for use within the Dolap server environment. Modify these values as needed for your deployment.
 
 ### Nginx Configuration
-The Nginx configuration is located in `backend/nginx/nginx.conf`
+The Nginx configuration is located in `backend/nginx/nginx.conf`. This configuration handles routing and serving the frontend static files.
+
+#### Frontend Deployment Instructions
+1. Build the React.js frontend application:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+2. Copy the generated `build` folder to the backend directory:
+   ```bash
+   cp -r build ../backend/
+   ```
+3. The Nginx server will automatically serve the new frontend files from the updated build folder
+
+Note: Any time you make changes to the frontend code, you'll need to rebuild and copy over the new build folder for the changes to take effect.
+
+

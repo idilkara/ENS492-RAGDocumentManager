@@ -11,6 +11,11 @@ SESSIONS_COLLECTION = os.getenv('SESSIONS_COLLECTION', 'sessions')
 CHROMADB_URL = os.getenv('CHROMADB_URL', 'http://chromadb:8000')  # Use the ChromaDB container name
 CHROMADB_DIR = "db"
 
+# LLM Model Configuration
+LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', 'deepseek-r1:1.5b')
+TOKENIZER_NAME = os.getenv('TOKENIZER_NAME', 'deepseek-ai/DeepSeek-R1-Distill-Qwen-14B')
+LLM_URI = os.getenv('LLM_URI', 'http://10.3.0.96:8888/v1')
+
 EMBEDDING_MODEL_URL = os.getenv('EMBEDDING_MODEL_URL', 'http://10.3.0.96:8888/v1/') #used to be ollama 
 EMBEDDING_MODEL_NAME = os.getenv('EMBEDDING_MODEL_NAME', 'nomic-embed-text')
 EMBEDDING_MODEL_NAME_V2 = "nomic-ai/nomic-embed-text-v2-moe"
@@ -27,6 +32,4 @@ MISTRAL_MODEL_7B = "mistral:7b"
 DEEPSEEK_TOKENIZER = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
 DEEPSEEK_R1_MODELNAME = "DeepSeek-R1-Distill-Qwen-32B-Q6_K.ggu"
 
-LLM_MODEL_NAME = DEEPSEEK_R1_MODELNAME
-TOKENIZER_NAME = DEEPSEEK_TOKENIZER
-LLM_URI = "http://10.3.0.96:8888/v1"
+

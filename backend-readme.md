@@ -108,13 +108,16 @@ The backend is a Flask-based REST API that implements a RAG (Retrieval-Augmented
 - Secure file handling
 
 ## Configuration
-The system uses environment variables for configuration:
+The system uses environment variables for configuration: see ./backend/backend/config.py
 - `MONGO_URI`: MongoDB connection string
 - `DB_NAME`: Database name
 - `SECRET_KEY`: JWT secret key
 - `CHROMADB_URL`: ChromaDB connection URL
 - `EMBEDDING_MODEL_NAME`: Name of the embedding model
-- `EMBEDDING_MODEL_URL`: URL for the embedding model
+- `EMBEDDING_MODEL_URL`: URL for the embedding model if it is in another server
+- `LLM_MODEL_NAME`: LLM model name
+- `TOKENIZER_NAME`:  tokenizer name 
+- `LLM_URI`: LLM service endpoint URL to send http requests
 
 ## Error Handling
 - Comprehensive error handling for file processing
@@ -122,27 +125,5 @@ The system uses environment variables for configuration:
 - Graceful error responses with appropriate HTTP status codes
 
 ## Dependencies
-Key Python packages required:
-- Flask
-- Flask-CORS
-- PyMongo
-- LangChain
-- ChromaDB
-- PyMuPDF
-- JWT
-- bcrypt
-- python-dotenv
+Some Python packages are required for the backend: see requirements.txt 
 
-## Setup and Installation
-1. Install dependencies from `requirements.txt`
-2. Set up environment variables
-3. Initialize MongoDB and ChromaDB
-4. Run the Flask application
-
-## Best Practices
-- Secure password storage
-- Input validation
-- Error logging
-- Session management
-- File type validation
-- Memory management for chat sessions
