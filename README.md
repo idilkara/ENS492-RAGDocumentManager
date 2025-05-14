@@ -16,14 +16,23 @@ A Retrieval-Augmented Generation (RAG) based document management system that ena
 ## Project Structure
 
 ENS492-RAGDocumentManager/
+
 ├── backend/
+
 │ ├── backend/ # Backend source code
+
 │ ├── nginx/ # Nginx configuration
+
 │ ├── build/ # Frontend build files
+
 │ └── docker-compose.yml # Docker services configuration
+
 ├── frontend/
+
 │ └── doc-manager-ui/ # Frontend source code
+
 └── README.md
+
 
 
 ## Prerequisites
