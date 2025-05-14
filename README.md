@@ -122,7 +122,7 @@ To run the application:
 
 1. Clone the repository:
 ```bash
-git clone [https://github.com/idilkara/ENS492-RAGDocumentManager.gitl]
+git clone https://github.com/idilkara/ENS492-RAGDocumentManager.gitl
 cd ENS492-RAGDocumentManager
 ```
 
