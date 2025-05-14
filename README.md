@@ -43,10 +43,10 @@ flowchart TB
 
 
         %% LLM Services Layer
-        subgraph "Services Layer"
+        subgraph "LLM Services Layer"
             VLLM[VLLM Service]
             VLLM --> GenText[Text Generation]
-            VLLM --> GenEmb[Embedding Generation]
+            VLLM --> GenEmb[Embedding Generation (we used to have this in OLLAMA but now we don't)]
         end
         
 
