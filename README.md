@@ -1,4 +1,4 @@
-﻿# RAG Document Manager - Sabanci University ENS491 Project
+﻿# RAG Document Manager - Sabanci University ENS491/2 Project
 
 ## Overview
 A Retrieval-Augmented Generation (RAG) based document management system that enables intelligent document processing, semantic search, and AI-powered chat interactions. This project was developed as part of the ENS491 course at Sabanci University.
@@ -122,7 +122,7 @@ To run the application:
 
 1. Clone the repository:
 ```bash
-git clone [repository-url]
+git clone [https://github.com/idilkara/ENS492-RAGDocumentManager.gitl]
 cd ENS492-RAGDocumentManager
 ```
 
