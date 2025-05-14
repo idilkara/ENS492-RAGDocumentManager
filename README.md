@@ -3,6 +3,87 @@
 ## Overview
 A Retrieval-Augmented Generation (RAG) based document management system that enables intelligent document processing, semantic search, and AI-powered chat interactions. This project was developed as part of the ENS491 course at Sabanci University.
 
+```mermaid
+
+
+flowchart TB
+    %% Client Layer
+    User((End User)) -->|HTTP Browser<br>localhost:5002| FE
+
+    subgraph "Client Layer"
+        FE[Web Browser]
+    end
+
+    %% Presentation Layer
+    FE -->|HTTP/HTTPS| NG
+    
+    subgraph "Presentation Layer"
+        NG[Nginx Web Server<br>Port 80]
+        
+        subgraph "Static React Build Files"
+            UI[React Frontend UI Components]
+            UI --> PDF[PDF Viewer]
+            UI --> DM[Document Manager]
+            UI --> CI[Chat Interface]
+        end
+    end
+    
+
+    subgraph "Backend Layer"
+        %% Application Layer
+        NG <-->|API Requests| API
+        
+        subgraph "Application Layer"
+            API[Flask REST API<br>Port 5001]
+            API --> Auth[Authentication<br>& Authorization]
+            API --> DocProc[Document<br>Processing]
+            API --> VSO[Vector Store<br>Operations]
+        end
+        
+
+
+        %% LLM Services Layer
+        subgraph "Services Layer"
+            VLLM[VLLM Service]
+            VLLM --> GenText[Text Generation]
+            VLLM --> GenEmb[Embedding Generation]
+        end
+        
+
+        %% Data Layer
+        subgraph "Data Layer"
+            MDB[(MongoDB<br>Port 27017)]
+            CDB[(ChromaDB<br>Port 8001)]
+        end
+        
+        %% Connections between layers
+        API -->|Document Storage| MDB
+        API -->|User Management| MDB
+        API -->|Session Management| MDB
+        API -->|Vector Operations| CDB
+        API -->|LLM Requests| VLLM
+    
+    end
+    
+    %% Styling
+    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px
+    classDef presentation fill:#e3f2fd,stroke:#1565c0,stroke-width:1px
+    classDef application fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px
+    classDef services fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px
+    classDef data fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px
+    classDef user fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef interface fill:#e1f5fe,stroke:#01579b,stroke-width:1px
+
+    class FE client
+    class User user
+    class NG,UI,PDF,DM,CI presentation
+    class API,Auth,DocProc,VSO application
+    class VLLM,GenText,GenEmb services
+    class MDB,CDB data
+
+
+```
+
 ## Features
 - 📄 Document Management
   - Upload and store documents
@@ -23,7 +104,7 @@ A Retrieval-Augmented Generation (RAG) based document management system that ena
   - Authentication
   - Role-based access
   - Session management
-  
+
 ## System Architecture
 
 ### Components
