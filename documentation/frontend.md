@@ -58,12 +58,6 @@ npm install
 yarn install
 ```
 
-3. Create a `.env` file in the root directory:
-```env
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_SOCKET_URL=http://localhost:5000
-```
-
 ## Development
 
 Start the development server:
