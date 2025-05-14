@@ -12,7 +12,7 @@ CHROMADB_URL = os.getenv('CHROMADB_URL', 'http://chromadb:8000')  # Use the Chro
 CHROMADB_DIR = "db"
 
 # LLM Model Configuration
-LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', 'deepseek-r1:1.5b')
+LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', 'DeepSeek-R1-Distill-Qwen-32B-Q6_K.ggu')
 TOKENIZER_NAME = os.getenv('TOKENIZER_NAME', 'deepseek-ai/DeepSeek-R1-Distill-Qwen-14B')
 LLM_URI = os.getenv('LLM_URI', 'http://10.3.0.96:8888/v1')
 

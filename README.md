@@ -185,14 +185,14 @@ docker-compose logs -f
 ## Configuration
 
 ### Environment Variables
-The system can be configured either through environment variables or by creating a `.env` file in the backend directory. The available configuration options are defined in `config.py`.
+The system can be configured either through environment variables in the docker-compose manifest file or by creating a `.env` file in the backend directory. The available configuration options are defined in `config.py`.
 
 Key configuration variables include:
 - `MONGO_URI`: MongoDB connection string
 - `DB_NAME`: Database name 
 - `CHROMADB_URL`: ChromaDB connection URL
 - `EMBEDDING_MODEL_NAME`: Name of the embedding model
-- `EMBEDDING_MODEL_URL`: URL for the embedding model
+- `EMBEDDING_MODEL_URL`: URL for the embedding model if it is in another server/container
 - `LLM_MODEL_NAME`: LLM model name
 - `TOKENIZER_NAME`: Tokenizer name
 - `LLM_URI`: LLM service endpoint URL
