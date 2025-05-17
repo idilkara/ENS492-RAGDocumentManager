@@ -7,7 +7,7 @@ A Retrieval-Augmented Generation (RAG) based document management system that ena
 
 The documentation folder contains detailed information about each component of the system:
 
--[ui.md](documentation/ui.md) - Example user interface functionalities with images
+- [ui.md](documentation/ui.md) - Example user interface functionalities with images
 - [rag-overview.md](documentation/rag-overview.md) - Overview of the RAG implementation and key dependencies
 - [rag-details.md](documentation/rag-details.md) - Detailed technical documentation of the RAG system
 - [frontend.md](documentation/frontend.md) - Frontend implementation details and development guide
@@ -16,7 +16,6 @@ The documentation folder contains detailed information about each component of t
 - [database.md](documentation/database.md) - MongoDB database structure
 - [documents.md](documentation/documents.md) - Document processing and management system details
 - [instructions.md](documentation/instructions.md) - General setup and usage instructions
-
 - [system-architecture-diagram.mermaid](documentation/system-architecture-diagram.mermaid) - System architecture in Mermaid format
 - [software-archi.png](documentation/software-archi.png) - Visual representation of the software architecture
 
