@@ -14,6 +14,7 @@ The documentation folder contains detailed information about each component of t
 - [backend.md](documentation/backend.md) - Backend architecture and API documentation
 - [documents.md](documentation/documents.md) - Document processing and management system details
 - [instructions.md](documentation/instructions.md) - General setup and usage instructions
+
 - [system-architecture-diagram.mermaid](documentation/system-architecture-diagram.mermaid) - System architecture in Mermaid format
 - [software-archi.png](documentation/software-archi.png) - Visual representation of the software architecture
 
@@ -118,13 +119,8 @@ docker-compose logs -f
 ```
 
 
-```
-
 5. Access the application:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- MongoDB: mongodb://localhost:27017
-- ChromaDB: http://localhost:8000
+- Nginx (MAIN ENTRY PORT FOR THE CLIENT): http://localhost:5002
 
 6. Troubleshooting:
 ```bash
@@ -139,7 +135,7 @@ docker-compose restart backend
 # Stop all services
 docker-compose down
 
-# Remove all containers and volumes
+# Remove all containers and volumes (! this deletes the database)
 docker-compose down -v
 ```
 
