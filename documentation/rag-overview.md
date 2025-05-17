@@ -1,7 +1,7 @@
-# RAG System Documentation (vector_store.py)
+# RAG System Documentation Overview (vector_store.py)
 
 ## Overview
-The RAG (Retrieval-Augmented Generation) system is implemented in `vector_store.py` and provides document processing, embedding, storage, and retrieval capabilities using ChromaDB and LangChain.
+The RAG (Retrieval-Augmented Generation) system is implemented in `vector_store.py` and provides document processing, embedding, storage, and retrieval capabilities using ChromaDB and LangChain. For detailed version go to [rag-details.md](rag-details.md)
 
 ## Core Components
 
@@ -29,6 +29,65 @@ The system supports two embedding models:
       encode_kwargs={'normalize_embeddings': True}
   )
   ```
+
+## Advanced Features
+
+### 1. Session Memory Management
+```python
+class SessionMemoryManager:
+    def __init__(self):
+        self.sessions: Dict[str, ConversationBufferWindowMemory] = {}
+```
+- Maintains conversation history
+- Implements window-based memory (last 3 messages)
+- Supports multiple concurrent sessions
+
+### 2. Document Chunking
+- Uses semantic chunking for intelligent document splitting
+- Implements fallback to RecursiveCharacterTextSplitter
+- Configurable chunk size and overlap
+
+### 3. Search Optimization
+- MMR search for diverse results
+- FlashRank reranking for improved relevance
+- Contextual compression for better context selection
+
+### 4. PDF Highlighting
+- Integrates with PDFHighlighter for source visualization
+- Supports multi-page highlighting
+- Maintains document metadata
+
+## Language Support (due to LLM limitations in Turkish fluency we do not use Turkish support but we tried it so it is left in the code for developements)
+
+### English Prompt Template
+```python
+qa_prompt = PromptTemplate(
+    template="""You are a knowledgeable assistant for Sabanci University..."""
+)
+```
+
+### Turkish Prompt Template
+```python
+qa_prompt = PromptTemplate(
+    template="""Sen Sabancı Üniversitesi için bilgili bir asistansın..."""
+)
+```
+
+## Error Handling
+- Comprehensive error handling for document processing
+- Fallback mechanisms for failed operations
+- Cleanup procedures for temporary files
+- Graceful degradation when primary methods fail
+
+## KEY dependencies see [requirements.txt](../backend/backend/requirements.txt)
+- langchain_chroma
+- langchain_community
+- PyMuPDF (fitz)
+- chromadb
+- langchain_experimental
+- langchain_huggingface
+
+
 
 ## Key Functions
 
@@ -73,62 +132,6 @@ The system supports two embedding models:
 - Handles cleanup of document chunks
 - Maintains consistency between MongoDB and vector store
 
-## Advanced Features
-
-### 1. Session Memory Management
-```python
-class SessionMemoryManager:
-    def __init__(self):
-        self.sessions: Dict[str, ConversationBufferWindowMemory] = {}
-```
-- Maintains conversation history
-- Implements window-based memory (last 3 messages)
-- Supports multiple concurrent sessions
-
-### 2. Document Chunking
-- Uses semantic chunking for intelligent document splitting
-- Implements fallback to RecursiveCharacterTextSplitter
-- Configurable chunk size and overlap
-
-### 3. Search Optimization
-- MMR search for diverse results
-- FlashRank reranking for improved relevance
-- Contextual compression for better context selection
-
-### 4. PDF Highlighting
-- Integrates with PDFHighlighter for source visualization
-- Supports multi-page highlighting
-- Maintains document metadata
-
-## Language Support
-
-### English Prompt Template
-```python
-qa_prompt = PromptTemplate(
-    template="""You are a knowledgeable assistant for Sabanci University..."""
-)
-```
-
-### Turkish Prompt Template
-```python
-qa_prompt = PromptTemplate(
-    template="""Sen Sabancı Üniversitesi için bilgili bir asistansın..."""
-)
-```
-
-## Error Handling
-- Comprehensive error handling for document processing
-- Fallback mechanisms for failed operations
-- Cleanup procedures for temporary files
-- Graceful degradation when primary methods fail
-
-## Dependencies
-- langchain_chroma
-- langchain_community
-- PyMuPDF (fitz)
-- chromadb
-- langchain_experimental
-- langchain_huggingface
 
 ## Best Practices
 1. **Document Processing**

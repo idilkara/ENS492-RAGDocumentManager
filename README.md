@@ -2,6 +2,21 @@
 
 ## Overview
 A Retrieval-Augmented Generation (RAG) based document management system that enables intelligent document processing, semantic search, and AI-powered chat interactions. This project was developed as part of the ENS491 course at Sabanci University.
+
+### For detailed documentations about components go to [documentations](documentation) folder 
+
+The documentation folder contains detailed information about each component of the system:
+
+- [rag-overview.md](documentation/rag-overview.md) - Overview of the RAG implementation and key dependencies
+- [rag-details.md](documentation/rag-details.md) - Detailed technical documentation of the RAG system
+- [frontend.md](documentation/frontend.md) - Frontend implementation details and development guide
+- [frontend-nginx.md](documentation/frontend-nginx.md) - Nginx configuration and frontend deployment guide
+- [backend.md](documentation/backend.md) - Backend architecture and API documentation
+- [documents.md](documentation/documents.md) - Document processing and management system details
+- [instructions.md](documentation/instructions.md) - General setup and usage instructions
+- [system-architecture-diagram.mermaid](documentation/system-architecture-diagram.mermaid) - System architecture in Mermaid format
+- [software-archi.png](documentation/software-archi.png) - Visual representation of the software architecture
+
 ## System Architecture Diagram
 ![Software Architecture](documentation/software-archi.png)
 
@@ -40,7 +55,7 @@ A Retrieval-Augmented Generation (RAG) based document management system that ena
 ##  Quick Start : Everything can be run using docker containers. 
 To run the application:
 
-## Quick Start
+## Quick Start (you need to have an up and runnning LLM server or change how you load the llm model in the [vector_store.py](backend/backend/vector_store.py) in backend)
 
 1. Clone the repository:
 ```bash
@@ -63,6 +78,96 @@ This command will:
 
 The access point for end users is port 5002, which maps to port 80 of the Nginx container.
 
+### For deployment:
+
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/ENS492-RAGDocumentManager.git
+cd ENS492-RAGDocumentManager
+```
+
+2. Configure environment variables:
+
+ You can configurethe required environment variables in docker-compose.yml file: 
+ 
+ How we configured for deployment in @dolap server is visible in the [compose manifest](backend/docker-compose.yml).
+
+```bash
+MONGO_URI=mongodb://your-mongodb-host:27017
+DB_NAME=your_database_name
+CHROMADB_URL=http://your-chromadb-host:8000
+LLM_URI=http://your-llm-host:8000
+EMBEDDING_MODEL_NAME_V2=your-embedding-model-name
+LLM_MODEL_NAME=your-llm-model-name
+TOKENIZER_NAME=your-tokenizer-name
+```
+
+3. Start the services:
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Or start in detached mode
+docker-compose up -d --build
+
+# Check service status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+```
+
+
+```
+
+5. Access the application:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- MongoDB: mongodb://localhost:27017
+- ChromaDB: http://localhost:8000
+
+6. Troubleshooting:
+```bash
+# View specific service logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f chromadb
+
+# Restart specific service
+docker-compose restart backend
+
+# Stop all services
+docker-compose down
+
+# Remove all containers and volumes
+docker-compose down -v
+```
+
+7. Development mode:
+```bash
+# Start services with hot-reload
+docker-compose -f docker-compose.dev.yml up --build
+
+# Run backend tests
+docker-compose exec backend python -m pytest
+
+# Run frontend tests
+docker-compose exec frontend npm test
+```
+
+8. Production deployment:
+```bash
+# Build production images
+docker-compose -f docker-compose.prod.yml build
+
+# Start production services
+docker-compose -f docker-compose.prod.yml up -d
+
+# Monitor production logs
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+Note: Replace placeholder values (your-mongodb-host, your-llm-host, etc.) with your actual service hostnames and configuration values.
 
 ## Project Structure
 
@@ -92,38 +197,41 @@ ENS492-RAGDocumentManager/
 - Python 3.8+ (for backend development)
 - Git
 
-
-### Backend (Port 5001)
+### Backend (serves at Port 5000)
 - Flask REST API
 - Document processing
 - Vector store operations
 - Authentication system
 
-### Nginx (Port 80)
+### Nginx (serves at Port 80)
 - Reverse proxy
 - Static file serving
 - SSL termination (if configured)
 
-### MongoDB (Port 27017)
+### MongoDB (serves at Port 27017)
 - Document storage
 - User data
 - Session management
 
-### ChromaDB (Port 8001)
+### ChromaDB (serves at Port 8001)
 - Vector embeddings
 - Semantic search
 - Document indexing
 
+### VLLM Server (serves at port 8000)
+###### We used to use Ollama (serves at port 11434 ) but we removed it, we now send requests to VLLM server. If you don't user VLLM, you can configure the software to send requests to Ollama. 
+- Handles text generation and completions
+
 ## Development
 
-### Frontend Development - see fonrtend.md for more details
+### Frontend Development - see [frontend.md](documentation/frontend.md) for more details
 ```bash
 cd frontend/doc-manager-ui
 npm install
 npm start
 ```
 
-### Backend Development
+### Backend Development - see backend.md
 ```bash
 cd backend/backend
 pip install -r requirements.txt
@@ -136,7 +244,7 @@ cd frontend/doc-manager-ui
 npm run build
 ```
 
-#### Frontend Deployment Instructions
+#### Frontend Deployment Instructions 
 1. Build the React.js frontend application:
    ```bash
    cd frontend
@@ -185,5 +293,6 @@ Key configuration variables include:
 
 The default configuration in `config.py` is set up for use within the Dolap server environment. Modify these values as needed for your deployment.
 
-### Nginx Configuration
+### Nginx Configuration 
 The Nginx configuration is located in `backend/nginx/nginx.conf`. This configuration handles routing and serving the frontend static files.
+
