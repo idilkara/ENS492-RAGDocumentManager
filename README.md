@@ -120,10 +120,10 @@ docker-compose logs -f
 ```
 
 
-5. Access the application:
+4. Access the application:
 - Nginx (MAIN ENTRY PORT FOR THE CLIENT): http://localhost:5002
 
-6. Troubleshooting:
+5. Troubleshooting:
 ```bash
 # View specific service logs
 docker-compose logs -f backend
@@ -139,32 +139,6 @@ docker-compose down
 # Remove all containers and volumes (! this deletes the database)
 docker-compose down -v
 ```
-
-7. Development mode:
-```bash
-# Start services with hot-reload
-docker-compose -f docker-compose.dev.yml up --build
-
-# Run backend tests
-docker-compose exec backend python -m pytest
-
-# Run frontend tests
-docker-compose exec frontend npm test
-```
-
-8. Production deployment:
-```bash
-# Build production images
-docker-compose -f docker-compose.prod.yml build
-
-# Start production services
-docker-compose -f docker-compose.prod.yml up -d
-
-# Monitor production logs
-docker-compose -f docker-compose.prod.yml logs -f
-```
-
-Note: Replace placeholder values (your-mongodb-host, your-llm-host, etc.) with your actual service hostnames and configuration values.
 
 ## Project Structure
 
