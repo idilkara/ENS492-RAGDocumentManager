@@ -7,6 +7,7 @@ A Retrieval-Augmented Generation (RAG) based document management system that ena
 
 The documentation folder contains detailed information about each component of the system:
 
+-[ui.md](documentation/ui.md) - Example user interface functionalities with images
 - [rag-overview.md](documentation/rag-overview.md) - Overview of the RAG implementation and key dependencies
 - [rag-details.md](documentation/rag-details.md) - Detailed technical documentation of the RAG system
 - [frontend.md](documentation/frontend.md) - Frontend implementation details and development guide
