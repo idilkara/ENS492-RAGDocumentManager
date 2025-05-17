@@ -144,7 +144,7 @@ docker-compose down -v
 
 ENS492-RAGDocumentManager/
 
-├── backend/
+├── backend/ # this is the folder that is needed to have on the machine you want to start the server on
 
 │ ├── backend/ # Backend source code
 
