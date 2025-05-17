@@ -12,6 +12,7 @@ The documentation folder contains detailed information about each component of t
 - [frontend.md](documentation/frontend.md) - Frontend implementation details and development guide
 - [frontend-nginx.md](documentation/frontend-nginx.md) - Nginx configuration and frontend deployment guide
 - [backend.md](documentation/backend.md) - Backend architecture and API documentation
+- [database.md](documentation/database.md) - MongoDB database structure
 - [documents.md](documentation/documents.md) - Document processing and management system details
 - [instructions.md](documentation/instructions.md) - General setup and usage instructions
 
