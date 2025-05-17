@@ -3,6 +3,21 @@
 ## Overview
 This document outlines the technical implementation of our Retrieval-Augmented Generation (RAG) system and Language Model (LLM) integration. The system is designed to provide context-aware responses by combining document retrieval with language model generation.
 
+The system includes several key components and this documnetation provides information about them:
+
+- Document Processing: Handles PDF highlighting, source tracking, and temporary file management
+- Error Handling: Implements robust fallback strategies and graceful degradation
+- Performance Optimization: Manages tokens, memory usage and context windows efficiently
+- History Management: Provides session-based conversation tracking and context relevance
+- Retrieval Optimization: Uses Maximum Marginal Relevance (MMR) and FlashRank reranking
+- Context Integration: Implements token-aware history management and dynamic context windows
+
+The system is built with scalability and reliability in mind, featuring:
+- MongoDB-based session and document storage
+- Automatic cleanup and resource management
+- Configurable parameters for fine-tuning
+- Comprehensive error handling and recovery mechanisms
+
 ## Vector Store Implementation
 
 ### Embeddings
@@ -324,3 +339,133 @@ Benefits in our system:
   - Removes redundant or irrelevant content from retrieved passages
   - Preserves key information while reducing token usage
   - Enables fitting more relevant context within token limits
+
+## History Management and Context Relevance
+
+### Session-Based History Management
+- **Implementation**: MongoDB-based session storage
+  - Collection: `sessions` (configurable via `SESSIONS_COLLECTION`)
+  - Stores user interactions with metadata:
+    - User ID
+    - Session ID
+    - User queries
+    - Agent responses
+    - Timestamps
+
+### History Retrieval Strategy
+- **Limited Context Window**:
+  - Retrieves last 2 messages per session
+  - Optimizes for recent context relevance
+  - Prevents context overflow
+  - Maintains conversation coherence
+
+### Context Integration
+- **Memory Management**:
+  ```python
+  # Session memory configuration
+  ConversationBufferWindowMemory(
+      memory_key="chat_history",
+      return_messages=True,
+      input_key='question',
+      output_key='answer',
+      k=3  # Keep last 3 messages
+  )
+  ```
+
+### Token-Aware History Management
+- **Dynamic Token Budgeting**:
+  - Maximum token limit: 200 tokens for history
+  - Token counting using AutoTokenizer
+  - Prioritizes most recent messages
+  - Trims older messages to fit token budget
+
+### History Processing Pipeline
+1. **Storage**:
+   - Stores each interaction in MongoDB
+   - Maintains chronological order
+   - Preserves complete conversation context
+
+2. **Retrieval**:
+   - Fetches last 2 messages by default
+   - Sorts by timestamp (newest first)
+   - Excludes internal metadata
+
+3. **Integration**:
+   - Combines with current query context
+   - Maintains conversation flow
+   - Enables follow-up questions
+
+### Context Relevance Features
+- **Session Isolation**:
+  - Separate history per user session
+  - Prevents context mixing between users
+  - Enables parallel conversations
+  - Uses unique session IDs stored in MongoDB
+  - Implements session timeout after 30 minutes of inactivity
+  - Maintains user-specific conversation state
+  - Handles concurrent user sessions efficiently
+  - Provides session persistence across page reloads
+
+- **Context Window Optimization**:
+  - Sliding window approach
+  - Prioritizes recent context
+  - Maintains conversation coherence
+  - Configurable window size (default: 3 messages)
+  - Implements token-based trimming
+  - Handles context overflow gracefully
+  - Preserves critical conversation elements
+  - Uses weighted relevance scoring
+  - Dynamically adjusts window size based on:
+    - Available system resources
+    - Query complexity
+    - User interaction patterns
+    - Token budget constraints
+
+- **Token Management**:
+  ```python
+  # Token counting and management
+  def count_tokens(self, text: str) -> int:
+      return len(self.tokenizer.encode(text, truncation=False))
+  ```
+
+### History Cleanup
+- **Automatic Cleanup**:
+  - MongoDB TTL indexes for automatic document expiration
+  - Configurable TTL duration via environment variables
+  - Automatic cleanup of expired sessions and documents
+  - Session-based expiration
+  - Resource optimization
+
+### Error Handling
+- **Robust Error Management**:
+  - Graceful fallback if history retrieval fails
+  - Continues with current query if history unavailable
+  - Logs errors for debugging
+
+### Performance Considerations
+1. **Query Optimization**:
+   - Indexed queries on user_id and session_id for faster lookups
+   - Limited result set (2 messages) to reduce memory overhead
+   - Efficient sorting using MongoDB indexes
+   - Query filtering using compound indexes
+   - Projection to retrieve only needed fields
+   - Cursor-based pagination for large result sets
+
+2. **Memory Usage**:
+   - Token-aware trimming to stay within model context limits
+   - Dynamic context window that adjusts based on query complexity
+   - Resource-efficient storage using MongoDB's WiredTiger engine
+   - Automatic memory release after processing
+   - Configurable memory limits per session
+   - Garbage collection optimization
+
+3. **Scalability**:
+   - MongoDB-based storage with sharding capabilities
+   - Configurable collection names via environment variables
+   - Environment-based configuration for easy deployment
+   - Horizontal scaling through MongoDB replication
+   - Connection pooling for efficient resource usage
+   - Load balancing across multiple instances
+   - Automatic failover support
+   - Distributed caching layer for frequently accessed data
+   - Asynchronous processing for non-blocking operations
