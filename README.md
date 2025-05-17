@@ -57,7 +57,7 @@ The documentation folder contains detailed information about each component of t
 ##  Quick Start : Everything can be run using docker containers. 
 To run the application:
 
-## Quick Start (you need to have an up and runnning LLM server or change how you load the llm model in the [vector_store.py](backend/backend/vector_store.py) in backend)
+NOTE: (you need to have an up and runnning LLM server or change how you load the llm model in the [vector_store.py](backend/backend/vector_store.py) in backend)
 
 1. Clone the repository:
 ```bash
