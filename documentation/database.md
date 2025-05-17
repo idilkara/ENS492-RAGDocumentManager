@@ -2,17 +2,17 @@
 
 ## Overview
 
-This document outlines the structure of the database system, which consists of 4 main entities: `admin`, `config`, `doc_db`, and `local`. The database appears to be a MongoDB implementation designed to support a document management system with user authentication, session tracking, and system logging capabilities.
+This document outlines the structure of the database system, which consists of 4 main entities: `admin`, `config`, `doc_db`, and `local`. The database is a MongoDB implementation designed to support a document management system with user authentication, session tracking, and system logging capabilities.
 
 ## Entities
 
 ### 1. `admin`
 
-An empty entity that likely exists for MongoDB administrative purposes.
+An empty entity that exists for MongoDB administrative purposes.
 
 ### 2. `config`
 
-An empty entity, possibly reserved for system configuration settings.
+An empty entity reserved for system configuration settings.
 
 ### 3. `doc_db`
 
@@ -77,22 +77,8 @@ Records information about MongoDB server startups.
 - `local` contains the collection `startup_log`
 - `admin` and `config` are currently empty entities
 
-## Security Considerations
-
-1. **Password Storage**: The current implementation appears to store passwords as plaintext in the `users` collection. It is strongly recommended to implement hashing with a secure algorithm (like bcrypt or Argon2) for password storage.
-
-2. **User Roles**: The system has at least one role type (`admin`), suggesting a role-based access control system that should be properly enforced in application logic.
-
 ## Usage Notes
 
 - The `documents` collection stores files as binary data, allowing for document retrieval and management
 - The `sessions` collection tracks user interactions, maintaining state across user visits
 - The `startup_log` provides system diagnostics that can be useful for troubleshooting and auditing
-
-## Recommended Improvements
-
-1. Implement secure password storage with hashing
-2. Consider adding indexes for commonly queried fields
-3. Add versioning for documents if needed
-4. Consider implementing soft delete functionality for documents
-5. Add validation rules for each collection
