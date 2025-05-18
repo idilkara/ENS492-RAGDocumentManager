@@ -23,6 +23,7 @@ The documentation folder contains detailed information about each component of t
 
 ```mermaid
 
+
 flowchart TB
     %% Client Layer
     User((End User)) -->|HTTP Browser<br>localhost:5002| FE
@@ -59,29 +60,39 @@ flowchart TB
 
                 subgraph "Application Layer"
             API[Flask REST API<br>Port 5001]
-            API --> Auth[Authentication<br>& Authorization]
-            API --> DocProc[Document<br>Processing]
-            API --> VSO[Vector Store<br>Operations]
+           
+            API --> DocProc[Document<br>Processing and Management]
+           
+            API --> RAGP[RAG pipeline:
+                query processing, history, retrieval, prompting] 
+
+            API --> Auth[User Management: Authentication<br>& Authorization]
+            API --> SessionMan[User Chat Session Management ]
+            
         end
         
 
         %% LLM Services Layer
         subgraph "LLM Services Layer"
             VLLM[VLLM Service]
-            VLLM --> GenText[Text Generation]
+            VLLM --> GenText[Response Generation]
             VLLM --> GenEmb[Embedding Generation 
-                - we used to have this in OLLAMA but now we don't]
+                - we used to have this in OLLAMA as LLM service but now it is in application layer]
         end
         
 
 
         
         %% Connections between layers
-        API -->|Document Storage| MDB
-        API -->|User Management| MDB
-        API -->|Session Management| MDB
-        API -->|Vector Operations| CDB
-        API -->|LLM Requests| VLLM
+        DocProc -->|Document Storage| MDB 
+        Auth -->|User Management| MDB
+        SessionMan -->|Session Management| MDB
+        RAGP --> |Relevant chunk search| CDB
+        DocProc -->|Vector Store Operations,
+            Chunk embedding storage | CDB
+        RAGP -->|LLM based Requests| VLLM
+       
+
     
     end
     
