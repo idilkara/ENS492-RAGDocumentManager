@@ -12,7 +12,6 @@ erDiagram
     doc_db ||--|{ DOCUMENTS : contains
     doc_db ||--|{ SESSIONS : contains
     doc_db ||--|{ USERS : contains
-    local ||--|{ STARTUP_LOG : contains
 
     DOCUMENTS {
         ObjectId _id "e.g. 67cdeb8f05aba3ef435c300c"
