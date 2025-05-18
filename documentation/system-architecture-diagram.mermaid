@@ -15,8 +15,7 @@ flowchart TB
         
         subgraph "Static React Build Files"
             UI[React Frontend UI Components]
-            UI --> PDF[PDF Viewer]
-            UI --> DM[Document Manager]
+            UI --> DM[Document Management]
             UI --> CI[Chat Interface]
         end
     end
@@ -26,7 +25,15 @@ flowchart TB
         %% Application Layer
         NG <-->|API Requests| API
         
-        subgraph "Application Layer"
+
+        %% Data Layer
+        subgraph "Data Layer"
+            CDB[(ChromaDB<br>Port 8001)]
+            MDB[(MongoDB<br>Port 27017)]
+  
+        end
+
+                subgraph "Application Layer"
             API[Flask REST API<br>Port 5001]
             API --> Auth[Authentication<br>& Authorization]
             API --> DocProc[Document<br>Processing]
@@ -34,20 +41,16 @@ flowchart TB
         end
         
 
-
         %% LLM Services Layer
         subgraph "LLM Services Layer"
             VLLM[VLLM Service]
             VLLM --> GenText[Text Generation]
-            VLLM --> GenEmb[Embedding Generation (we used to have this in OLLAMA but now we don't)]
+            VLLM --> GenEmb[Embedding Generation 
+                - we used to have this in OLLAMA but now we don't]
         end
         
 
-        %% Data Layer
-        subgraph "Data Layer"
-            MDB[(MongoDB<br>Port 27017)]
-            CDB[(ChromaDB<br>Port 8001)]
-        end
+
         
         %% Connections between layers
         API -->|Document Storage| MDB
