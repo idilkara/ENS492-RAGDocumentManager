@@ -10,91 +10,48 @@ subgraph RAG_pipeline
     E --> M
     I --> M
     L --> M
-    
 
     subgraph Response_Generation
-   
-        Z[LLM: Generates Context
-            -aware Response]
-        Z --> N[Output Answer, 
-                Reference to document 
-                chunks,
-                source metadata
-                ]
         
-    
+        Z[LLM: Generates Context-aware Response] 
+        N[Output Answer, Reference to Chunks, Metadata]
+        Z --> N 
+
     end 
 
     subgraph Session_Context
-       
-        O[Previous Session 
-            Context:
-            Chat History
-            stored in MongoDB
-            ] 
         
-         O -->  E[Prepare history buffer
-        based on token count 
-        for length]
-
+        O[Previous Session Context: Chat History in MongoDB] 
+        E[Prepare history buffer by token count]
+        O --> E
         
-
     end
-
-
 
     subgraph Query_Analysis
-
-        B[Structural analysis: 
-            Language Detection 
-            & Token Counting]
-
-        B --> C[Semantic-aware Analysis:
-                Condense & Refocus Query
-            with LangChain's 
-                ConversationalRetrieval-
-                Chain
-                ]
-
-
+        direction TB
+        B[Structural analysis: Lang Detection & Token Count] --> 
+        C[Semantic-aware Analysis via LangChain]
     end
-
-
-
 
     subgraph Chunk_Retrieval
-
-        C -->  H[Apply MMR Search to
-            select the top relevant
-            chunks stored in ChromaDB
-            ]
-
-        H --> I[Re-rank with FlashRank:
-                Cross Encoder for Semantic 
-                Similarity]
-
+        direction TB
+        C --> H[MMR Search for Top Chunks in ChromaDB] --> 
+        I[Re-rank with FlashRank: Cross Encoder]
     end
-
 
     subgraph Prompt_Template
-
-        L[Language Specific Rules 
-            and Behavioral Instructions]
-       
-
+        direction TB
+        L[Language-Specific Rules & Instructions]
     end
-
 
 end
 
-    
-    %% Styling
+%% Styling
 
-    classDef outer fill:#ffffff,stroke:#01579b,stroke-width:1px
+classDef outer fill:#ffffff,stroke:#01579b,stroke-width:1px
+classDef blue fill:#e1f5fe,stroke:#01579b,stroke-width:2px
 
-    classDef blue fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-
-    class RAG_pipeline outer
-    class Response_Generation blue
-    class Chunk_Retrieval blue
-    class Session_Context,Query_Analysis,Prompt_Template blue
+class RAG_pipeline outer
+class Response_Generation blue
+class Chunk_Retrieval blue
+class Session_Context,Query_Analysis,Prompt_Template blue
