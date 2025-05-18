@@ -8,12 +8,6 @@ This document outlines the structure of the database system, which consists of 4
 
 ```mermaid
 erDiagram
-    DATABASE {
-        entity admin "Empty"
-        entity config "Empty"
-        entity doc_db "Contains collections"
-        entity local "Contains collection"
-    }
 
     doc_db ||--|{ DOCUMENTS : contains
     doc_db ||--|{ SESSIONS : contains
@@ -43,15 +37,6 @@ erDiagram
         DateTime created_at "e.g. 2025-03-09T21:31:49.804+00:00"
     }
 
-    STARTUP_LOG {
-        string _id "e.g. LAPTOP-B741STJU-1738260825417"
-        string hostname "e.g. LAPTOP-B741STJU"
-        DateTime startTime "e.g. 2025-01-30T18:13:45.000+00:00"
-        string startTimeLocal "e.g. Thu Jan 30 21:13:45.417"
-        Object cmdLine "Command line object"
-        int pid "e.g. 34312"
-        Object buildinfo "Build info object"
-    }
 ```
 
 ## Entities
@@ -139,10 +124,3 @@ Records information about MongoDB server startups.
 - The `sessions` collection tracks user interactions, maintaining state across user visits
 - The `startup_log` provides system diagnostics that can be useful for troubleshooting and auditing
 
-## Recommended Improvements
-
-1. Implement secure password storage with hashing
-2. Consider adding indexes for commonly queried fields
-3. Add versioning for documents if needed
-4. Consider implementing soft delete functionality for documents
-5. Add validation rules for each collection
