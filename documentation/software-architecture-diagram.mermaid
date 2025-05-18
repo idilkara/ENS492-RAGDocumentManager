@@ -3,14 +3,14 @@ flowchart TB
     %% Client Layer
     User((End User)) -->|HTTP Browser<br>localhost:5002| FE
 
-    subgraph "Client Layer"
+    subgraph "Client_Layer"
         FE[Web Browser]
     end
 
     %% Presentation Layer
     FE -->|HTTP/HTTPS| NG
     
-    subgraph "Presentation Layer"
+    subgraph "Presentation_Layer"
         NG[Nginx Web Server<br>Port 80]
         
         subgraph "Static React Build Files"
@@ -21,7 +21,7 @@ flowchart TB
     end
     
 
-    subgraph "Backend Layer"
+    subgraph "Backend_Layer"
         %% Application Layer
         NG <-->|API Requests| API
         
@@ -33,31 +33,41 @@ flowchart TB
   
         end
 
-                subgraph "Application Layer"
+        subgraph "Application_Layer"
             API[Flask REST API<br>Port 5001]
-            API --> Auth[Authentication<br>& Authorization]
-            API --> DocProc[Document<br>Processing]
-            API --> VSO[Vector Store<br>Operations]
+           
+            API --> DocProc[Document<br>Processing and Management]
+           
+            API --> RAGP[RAG pipeline:
+                query processing, history, retrieval, prompting] 
+
+            API --> Auth[User Management: Authentication<br>& Authorization]
+            API --> SessionMan[User Chat Session Management ]
+            
         end
         
 
         %% LLM Services Layer
         subgraph "LLM Services Layer"
             VLLM[VLLM Service]
-            VLLM --> GenText[Text Generation]
+            VLLM --> GenText[Response Generation]
             VLLM --> GenEmb[Embedding Generation 
-                - we used to have this in OLLAMA but now we don't]
+                - we used to have this in OLLAMA as LLM service but now it is in application layer]
         end
         
 
 
         
         %% Connections between layers
-        API -->|Document Storage| MDB
-        API -->|User Management| MDB
-        API -->|Session Management| MDB
-        API -->|Vector Operations| CDB
-        API -->|LLM Requests| VLLM
+        DocProc -->|Document Storage| MDB 
+        Auth -->|User Management| MDB
+        SessionMan -->|Session Management| MDB
+        RAGP --> |Relevant chunk search| CDB
+        DocProc -->|Vector Store Operations,
+            Chunk embedding storage | CDB
+        RAGP -->|LLM based Requests| VLLM
+       
+
     
     end
     
@@ -69,10 +79,12 @@ flowchart TB
     classDef data fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px
     classDef user fill:#ffebee,stroke:#c62828,stroke-width:2px
     classDef interface fill:#e1f5fe,stroke:#01579b,stroke-width:1px
+    classDef outer fill:#ffffff,stroke:#01579b,stroke-width:1px
 
     class FE client
     class User user
     class NG,UI,PDF,DM,CI presentation
-    class API,Auth,DocProc,VSO application
+    class API,Auth,DocProc,VSO,RAGP,SessionMan application
     class VLLM,GenText,GenEmb services
     class MDB,CDB data
+    class Backend_Layer,Presentation_Layer,Client_Layer outer
