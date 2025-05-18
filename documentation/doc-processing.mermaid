@@ -1,6 +1,6 @@
 flowchart TD
     %% Document Processing Flow
-    subgraph Document Processing
+    subgraph Document_Processing
         S[Upload Document] --> T[File Type Check]
 
         T --> V[Preprocess PDF Documents
@@ -19,3 +19,11 @@ flowchart TD
         T --> U[Store the file in MongoDB]
     
     end
+    
+    %% Styling
+
+    classDef outer fill:#ffffff,stroke:#01579b,stroke-width:1px
+
+    classDef blue fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+
+    class Document_Processing outer
