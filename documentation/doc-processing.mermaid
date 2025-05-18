@@ -1,0 +1,21 @@
+flowchart TD
+    %% Document Processing Flow
+    subgraph Document Processing
+        S[Upload Document] --> T[File Type Check]
+
+        T --> V[Preprocess PDF Documents
+            PyMuPDF for text extraction ]
+        V --> W[Split into Overlapping Chunks 
+                based on syntactic
+                structure]
+        W --> X[Generate Embeddings
+                 model: Nomic Embed Text
+                  V2 MoE
+                    ]
+        X --> Y[Store the embeddings 
+                and chunk metadata
+                in ChromaDB]
+       
+        T --> U[Store the file in MongoDB]
+    
+    end

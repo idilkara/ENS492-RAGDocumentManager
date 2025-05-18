@@ -3,6 +3,129 @@
 ## Overview
 The RAG (Retrieval-Augmented Generation) system is implemented in `vector_store.py` and provides document processing, embedding, storage, and retrieval capabilities using ChromaDB and LangChain. For detailed version go to [rag-details.md](rag-details.md)
 
+### Document processing
+```mermaid
+flowchart TD
+    %% Document Processing Flow
+    subgraph Document Processing
+        S[Upload Document] --> T[File Type Check]
+
+        T --> V[Preprocess PDF Documents
+            PyMuPDF for text extraction ]
+        V --> W[Split into Overlapping Chunks 
+                based on syntactic
+                structure]
+        W --> X[Generate Embeddings
+                 model: Nomic Embed Text
+                  V2 MoE
+                    ]
+        X --> Y[Store the embeddings 
+                and chunk metadata
+                in ChromaDB]
+       
+        T --> U[Store the file in MongoDB]
+    
+    end
+```
+
+
+### RAG pipeline overview
+
+```mermaid
+flowchart TD
+
+subgraph RAG pipeline
+
+    A[User submits a question] 
+    A --> O         
+    A --> B   
+    M[combine and create request
+    to LLM ] --> Z
+    E --> M
+    I --> M
+    L --> M
+    
+
+    subgraph Response Generation
+   
+        Z[LLM: Generates Context
+            -aware Response]
+        Z --> N[Output Answer, 
+                Reference to document 
+                chunks,
+                source metadata
+                ]
+        
+    
+    end 
+
+    subgraph Session Context
+       
+        O[Previous Session 
+            Context:
+            Chat History
+            stored in MongoDB
+            ] 
+        
+         O -->  E[Prepare history buffer
+        based on token count 
+        for length]
+
+        
+
+    end
+
+
+
+    subgraph Query Analysis
+
+        B[Structural analysis: 
+            Language Detection 
+            & Token Counting]
+
+        B --> C[Semantic-aware Analysis:
+                Condense & Refocus Query
+            with LangChain's 
+                ConversationalRetrieval-
+                Chain
+                ]
+
+
+    end
+
+
+
+
+    subgraph Chunk Retrieval        
+        C -->  H[Apply MMR Search to
+            select the top relevant
+            chunks stored in ChromaDB
+        ]
+
+        H --> I[Re-rank with FlashRank:
+                Cross Encoder for Semantic 
+                Similarity]
+        
+
+
+        
+    end
+
+
+    subgraph Prompt Template
+
+        L[Language Specific Rules 
+            and Behavioral Instructions]
+       
+
+    end
+
+
+end
+
+```
+
+
 ## Core Components
 
 ### 1. Vector Store Setup
