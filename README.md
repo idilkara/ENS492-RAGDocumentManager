@@ -28,14 +28,14 @@ flowchart TB
     %% Client Layer
     User((End User)) -->|HTTP Browser<br>localhost:5002| FE
 
-    subgraph "Client Layer"
+    subgraph "Client_Layer"
         FE[Web Browser]
     end
 
     %% Presentation Layer
     FE -->|HTTP/HTTPS| NG
     
-    subgraph "Presentation Layer"
+    subgraph "Presentation_Layer"
         NG[Nginx Web Server<br>Port 80]
         
         subgraph "Static React Build Files"
@@ -46,7 +46,7 @@ flowchart TB
     end
     
 
-    subgraph "Backend Layer"
+    subgraph "Backend_Layer"
         %% Application Layer
         NG <-->|API Requests| API
         
@@ -58,7 +58,7 @@ flowchart TB
   
         end
 
-        subgraph "Application Layer"
+        subgraph "Application_Layer"
             API[Flask REST API<br>Port 5001]
            
             API --> DocProc[Document<br>Processing and Management]
@@ -104,6 +104,7 @@ flowchart TB
     classDef data fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px
     classDef user fill:#ffebee,stroke:#c62828,stroke-width:2px
     classDef interface fill:#e1f5fe,stroke:#01579b,stroke-width:1px
+    classDef outer fill:#ffffff,stroke:#01579b,stroke-width:1px
 
     class FE client
     class User user
@@ -111,6 +112,8 @@ flowchart TB
     class API,Auth,DocProc,VSO,RAGP,SessionMan application
     class VLLM,GenText,GenEmb services
     class MDB,CDB data
+    class Backend_Layer,Presentation_Layer,Client_Layer outer
+
 ```
 
 
