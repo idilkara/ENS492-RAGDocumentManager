@@ -47,7 +47,7 @@ The backend is a Flask-based REST API that implements a RAG (Retrieval-Augmented
   - Uploads documents to the system
   - Processes and stores documents in both MongoDB and vector store
   - Admin-only access
-  - Supports PDF and text files
+  - Supports PDF files only
 
 - `GET /get_documents`
   - Retrieves list of all stored documents
