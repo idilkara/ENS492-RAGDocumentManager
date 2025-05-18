@@ -58,7 +58,7 @@ flowchart TB
   
         end
 
-                subgraph "Application Layer"
+        subgraph "Application Layer"
             API[Flask REST API<br>Port 5001]
            
             API --> DocProc[Document<br>Processing and Management]
@@ -108,7 +108,7 @@ flowchart TB
     class FE client
     class User user
     class NG,UI,PDF,DM,CI presentation
-    class API,Auth,DocProc,VSO application
+    class API,Auth,DocProc,VSO,RAGP,SessionMan application
     class VLLM,GenText,GenEmb services
     class MDB,CDB data
 ```
