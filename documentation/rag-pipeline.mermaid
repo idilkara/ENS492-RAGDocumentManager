@@ -1,6 +1,6 @@
 flowchart TD
 
-subgraph RAG pipeline
+subgraph RAG_pipeline
 
     A[User submits a question] 
     A --> O         
@@ -12,7 +12,7 @@ subgraph RAG pipeline
     L --> M
     
 
-    subgraph Response Generation
+    subgraph Response_Generation
    
         Z[LLM: Generates Context
             -aware Response]
@@ -25,7 +25,7 @@ subgraph RAG pipeline
     
     end 
 
-    subgraph Session Context
+    subgraph Session_Context
        
         O[Previous Session 
             Context:
@@ -43,7 +43,7 @@ subgraph RAG pipeline
 
 
 
-    subgraph Query Analysis
+    subgraph Query_Analysis
 
         B[Structural analysis: 
             Language Detection 
@@ -62,23 +62,21 @@ subgraph RAG pipeline
 
 
 
-    subgraph Chunk Retrieval        
+    subgraph Chunk_Retrieval
+
         C -->  H[Apply MMR Search to
             select the top relevant
             chunks stored in ChromaDB
-        ]
+            ]
 
         H --> I[Re-rank with FlashRank:
                 Cross Encoder for Semantic 
                 Similarity]
-        
 
-
-        
     end
 
 
-    subgraph Prompt Template
+    subgraph Prompt_Template
 
         L[Language Specific Rules 
             and Behavioral Instructions]
@@ -89,3 +87,14 @@ subgraph RAG pipeline
 
 end
 
+    
+    %% Styling
+
+    classDef outer fill:#ffffff,stroke:#01579b,stroke-width:1px
+
+    classDef blue fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+
+    class RAG_pipeline outer
+    class Response_Generation blue
+    class Chunk_Retrieval blue
+    class Session_Context,Query_Analysis,Prompt_Template blue
