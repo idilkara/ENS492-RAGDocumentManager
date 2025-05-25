@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/static/css/main.de8b90b5.css",
-    "main.js": "/static/js/main.279737d4.js",
+    "main.js": "/static/js/main.4ab01fc4.js",
     "static/js/453.61850c05.chunk.js": "/static/js/453.61850c05.chunk.js",
     "static/media/ucentersabanci.jpg": "/static/media/ucentersabanci.1fedfedba77778557456.jpg",
     "static/media/Sabanci_University_logo.png": "/static/media/Sabanci_University_logo.ee36de9b2b79715e44d2.png",
-    "static/media/settings-svgrepo-com.svg": "/static/media/settings-svgrepo-com.6a681f2405701ddd01ad95c758f9da0e.svg",
+    "static/media/settings-svgrepo-com.svg": "/static/media/settings-svgrepo-com.68d1da9876102edbc46fa0505de08997.svg",
     "static/media/chat-conversation-circle-svgrepo-com.svg": "/static/media/chat-conversation-circle-svgrepo-com.abce475630bcdf98b8c09b52fc9f61ba.svg",
     "static/media/chat-circle-add-svgrepo-com.svg": "/static/media/chat-circle-add-svgrepo-com.7105fe5ec652d8095c9c8bae0effaffd.svg",
     "static/media/chat-circle-remove-svgrepo-com.svg": "/static/media/chat-circle-remove-svgrepo-com.e76e307dae01982f66ea89468a1134cb.svg",
-    "static/media/upload-file-2-svgrepo-com.svg": "/static/media/upload-file-2-svgrepo-com.0479255a0d34d2a72198b0306ddb0aa8.svg",
     "index.html": "/index.html",
+    "static/media/upload-file-2-svgrepo-com.svg": "/static/media/upload-file-2-svgrepo-com.ba387cb9a26d2ef69caf8b9cde91e3bd.svg",
     "main.de8b90b5.css.map": "/static/css/main.de8b90b5.css.map",
-    "main.279737d4.js.map": "/static/js/main.279737d4.js.map",
+    "main.4ab01fc4.js.map": "/static/js/main.4ab01fc4.js.map",
     "453.61850c05.chunk.js.map": "/static/js/453.61850c05.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.de8b90b5.css",
-    "static/js/main.279737d4.js"
+    "static/js/main.4ab01fc4.js"
   ]
 }
