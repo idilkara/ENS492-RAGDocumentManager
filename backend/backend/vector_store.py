@@ -14,7 +14,7 @@ from langchain.schema import Document
 import fitz  # PyMuPDF
 from documents import add_document_to_mongo, delete_document_from_mongo, is_file_already_uploaded, get_document_by_id
 import traceback
-from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR, EMBEDDING_MODEL_NAME_V2, LLM_MODEL_NAME, TOKENIZER_NAME, LLM_URI
+from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR, EMBEDDING_MODEL_NAME_V2
 import tempfile
 import uuid
 from bson import ObjectId
@@ -79,8 +79,8 @@ embeddings_netv2 = HuggingFaceEmbeddings(
 # Initialize vector store
 vectorstore = Chroma(client=db, embedding_function=embeddings_netv2)
 
-tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
-MAX_TOKENS_TOTAL = 4096
+tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
+MAX_TOKENS_TOTAL = 8192
 MAX_COMPLETION_TOKENS = 2048
 
 
@@ -88,7 +88,7 @@ class SessionMemoryManager:
     
     def __init__(self):
         self.sessions: Dict[str, ConversationBufferWindowMemory] = {}
-        self.tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
+        self.tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
 
     def count_tokens(self, text: str) -> int:
         return len(self.tokenizer.encode(text, truncation=False))
@@ -451,7 +451,7 @@ def create_qa_chain(vectorstore, llm, session_id: str, language):
 
     return qa_chain
 
-def trim_chunks_to_fit(query, docs, tokenizer, max_total=2048, completion_buffer=1024):
+def trim_chunks_to_fit(query, docs, tokenizer, max_total=8192, completion_buffer=1024):
     query_tokens = len(tokenizer.encode(query))
     budget = max_total - completion_buffer
     included = []
@@ -589,12 +589,12 @@ def get_most_relevant_chunks(query):
 
 
 def load_model(model):
-    MODEL_NAME = LLM_MODEL_NAME
+    MODEL_NAME = "DeepSeek-R1-Distill-Qwen-32B-Q6_K.gguf"
     
     return ChatOpenAI(
         model_name=MODEL_NAME,
-        openai_api_base=LLM_URI,
+        openai_api_base="http://10.3.0.96:8888/v1",
         openai_api_key="not-needed-for-vllm",  # <--- this is the fix
         temperature=0.5,
-        max_tokens=1024
+        max_tokens=8192
     )
