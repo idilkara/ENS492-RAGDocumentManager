@@ -14,7 +14,7 @@ from langchain.schema import Document
 import fitz  # PyMuPDF
 from documents import add_document_to_mongo, delete_document_from_mongo, is_file_already_uploaded, get_document_by_id
 import traceback
-from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR, EMBEDDING_MODEL_NAME_V2
+from config import EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_URL, CHROMADB_DIR, EMBEDDING_MODEL_NAME_V2, LLM_MODEL_NAME, TOKENIZER_NAME, LLM_URI
 import tempfile
 import uuid
 from bson import ObjectId
@@ -79,7 +79,7 @@ embeddings_netv2 = HuggingFaceEmbeddings(
 # Initialize vector store
 vectorstore = Chroma(client=db, embedding_function=embeddings_netv2)
 
-tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
+tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
 MAX_TOKENS_TOTAL = 8192
 MAX_COMPLETION_TOKENS = 2048
 
@@ -88,7 +88,7 @@ class SessionMemoryManager:
     
     def __init__(self):
         self.sessions: Dict[str, ConversationBufferWindowMemory] = {}
-        self.tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-14B")
+        self.tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
 
     def count_tokens(self, text: str) -> int:
         return len(self.tokenizer.encode(text, truncation=False))
@@ -589,7 +589,7 @@ def get_most_relevant_chunks(query):
 
 
 def load_model(model):
-    MODEL_NAME = "DeepSeek-R1-Distill-Qwen-32B-Q6_K.gguf"
+    MODEL_NAME = LLM_MODEL_NAME
     
     return ChatOpenAI(
         model_name=MODEL_NAME,
