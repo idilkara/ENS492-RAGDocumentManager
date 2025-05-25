@@ -12,8 +12,8 @@ CHROMADB_URL = os.getenv('CHROMADB_URL', 'http://chromadb:8000')  # Use the Chro
 CHROMADB_DIR = "db"
 
 # LLM Model Configuration
-LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', 'DeepSeek-R1-Distill-Qwen-32B-Q6_K.ggu')
-TOKENIZER_NAME = os.getenv('TOKENIZER_NAME', 'deepseek-ai/DeepSeek-R1-Distill-Qwen-14B')
+LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', "meta-llama/Llama-3.1-8B-Instruct")
+TOKENIZER_NAME = os.getenv('TOKENIZER_NAME', "codellama/CodeLlama-7b-Python-hf")
 LLM_URI = os.getenv('LLM_URI', 'http://10.3.0.96:8888/v1')
 
 EMBEDDING_MODEL_URL = os.getenv('EMBEDDING_MODEL_URL', 'http://10.3.0.96:8888/v1/') #used to be ollama 
@@ -32,4 +32,6 @@ MISTRAL_MODEL_7B = "mistral:7b"
 DEEPSEEK_TOKENIZER = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
 DEEPSEEK_R1_MODELNAME = "DeepSeek-R1-Distill-Qwen-32B-Q6_K.ggu"
 
+LLAMA_TOKENIZER = "codellama/CodeLlama-7b-Python-hf"
+LLAMA_3_1_8B = "meta-llama/Llama-3.1-8B-Instruct"
 
