@@ -1,7 +1,9 @@
 # app.py
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, redirect
 from flask_cors import CORS
 import os
+import requests
+import traceback
 from flask import send_file
 from vector_store import add_document, search_query, delete_document_vectorstore
 # import uuid
@@ -22,15 +24,25 @@ from pymongo import MongoClient
 # from config import LLAMA_MODEL_3_2_3B, LLAMA_MODEL_3_3_70B
 # from model_state import set_current_model, get_current_model
 import bcrypt
+from flask_cas import CAS, login_required
+from xml.etree import ElementTree as ET
 
 app = Flask(__name__)
 
 app.config['PROPAGATE_EXCEPTIONS'] = True  # ✅ Force full error messages
 app.config['DEBUG'] = True  # ✅ Ensure debug mode is enabled
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+app.config['SECRET_KEY'] = SECRET_KEY
+
+
+app.config['CAS_SERVER'] = 'https://login.sabanciuniv.edu/CASV'
+app.config['CAS_AFTER_LOGIN'] = 'cas_logged_in'  # This is your internal endpoint
+cas = CAS(app)
 
 # # # Enable CORS for all routes
 CORS(app,  resources={r"/api/*": {"origins": "http://localhost:5002", "supports_credentials": True}})
- 
+
 # # # Or allow CORS from a specific origin
 # CORS(app, origins="http://localhost:3000", supports_credentials=True)
 #start of backend
@@ -45,20 +57,35 @@ CORS(app,  resources={r"/api/*": {"origins": "http://localhost:5002", "supports_
 
 # login implementation requirements
 EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@sabanciuniv\.edu$'
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALLOWED_ROUTES = ['/login', '/logout','/register', '/api/login', '/api/logout', '/api/register']
-
 
 client = MongoClient(MONGO_URI)
+ALLOWED_ROUTES = ['/login', '/logout','/register', '/api/login', '/api/logout', '/api/register', '/cas-login', '/cas-logout']
+
 db = client[DB_NAME]  # Replace with your actual database name
 users_collection = db[USERS_COLLECTION]
+
+### CAS 
+
+from urllib.parse import urlencode
+
+@app.route('/cas-login')
+def cas_login_redirect():
+    cas_login_url = "https://login.sabanciuniv.edu/cas/login"
+    service_url = "http://10.3.0.96:5002/api/login"  # <- your backend CAS return route
+    redirect_url = f"{cas_login_url}?service={service_url}"
+    return redirect(redirect_url)
+
+@app.route('/cas-logout')
+def cas_logout_view():
+    return cas_logout()
+
+
 
 def get_user_by_email(email):
     return users_collection.find_one({"email": email})
 
-
-# login api
+"""
+# login api LEGACY
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -86,6 +113,75 @@ def login():
 
     return jsonify({"success": True, "message": "Login successful", "token": token, "role": role, "user_id": user_id})
 
+"""
+
+@app.route('/login', methods=['GET', 'POST'])
+def cas_login_handler():
+    ticket = request.args.get("ticket")
+    service_url = "http://10.3.0.96:5002/login"
+    print("CAS ticket:", ticket)
+
+    if not ticket:
+        return "Missing CAS ticket", 400
+        
+    # Step 2: Validate ticket
+    validate_url = "https://login.sabanciuniv.edu/cas/serviceValidate"
+    params = {
+        "service": service_url,
+        "ticket": ticket
+    }
+    print("Validating with:", validate_url)
+
+    try:
+        r = requests.get(validate_url, params=params)
+        print("CAS response text:", r.text)
+        tree = ET.fromstring(r.text)
+        namespace = {'cas': 'http://www.yale.edu/tp/cas'}
+        user_elem = tree.find('.//cas:user', namespace)
+
+        if user_elem is None:
+            print("CAS validation failed, no user element found.")
+            return redirect(f"{service_url}?error=ticket_validation_failed")
+
+        username = user_elem.text
+        user_email = f"{username}@sabanciuniv.edu"
+
+        # Lookup or auto-register
+        user = get_user_by_email(user_email)
+        if not user:
+            new_user = {
+                "email": user_email,
+                "role": "user",  # or 'admin' if you want special cases
+                "created_at": datetime.now()
+            }
+            result = users_collection.insert_one(new_user)
+            if result.inserted_id:
+                user = new_user
+                user["_id"] = result.inserted_id
+            else:
+                return redirect(f"{service_url}?error=registration_failed")
+
+        role = user["role"]
+        user_id = str(user["_id"])
+
+        expiration = datetime.now() + timedelta(minutes=60)
+        token = jwt.encode(
+            {"email": user_email, "role": role, "exp": expiration},
+            SECRET_KEY,
+            algorithm="HS256"
+        )
+
+        query = urlencode({
+            "token": token,
+            "role": role,
+            "user_id": user_id
+        })
+        return redirect(f"http://10.3.0.96:5002/cas-landing?{query}")
+
+    except Exception as e:
+        print("CAS login error:", str(e))
+        traceback.print_exc()
+        return redirect(f"{service_url}?error=internal_error")
 
 # register api
 @app.route('/register', methods=['POST'])

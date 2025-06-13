@@ -1,4 +1,4 @@
-Flask
+Flask==2.2.5
 flask-cors
 pymongo
 langchain
@@ -17,3 +17,4 @@ einops
 openai
 transformers
 langdetect
+flask-cas

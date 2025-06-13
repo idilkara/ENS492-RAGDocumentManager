@@ -41,6 +41,13 @@ const Login = () => {
         }
     };
 
+    const handleCAS = () => {
+        // Redirect to the CAS landing page
+        window.location.href = `${config.API_BASE_URL}/cas-login`;
+        // Note: The CAS landing page should handle the authentication flow
+        // and redirect back to the main application with the necessary tokens.
+    }
+
     const handleRegister = async () => {
         setError('');
         
@@ -97,7 +104,7 @@ const Login = () => {
             <div className="login-mini-container">
                 <h1>Welcome to Sabancı University Document Manager</h1>
                 
-                {!isRegistering ? (
+                {/*!isRegistering ? (
                     // Login View
                     <>
                         <input
@@ -144,8 +151,8 @@ const Login = () => {
                         <button className="login-button" onClick={handleRegister}>Create Account</button>
                         <button className="login-button" onClick={toggleRegisterView}>Back to Login</button>
                     </>
-                )}
-                
+                )*/}
+                <button className="login-button" onClick={handleCAS}>Login with CAS</button>
                 {error && <div className="login-error">{error}</div>}
             </div>
         </div>
